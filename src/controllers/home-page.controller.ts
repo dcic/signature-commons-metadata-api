@@ -13,7 +13,18 @@ export class HomePageController {
     );
   }
 
-  @get('/', {
+  @get('/signature-commons-metadata-api/explorer', {
+    responses: {
+      '302': {
+        description: 'API Explorer'
+      },
+    },
+  })
+  explorer() {
+    return this.response.redirect('http://explorer.loopback.io/?url=http://amp.pharm.mssm.edu/signature-commons-metadata-api/openapi.json');
+  }
+
+  @get('/signature-commons-metadata-api', {
     responses: {
       '200': {
         description: 'Home Page',

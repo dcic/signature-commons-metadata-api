@@ -10,5 +10,5 @@ export const SignatureController = GenericControllerFactory<
   GenericRepository: SignatureRepository,
   GenericModelSchema: SignatureSchema,
   modelName: 'Signature',
-  basePath: '/signatures',
+  basePath: '/signature-commons-metadata-api/signatures',
 })

@@ -10,5 +10,5 @@ export const EntityController = GenericControllerFactory<
   GenericRepository: EntityRepository,
   GenericModelSchema: EntitySchema,
   modelName: 'Entity',
-  basePath: '/entities',
+  basePath: '/signature-commons-metadata-api/entities',
 })

@@ -10,5 +10,5 @@ export const LibraryController = GenericControllerFactory<
   GenericRepository: LibraryRepository,
   GenericModelSchema: LibrarySchema,
   modelName: 'Library',
-  basePath: '/libraries',
+  basePath: '/signature-commons-metadata-api/libraries',
 })
