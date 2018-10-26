@@ -14,6 +14,11 @@ export POSTGRESQL=posgresql://${user}:${pass}@${host}:${port}/${db}
 
 Where the ${} variables should be substituted with your own values.
 
+### Deployment 
+```bash
+docker build -t maayanlab/signature-commons-metadata-api:1.0.0 .
+docker push maayanlab/signature-commons-metadata-api:1.0.0
+```
 
 ## Development
 
