@@ -57,20 +57,21 @@ export function GenericControllerFactory<
       public genericRepository : GenericRepository,
     ) {}
 
-    @post(props.basePath + '', {
-      operationId: props.modelName + '.create',
-      responses: {
-        '200': {
-          description: props.modelName + ' model instance',
-          content: {'application/json': {'x-ts-type': props.GenericModel}},
-        },
-      },
-    })
-    async create(@requestBody() obj: GenericModel): Promise<GenericModel> {
-      // TODO: ACL
-      // TODO: JSON Schema Validation
-      return await this.genericRepository.create(obj);
-    }
+    // @post(props.basePath + '', {
+    //   operationId: props.modelName + '.create',
+    //   responses: {
+    //     '200': {
+    //       description: props.modelName + ' model instance',
+    //       content: {'application/json': {'x-ts-type': props.GenericModel}},
+    //     },
+    //   },
+    // })
+    // async create(@requestBody() obj: GenericModel): Promise<GenericModel> {
+    //   // TODO: ACL
+    //   // TODO: JSON Schema Validation
+    //   // return await this.genericRepository.create(obj);
+    //   return obj;
+    // }
 
     @get(props.basePath + '/count', {
       operationId: props.modelName + '.count',
@@ -163,23 +164,23 @@ export function GenericControllerFactory<
       return await this.genericRepository.find(filterObj);
     }
 
-    @patch(props.basePath + '', {
-      operationId: props.modelName + '.updateAll',
-      responses: {
-        '200': {
-          description: props.modelName + ' PATCH success count',
-          content: {'application/json': {schema: CountSchema}},
-        },
-      },
-    })
-    async updateAll(
-      @requestBody() obj: GenericModel,
-      @param.query.object('where', getWhereSchemaFor(props.GenericModel)) where?: Where,
-    ): Promise<Count> {
-      // TODO: ACL
-      // TODO: JSON Schema Validation
-      return await this.genericRepository.updateAll(obj, where);
-    }
+    // @patch(props.basePath + '', {
+    //   operationId: props.modelName + '.updateAll',
+    //   responses: {
+    //     '200': {
+    //       description: props.modelName + ' PATCH success count',
+    //       content: {'application/json': {schema: CountSchema}},
+    //     },
+    //   },
+    // })
+    // async updateAll(
+    //   @requestBody() obj: GenericModel,
+    //   @param.query.object('where', getWhereSchemaFor(props.GenericModel)) where?: Where,
+    // ): Promise<Count> {
+    //   // TODO: ACL
+    //   // TODO: JSON Schema Validation
+    //   return await this.genericRepository.updateAll(obj, where);
+    // }
 
     @get(props.basePath + '/{id}', {
       operationId: props.modelName + '.findById',
@@ -194,35 +195,35 @@ export function GenericControllerFactory<
       return await this.genericRepository.findById(id);
     }
 
-    @patch(props.basePath + '/{id}', {
-      operationId: props.modelName + '.updateById',
-      responses: {
-        '204': {
-          description: props.modelName + ' PATCH success',
-        },
-      },
-    })
-    async updateById(
-      @param.path.number('id') id: number,
-      @requestBody() obj: GenericModel,
-    ): Promise<void> {
-      // TODO: ACL
-      // TODO: JSON Schema Validation
-      await this.genericRepository.updateById(id, obj);
-    }
+    // @patch(props.basePath + '/{id}', {
+    //   operationId: props.modelName + '.updateById',
+    //   responses: {
+    //     '204': {
+    //       description: props.modelName + ' PATCH success',
+    //     },
+    //   },
+    // })
+    // async updateById(
+    //   @param.path.number('id') id: number,
+    //   @requestBody() obj: GenericModel,
+    // ): Promise<void> {
+    //   // TODO: ACL
+    //   // TODO: JSON Schema Validation
+    //   await this.genericRepository.updateById(id, obj);
+    // }
 
-    @del(props.basePath + '/{id}', {
-      operationId: props.modelName + '.deleteById',
-      responses: {
-        '204': {
-          description: props.modelName + ' DELETE success',
-        },
-      },
-    })
-    async deleteById(@param.path.number('id') id: number): Promise<void> {
-      // TODO: ACL
-      await this.genericRepository.deleteById(id);
-    }
+    // @del(props.basePath + '/{id}', {
+    //   operationId: props.modelName + '.deleteById',
+    //   responses: {
+    //     '204': {
+    //       description: props.modelName + ' DELETE success',
+    //     },
+    //   },
+    // })
+    // async deleteById(@param.path.number('id') id: number): Promise<void> {
+    //   // TODO: ACL
+    //   await this.genericRepository.deleteById(id);
+    // }
   }
 
   return Controller
