@@ -1,0 +1,5 @@
+{
+  "name": "PostgreSQL",
+  "connector": "postgresql",
+  "url": "${POSTGRESQL_URL}"
+}
