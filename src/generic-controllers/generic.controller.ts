@@ -19,14 +19,13 @@ import {
   requestBody,
   api,
 } from '@loopback/rest';
-import {validate} from '../util/validate';
-import {AsyncArrayFromAsyncIterable} from '../util/async-iterable';
+import { validate } from 'signature-commons-schema/dist/validate';
 import { Constructor } from '@loopback/core';
 
 interface GenericControllerProps<
   GenericModel extends typeof Model,
   GenericRepository extends Class<Repository<Model>>
-> {
+  > {
   GenericRepository: GenericRepository
   GenericModel: GenericModel
   GenericModelSchema: any,
@@ -37,12 +36,12 @@ interface GenericControllerProps<
 export function GenericControllerFactory<
   GenericModel extends typeof Model,
   GenericRepository extends Class<Repository<Model>>
->(
-  props: GenericControllerProps<
-    GenericModel,
-    GenericRepository
-  >
-): Constructor<any> {
+  >(
+    props: GenericControllerProps<
+      GenericModel,
+      GenericRepository
+      >
+  ): Constructor<any> {
   @api({
     paths: {},
     components: {
@@ -54,8 +53,8 @@ export function GenericControllerFactory<
   class Controller {
     constructor(
       @repository(props.GenericRepository)
-      public genericRepository : GenericRepository,
-    ) {}
+      public genericRepository: GenericRepository,
+    ) { }
 
     // @post(props.basePath + '', {
     //   operationId: props.modelName + '.create',
@@ -78,7 +77,7 @@ export function GenericControllerFactory<
       responses: {
         '200': {
           description: props.modelName + ' model count',
-          content: {'application/json': {schema: CountSchema}},
+          content: { 'application/json': { schema: CountSchema } },
         },
       },
     })
@@ -120,23 +119,22 @@ export function GenericControllerFactory<
     async dbck(
       @param.query.object('filter', getFilterSchemaFor(props.GenericModel)) filter?: Filter,
       @param.query.number('limit') limit?: number,
-    ): Promise<Array<{obj: GenericModel, errors: string[]}>> {
+    ): Promise<Array<object>> {
       const objs = await this.genericRepository.find(filter);
-      let results: Array<{obj: GenericModel, errors: string[]}> = []
+      let results: Array<object> = []
 
-      for await(const obj of objs) {
-        if(results.length === limit)
+      for await (let obj of objs) {
+        if (results.length === limit)
           break
-        results = results.concat({
-          obj: obj,
-          errors: (await AsyncArrayFromAsyncIterable(
-            validate({
-              $schema: 'https://raw.githubusercontent.com/dcic/signature-commons-schema/next/core/' + props.modelName + '.json',
-              id: obj.uuid,
-              meta: obj.meta,
-            })
-          )).map((err) => err.message),
-        })
+        try {
+          obj = await validate({
+            $validator: 'https://raw.githubusercontent.com/dcic/signature-commons-schema/next/core/' + props.modelName.toLowerCase() + '.json',
+            id: obj.uuid,
+            meta: obj.meta,
+          })
+        } catch (e) {
+          results = results.concat(e.errors)
+        }
       }
 
       return results
@@ -149,7 +147,7 @@ export function GenericControllerFactory<
           description: 'Array of ' + props.modelName + ' model instances',
           content: {
             'application/json': {
-              schema: {type: 'array', items: {'x-ts-type': props.GenericModel}},
+              schema: { type: 'array', items: { 'x-ts-type': props.GenericModel } },
             },
           },
         },
@@ -187,7 +185,7 @@ export function GenericControllerFactory<
       responses: {
         '200': {
           description: props.modelName + ' model instance',
-          content: {'application/json': {'x-ts-type': props.GenericModel}},
+          content: { 'application/json': { 'x-ts-type': props.GenericModel } },
         },
       },
     })

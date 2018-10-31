@@ -52,16 +52,13 @@
     "@loopback/rest": "^1.0.1",
     "@loopback/service-proxy": "^1.0.0",
     "loopback-connector-postgresql": "^3.4.0",
-    "node-fetch": "^2.2.0",
-    "z-schema": "^3.24.1"
+    "signature-commons-schema": "^1.0.0"
   },
   "devDependencies": {
     "@loopback/build": "^1.0.0",
     "@loopback/testlab": "^1.0.0",
     "@types/assert": "^1.4.0",
     "@types/node": "^10.12.0",
-    "@types/node-fetch": "^2.1.2",
-    "@types/z-schema": "^3.16.32",
     "assert": "^1.4.1",
     "tslint": "^5.11.0",
     "typescript": "^3.1.3"
