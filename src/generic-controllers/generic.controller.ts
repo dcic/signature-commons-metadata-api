@@ -3,6 +3,7 @@ import { Constructor } from '@loopback/core';
 import { Count, CountSchema, DefaultCrudRepository, Entity, Filter, repository, Where } from '@loopback/repository';
 import { api, get, getFilterSchemaFor, getWhereSchemaFor, param } from '@loopback/rest';
 import { keyCounts } from '../util/key-counts';
+import { sortedDict } from '../util/sorted-dict';
 
 export class IGenericEntity extends Entity {
   $validator?: string
@@ -96,7 +97,11 @@ export function GenericControllerFactory<
     ): Promise<{ [key: string]: number }> {
       if (depth < 0)
         throw new Error("Depth must be greater than 0")
-      return keyCounts((await this.genericRepository.find(filter)).map((obj) => obj.meta), depth, values)
+
+      return sortedDict(
+        keyCounts((await this.genericRepository.find(filter)).map((obj) => obj.meta), depth, values),
+        (a, b) => b - a
+      )
     }
 
     @get(props.basePath + '/dbck', {
