@@ -3,16 +3,16 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
-import {Client} from '@loopback/testlab';
-import {App} from '../..';
-import {setupApplication} from './test-helper';
+import { Client } from '@loopback/testlab';
+import { App } from '../..';
+import { setupApplication } from './test-helper';
 
 describe('HomePageController', () => {
   let app: App;
   let client: Client;
 
   before('setupApplication', async () => {
-    ({app, client} = await setupApplication());
+    ({ app, client } = await setupApplication());
   });
 
   after(async () => {
@@ -21,7 +21,7 @@ describe('HomePageController', () => {
 
   it('exposes a default home page', async () => {
     await client
-      .get('/')
+      .get('/signature-commons-metadata-api')
       .expect(200)
       .expect('Content-Type', /text\/html/);
   });

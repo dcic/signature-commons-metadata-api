@@ -1,4 +1,4 @@
-import {Entity, model, property} from '@loopback/repository';
+import { Entity, model, property } from '@loopback/repository';
 import { getJsonSchema } from '@loopback/rest';
 
 @model({
@@ -21,9 +21,12 @@ export class Library extends Entity {
 
   @property({
     type: 'object',
+    postgresql: {
+      dataType: 'json',
+    },
     required: true,
   })
-  meta: object;
+  meta: JSON;
 
   constructor(data?: Partial<Library>) {
     super(data);

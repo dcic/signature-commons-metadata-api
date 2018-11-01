@@ -1,4 +1,4 @@
-import {Entity, model, property} from '@loopback/repository';
+import { Entity, model, property } from '@loopback/repository';
 import { getJsonSchema } from '@loopback/rest';
 
 @model({
@@ -21,10 +21,13 @@ export class Signature extends Entity {
 
   @property({
     type: 'object',
+    postgresql: {
+      dataType: 'json',
+    },
     required: true,
     default: {},
   })
-  meta: object;
+  meta: JSON;
 
   constructor(data?: Partial<Signature>) {
     super(data);

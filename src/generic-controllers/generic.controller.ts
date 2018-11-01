@@ -99,14 +99,13 @@ export function GenericControllerFactory<
       }
     })
     async dbck(
-      @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
-      @param.query.number('limit') limit?: number,
+      @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter: Filter<GenericEntity>,
     ): Promise<Array<object>> {
-      const objs = await this.genericRepository.find(filter);
+      const objs = await this.genericRepository.find({ ...filter, limit: undefined });
       let results: Array<object> = []
 
       for await (let obj of objs) {
-        if (results.length === limit)
+        if (results.length === filter.limit)
           break
         try {
           obj = await validate<GenericEntity>({
@@ -136,12 +135,9 @@ export function GenericControllerFactory<
       },
     })
     async find(
-      // @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
-      @param.query.string('filter') filter?: string,
+      @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
     ): Promise<GenericEntity[]> {
-      const filterObj = filter !== undefined ? (JSON.parse(filter) as Filter<GenericEntity>) : undefined
-
-      return await this.genericRepository.find(filterObj);
+      return await this.genericRepository.find(filter);
     }
 
     // @patch(props.basePath + '', {

@@ -1,4 +1,4 @@
-import {Entity as LBEntity, model, property} from '@loopback/repository';
+import { Entity as LBEntity, model, property } from '@loopback/repository';
 import { getJsonSchema } from '@loopback/rest';
 
 @model({
@@ -16,9 +16,12 @@ export class Entity extends LBEntity {
   @property({
     type: 'object',
     required: true,
+    postgresql: {
+      dataType: 'json',
+    },
     default: {},
   })
-  meta: object;
+  meta: JSON;
 
   constructor(data?: Partial<Entity>) {
     super(data);
