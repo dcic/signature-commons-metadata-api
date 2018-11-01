@@ -90,13 +90,13 @@ export function GenericControllerFactory<
       },
     })
     async key_count(
-      @param.query.object('where', getWhereSchemaFor(props.GenericEntity)) where?: Where<GenericEntity>,
+      @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
       @param.query.number('depth') depth: number = 0,
       @param.query.boolean('values') values: boolean = false,
     ): Promise<{ [key: string]: number }> {
       if (depth < 0)
         throw new Error("Depth must be greater than 0")
-      return keyCounts((await this.genericRepository.find({ where })).map((obj) => obj.meta), depth, values)
+      return keyCounts((await this.genericRepository.find(filter)).map((obj) => obj.meta), depth, values)
     }
 
     @get(props.basePath + '/dbck', {
