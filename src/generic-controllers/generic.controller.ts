@@ -19,7 +19,7 @@ import {
   requestBody,
   api,
 } from '@loopback/rest';
-import { validate } from '@dcic/signature-commons-schema/dist/validate';
+import { validate } from '@dcic/signature-commons-schema';
 import { Constructor } from '@loopback/core';
 
 interface GenericControllerProps<
