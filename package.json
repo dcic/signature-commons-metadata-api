@@ -44,6 +44,7 @@
     "src"
   ],
   "dependencies": {
+    "@dcic/signature-commons-schema": "^1.0.0",
     "@loopback/boot": "^1.0.1",
     "@loopback/context": "^1.0.0",
     "@loopback/core": "^1.0.0",
@@ -51,8 +52,7 @@
     "@loopback/repository": "^1.0.1",
     "@loopback/rest": "^1.0.1",
     "@loopback/service-proxy": "^1.0.0",
-    "loopback-connector-postgresql": "^3.4.0",
-    "signature-commons-schema": "^1.0.0"
+    "loopback-connector-postgresql": "^3.4.0"
   },
   "devDependencies": {
     "@loopback/build": "^1.0.0",
