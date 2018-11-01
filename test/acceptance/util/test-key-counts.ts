@@ -29,6 +29,18 @@ describe('util', () => {
           }
         )
       })
+      it('works properly with values', () => {
+        assert.deepEqual(
+          keyCounts(testObj, 0, true),
+          {
+            'a': 2,
+            'a:b': 2,
+            'c': 1,
+            'c:2': 1,
+            'd': 2,
+          }
+        )
+      })
     })
     describe('depth 1', () => {
       it('works properly', () => {
@@ -37,6 +49,19 @@ describe('util', () => {
           {
             'a': 2,
             'c': 1,
+            'd': 2,
+            'd.e': 2,
+          }
+        )
+      })
+      it('works properly with values', () => {
+        assert.deepEqual(
+          keyCounts(testObj, 1, true),
+          {
+            'a': 2,
+            'a:b': 2,
+            'c': 1,
+            'c:2': 1,
             'd': 2,
             'd.e': 2,
           }
@@ -54,6 +79,23 @@ describe('util', () => {
             'd.e': 2,
             'd.e.f': 1,
             'd.e.b': 1
+          }
+        )
+      })
+      it('with values works properly', () => {
+        assert.deepEqual(
+          keyCounts(testObj, 2, true),
+          {
+            'a': 2,
+            'a:b': 2,
+            'c': 1,
+            'c:2': 1,
+            'd': 2,
+            'd.e': 2,
+            'd.e.f': 1,
+            'd.e.f:0': 1,
+            'd.e.b': 1,
+            'd.e.b:0': 1
           }
         )
       })
