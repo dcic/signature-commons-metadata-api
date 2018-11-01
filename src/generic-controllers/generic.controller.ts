@@ -1,59 +1,41 @@
-import {
-  Count,
-  CountSchema,
-  Filter,
-  repository,
-  Where,
-  Class,
-  Repository,
-  Model,
-} from '@loopback/repository';
-import {
-  post,
-  param,
-  get,
-  getFilterSchemaFor,
-  getWhereSchemaFor,
-  patch,
-  del,
-  requestBody,
-  api,
-} from '@loopback/rest';
 import { validate } from '@dcic/signature-commons-schema';
 import { Constructor } from '@loopback/core';
+import { Count, CountSchema, DefaultCrudRepository, Entity, Filter, repository, Where } from '@loopback/repository';
+import { api, get, getFilterSchemaFor, getWhereSchemaFor, param } from '@loopback/rest';
 
-interface GenericControllerProps<
-  GenericModel extends typeof Model,
-  GenericRepository extends Class<Repository<Model>>
-  > {
-  GenericRepository: GenericRepository
-  GenericModel: GenericModel
-  GenericModelSchema: any,
-  modelName: string
-  basePath: string
+export class IGenericEntity extends Entity {
+  $validator?: string
+  id: number
+  meta: object
+}
+
+export class IGenericRepository<T extends IGenericEntity> extends DefaultCrudRepository<T, number> {
 }
 
 export function GenericControllerFactory<
-  GenericModel extends typeof Model,
-  GenericRepository extends Class<Repository<Model>>
+  GenericEntity extends IGenericEntity,
+  GenericRepository extends IGenericRepository<GenericEntity>
   >(
-    props: GenericControllerProps<
-      GenericModel,
-      GenericRepository
-      >
+    props: {
+      GenericRepository: Constructor<GenericRepository>
+      GenericEntity: typeof IGenericEntity
+      GenericEntitySchema: any,
+      modelName: string
+      basePath: string
+    }
   ): Constructor<any> {
   @api({
     paths: {},
     components: {
       schemas: {
-        [props.modelName]: props.GenericModelSchema,
+        [props.modelName]: props.GenericEntitySchema,
       },
     },
   })
   class Controller {
     constructor(
       @repository(props.GenericRepository)
-      public genericRepository: GenericRepository,
+      public genericRepository: IGenericRepository<GenericEntity>,
     ) { }
 
     // @post(props.basePath + '', {
@@ -61,11 +43,11 @@ export function GenericControllerFactory<
     //   responses: {
     //     '200': {
     //       description: props.modelName + ' model instance',
-    //       content: {'application/json': {'x-ts-type': props.GenericModel}},
+    //       content: {'application/json': {'x-ts-type': props.GenericEntity}},
     //     },
     //   },
     // })
-    // async create(@requestBody() obj: GenericModel): Promise<GenericModel> {
+    // async create(@requestBody() obj: GenericEntity): Promise<GenericEntity> {
     //   // TODO: ACL
     //   // TODO: JSON Schema Validation
     //   // return await this.genericRepository.create(obj);
@@ -82,7 +64,7 @@ export function GenericControllerFactory<
       },
     })
     async count(
-      @param.query.object('where', getWhereSchemaFor(props.GenericModel)) where?: Where,
+      @param.query.object('where', getWhereSchemaFor(props.GenericEntity)) where?: Where<GenericEntity>,
     ): Promise<Count> {
       return await this.genericRepository.count(where);
     }
@@ -100,7 +82,7 @@ export function GenericControllerFactory<
                   'type': 'object',
                   'properties': {
                     obj: {
-                      'x-ts-type': props.GenericModel,
+                      'x-ts-type': props.GenericEntity,
                     },
                     errors: {
                       type: 'array',
@@ -117,7 +99,7 @@ export function GenericControllerFactory<
       }
     })
     async dbck(
-      @param.query.object('filter', getFilterSchemaFor(props.GenericModel)) filter?: Filter,
+      @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
       @param.query.number('limit') limit?: number,
     ): Promise<Array<object>> {
       const objs = await this.genericRepository.find(filter);
@@ -127,11 +109,11 @@ export function GenericControllerFactory<
         if (results.length === limit)
           break
         try {
-          obj = await validate({
+          obj = await validate<GenericEntity>({
             $validator: 'https://raw.githubusercontent.com/dcic/signature-commons-schema/next/core/' + props.modelName.toLowerCase() + '.json',
-            id: obj.uuid,
+            id: obj.id,
             meta: obj.meta,
-          })
+          } as GenericEntity)
         } catch (e) {
           results = results.concat(e.errors)
         }
@@ -147,17 +129,17 @@ export function GenericControllerFactory<
           description: 'Array of ' + props.modelName + ' model instances',
           content: {
             'application/json': {
-              schema: { type: 'array', items: { 'x-ts-type': props.GenericModel } },
+              schema: { type: 'array', items: { 'x-ts-type': props.GenericEntity } },
             },
           },
         },
       },
     })
     async find(
-      // @param.query.object('filter', getFilterSchemaFor(props.GenericModel)) filter?: Filter,
+      // @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
       @param.query.string('filter') filter?: string,
-    ): Promise<GenericModel[]> {
-      const filterObj = filter !== undefined ? (JSON.parse(filter) as Filter) : undefined
+    ): Promise<GenericEntity[]> {
+      const filterObj = filter !== undefined ? (JSON.parse(filter) as Filter<GenericEntity>) : undefined
 
       return await this.genericRepository.find(filterObj);
     }
@@ -172,8 +154,8 @@ export function GenericControllerFactory<
     //   },
     // })
     // async updateAll(
-    //   @requestBody() obj: GenericModel,
-    //   @param.query.object('where', getWhereSchemaFor(props.GenericModel)) where?: Where,
+    //   @requestBody() obj: GenericEntity,
+    //   @param.query.object('where', getWhereSchemaFor(props.GenericEntity)) where?: Where,
     // ): Promise<Count> {
     //   // TODO: ACL
     //   // TODO: JSON Schema Validation
@@ -185,11 +167,11 @@ export function GenericControllerFactory<
       responses: {
         '200': {
           description: props.modelName + ' model instance',
-          content: { 'application/json': { 'x-ts-type': props.GenericModel } },
+          content: { 'application/json': { 'x-ts-type': props.GenericEntity } },
         },
       },
     })
-    async findById(@param.path.number('id') id: number): Promise<GenericModel> {
+    async findById(@param.path.number('id') id: number): Promise<GenericEntity> {
       return await this.genericRepository.findById(id);
     }
 
@@ -203,7 +185,7 @@ export function GenericControllerFactory<
     // })
     // async updateById(
     //   @param.path.number('id') id: number,
-    //   @requestBody() obj: GenericModel,
+    //   @requestBody() obj: GenericEntity,
     // ): Promise<void> {
     //   // TODO: ACL
     //   // TODO: JSON Schema Validation
