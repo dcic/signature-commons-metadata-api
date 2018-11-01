@@ -2,6 +2,7 @@ import { validate } from '@dcic/signature-commons-schema';
 import { Constructor } from '@loopback/core';
 import { Count, CountSchema, DefaultCrudRepository, Entity, Filter, repository, Where } from '@loopback/repository';
 import { api, get, getFilterSchemaFor, getWhereSchemaFor, param } from '@loopback/rest';
+import { keyCounts } from '../util/key-counts';
 
 export class IGenericEntity extends Entity {
   $validator?: string
@@ -67,6 +68,34 @@ export function GenericControllerFactory<
       @param.query.object('where', getWhereSchemaFor(props.GenericEntity)) where?: Where<GenericEntity>,
     ): Promise<Count> {
       return await this.genericRepository.count(where);
+    }
+
+    @get(props.basePath + '/key_count', {
+      operationId: props.modelName + '.key_count',
+      responses: {
+        '200': {
+          description: props.modelName + ' model key_count (number of unique keys which appear in the query results)',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  description: 'The key in the database paired with the number of those keys'
+                }
+              }
+            }
+          },
+        },
+      },
+    })
+    async key_count(
+      @param.query.object('where', getWhereSchemaFor(props.GenericEntity)) where?: Where<GenericEntity>,
+      @param.query.number('depth') depth: number = 0,
+    ): Promise<{ [key: string]: number }> {
+      if (depth < 0)
+        throw new Error("Depth must be greater than 0")
+      return keyCounts(await this.genericRepository.find({ where }))
     }
 
     @get(props.basePath + '/dbck', {
