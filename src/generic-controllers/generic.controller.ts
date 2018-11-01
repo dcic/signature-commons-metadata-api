@@ -109,18 +109,7 @@ export function GenericControllerFactory<
               schema: {
                 type: 'array',
                 items: {
-                  'type': 'object',
-                  'properties': {
-                    obj: {
-                      'x-ts-type': props.GenericEntity,
-                    },
-                    errors: {
-                      type: 'array',
-                      items: {
-                        'type': 'string',
-                      },
-                    },
-                  },
+                  type: 'object'
                 },
               },
             },
@@ -129,9 +118,9 @@ export function GenericControllerFactory<
       }
     })
     async dbck(
-      @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter: Filter<GenericEntity>,
+      @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter: Filter<GenericEntity> = {},
     ): Promise<Array<object>> {
-      const objs = await this.genericRepository.find({ ...filter, limit: undefined });
+      const objs = await this.genericRepository.find(filter);
       let results: Array<object> = []
 
       for await (let obj of objs) {
@@ -139,12 +128,12 @@ export function GenericControllerFactory<
           break
         try {
           obj = await validate<GenericEntity>({
-            $validator: 'https://raw.githubusercontent.com/dcic/signature-commons-schema/next/core/' + props.modelName.toLowerCase() + '.json',
+            $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
             id: obj.id,
             meta: obj.meta,
           } as GenericEntity)
         } catch (e) {
-          results = results.concat(e.errors)
+          results = results.concat(e)
         }
       }
 
