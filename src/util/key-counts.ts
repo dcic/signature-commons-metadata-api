@@ -27,18 +27,17 @@ export function keyCounts(objs: any[], depth: number = 0, values: boolean = fals
         key_counts[kk] += 1
       }
 
-      if (d > 0) {
+      if (k.split(':')[0].replace(/[^\.]/g, '').length < d) {
         try {
           if (typeof v === 'object') {
             Q = Q.concat(
               ObjectItems(v).map(
                 ([kk, vv]) =>
                   [k + '.' + kk, vv] as [string, any]
-              )
+              ) as [string, any][]
             )
           }
         } catch (e) { }
-        d -= 1
       }
     }
   }
