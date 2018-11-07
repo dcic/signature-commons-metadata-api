@@ -44,7 +44,7 @@
     "src"
   ],
   "dependencies": {
-    "@dcic/signature-commons-schema": "^1.0.2",
+    "@dcic/signature-commons-schema": "^1.0.4",
     "@loopback/boot": "^1.0.2",
     "@loopback/context": "^1.0.0",
     "@loopback/core": "^1.0.0",
@@ -58,9 +58,9 @@
     "@loopback/build": "^1.0.0",
     "@loopback/testlab": "^1.0.0",
     "@types/assert": "^1.4.0",
-    "@types/node": "^10.12.1",
+    "@types/node": "^10.12.2",
     "assert": "^1.4.1",
     "tslint": "^5.11.0",
-    "typescript": "^3.1.5"
+    "typescript": "^3.1.6"
   }
 }
