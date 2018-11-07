@@ -45,6 +45,7 @@
   ],
   "dependencies": {
     "@dcic/signature-commons-schema": "^1.0.4",
+    "@loopback/authentication": "^1.0.2",
     "@loopback/boot": "^1.0.2",
     "@loopback/context": "^1.0.0",
     "@loopback/core": "^1.0.0",
@@ -52,13 +53,17 @@
     "@loopback/repository": "^1.0.2",
     "@loopback/rest": "^1.1.0",
     "@loopback/service-proxy": "^1.0.0",
-    "loopback-connector-postgresql": "^3.4.0"
+    "loopback-connector-postgresql": "^3.4.0",
+    "passport": "^0.4.0",
+    "passport-http": "^0.3.0"
   },
   "devDependencies": {
     "@loopback/build": "^1.0.0",
     "@loopback/testlab": "^1.0.0",
     "@types/assert": "^1.4.0",
     "@types/node": "^10.12.2",
+    "@types/passport": "^0.4.7",
+    "@types/passport-http": "^0.3.6",
     "assert": "^1.4.1",
     "tslint": "^5.11.0",
     "typescript": "^3.1.6"

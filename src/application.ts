@@ -1,14 +1,12 @@
-import {BootMixin} from '@loopback/boot';
-import {ApplicationConfig} from '@loopback/core';
-import {RepositoryMixin} from '@loopback/repository';
-import {RestApplication} from '@loopback/rest';
-import {ServiceMixin} from '@loopback/service-proxy';
-import {MySequence} from './sequence';
-import {
-  EntityController,
-  LibraryController,
-  SignatureController
-} from './generic-controllers';
+import { AuthenticationBindings, AuthenticationComponent } from '@loopback/authentication';
+import { BootMixin } from '@loopback/boot';
+import { ApplicationConfig } from '@loopback/core';
+import { RepositoryMixin } from '@loopback/repository';
+import { RestApplication } from '@loopback/rest';
+import { ServiceMixin } from '@loopback/service-proxy';
+import { EntityController, LibraryController, SignatureController } from './generic-controllers';
+import { AuthStrategyProvider } from './providers/auth-strategy.provider';
+import { Sequence } from './sequence';
 
 export class App extends BootMixin(
   ServiceMixin(RepositoryMixin(RestApplication)),
@@ -16,13 +14,19 @@ export class App extends BootMixin(
   constructor(options: ApplicationConfig = {}) {
     super(options);
 
+    // Add authentication
+    this.component(AuthenticationComponent);
+    this.bind(AuthenticationBindings.STRATEGY).toProvider(
+      AuthStrategyProvider,
+    );
+
     // Manually setup named custom generic controllers
     this.controller(LibraryController, 'Library');
     this.controller(SignatureController, 'Signature');
     this.controller(EntityController, 'Entity');
 
     // Set up the custom sequence
-    this.sequence(MySequence);
+    this.sequence(Sequence);
 
     this.projectRoot = __dirname;
     // Customize @loopback/boot Booter Conventions here
