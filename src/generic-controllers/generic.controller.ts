@@ -1,7 +1,9 @@
 import { validate } from '@dcic/signature-commons-schema';
+import { authenticate, AuthenticationBindings, UserProfile } from '@loopback/authentication';
+import { inject } from '@loopback/context';
 import { Constructor } from '@loopback/core';
-import { Count, CountSchema, DefaultCrudRepository, Entity, Filter, repository, Where } from '@loopback/repository';
-import { api, get, getFilterSchemaFor, getWhereSchemaFor, param } from '@loopback/rest';
+import { Count, CountSchema, DataObject, DefaultCrudRepository, Entity, Filter, repository, Where } from '@loopback/repository';
+import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param, patch, post, requestBody } from '@loopback/rest';
 import { keyCounts } from '../util/key-counts';
 import { sortedDict } from '../util/sorted-dict';
 
@@ -36,26 +38,37 @@ export function GenericControllerFactory<
   })
   class Controller {
     constructor(
-      @repository(props.GenericRepository)
-      public genericRepository: IGenericRepository<GenericEntity>,
+      @repository(props.GenericRepository) public genericRepository: IGenericRepository<GenericEntity>,
+      @inject(AuthenticationBindings.CURRENT_USER) private user: UserProfile,
     ) { }
 
-    // @post(props.basePath + '', {
-    //   operationId: props.modelName + '.create',
-    //   responses: {
-    //     '200': {
-    //       description: props.modelName + ' model instance',
-    //       content: {'application/json': {'x-ts-type': props.GenericEntity}},
-    //     },
-    //   },
-    // })
-    // async create(@requestBody() obj: GenericEntity): Promise<GenericEntity> {
-    //   // TODO: ACL
-    //   // TODO: JSON Schema Validation
-    //   // return await this.genericRepository.create(obj);
-    //   return obj;
-    // }
+    @authenticate('POST.' + props.modelName + '.create')
+    @post(props.basePath + '', {
+      operationId: props.modelName + '.create',
+      responses: {
+        '200': {
+          description: props.modelName + ' model instance',
+          content: { 'application/json': { 'x-ts-type': props.GenericEntity } },
+        },
+      },
+    })
+    async create(@requestBody() obj: GenericEntity): Promise<GenericEntity> {
+      try {
+        return await this.genericRepository.create(
+          await validate<GenericEntity>({
+            $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
+            id: obj.id,
+            meta: obj.meta,
+          } as GenericEntity,
+            '/@dcic/signature-commons-schema/core/meta.json'
+          )
+        )
+      } catch (e) {
+        throw new HttpErrors.NotAcceptable(e)
+      }
+    }
 
+    @authenticate('GET.' + props.modelName + '.count')
     @get(props.basePath + '/count', {
       operationId: props.modelName + '.count',
       responses: {
@@ -71,6 +84,7 @@ export function GenericControllerFactory<
       return await this.genericRepository.count(where);
     }
 
+    @authenticate('GET.' + props.modelName + '.key_count')
     @get(props.basePath + '/key_count', {
       operationId: props.modelName + '.key_count',
       responses: {
@@ -104,6 +118,7 @@ export function GenericControllerFactory<
       )
     }
 
+    @authenticate('GET.' + props.modelName + '.dbck')
     @get(props.basePath + '/dbck', {
       operationId: props.modelName + '.dbck',
       responses: {
@@ -124,7 +139,7 @@ export function GenericControllerFactory<
     })
     async dbck(
       @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter: Filter<GenericEntity> = {},
-    ): Promise<Array<object>> {
+    ): Promise<object> {
       const objs = await this.genericRepository.find(filter);
       let results: Array<object> = []
 
@@ -136,7 +151,9 @@ export function GenericControllerFactory<
             $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
             id: obj.id,
             meta: obj.meta,
-          } as GenericEntity)
+          } as GenericEntity,
+            '/@dcic/signature-commons-schema/core/meta.json'
+          )
         } catch (e) {
           results = results.concat(e)
         }
@@ -145,6 +162,7 @@ export function GenericControllerFactory<
       return results
     }
 
+    @authenticate('GET.' + props.modelName + '.find')
     @get(props.basePath + '', {
       operationId: props.modelName + '.find',
       responses: {
@@ -164,24 +182,46 @@ export function GenericControllerFactory<
       return await this.genericRepository.find(filter);
     }
 
-    // @patch(props.basePath + '', {
-    //   operationId: props.modelName + '.updateAll',
-    //   responses: {
-    //     '200': {
-    //       description: props.modelName + ' PATCH success count',
-    //       content: {'application/json': {schema: CountSchema}},
-    //     },
-    //   },
-    // })
-    // async updateAll(
-    //   @requestBody() obj: GenericEntity,
-    //   @param.query.object('where', getWhereSchemaFor(props.GenericEntity)) where?: Where,
-    // ): Promise<Count> {
-    //   // TODO: ACL
-    //   // TODO: JSON Schema Validation
-    //   return await this.genericRepository.updateAll(obj, where);
-    // }
+    @authenticate('PATCH.' + props.modelName + '.updateAll')
+    @patch(props.basePath + '', {
+      operationId: props.modelName + '.updateAll',
+      responses: {
+        '200': {
+          description: props.modelName + ' PATCH success count',
+          content: { 'application/json': { schema: CountSchema } },
+        },
+      },
+    })
+    async updateAll(
+      @requestBody() body: DataObject<GenericEntity>,
+      @param.query.object('where', getWhereSchemaFor(props.GenericEntity)) where?: Where<GenericEntity>,
+    ): Promise<Count> {
+      const objs: GenericEntity[] = await this.genericRepository.find({ where })
+      let results: Array<object> = []
 
+      for await (let obj of objs) {
+        obj = Object.assign(obj, body)
+
+        try {
+          obj = await validate<GenericEntity>({
+            $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
+            id: obj.id,
+            meta: obj.meta,
+          } as GenericEntity,
+            '/@dcic/signature-commons-schema/core/meta.json'
+          )
+        } catch (e) {
+          results = results.concat(e)
+        }
+      }
+
+      if (results.length > 0)
+        throw new HttpErrors.NotAcceptable(JSON.stringify(results))
+
+      return await this.genericRepository.updateAll(body, where)
+    }
+
+    @authenticate('GET.' + props.modelName + '.findById')
     @get(props.basePath + '/{id}', {
       operationId: props.modelName + '.findById',
       responses: {
@@ -195,35 +235,46 @@ export function GenericControllerFactory<
       return await this.genericRepository.findById(id);
     }
 
-    // @patch(props.basePath + '/{id}', {
-    //   operationId: props.modelName + '.updateById',
-    //   responses: {
-    //     '204': {
-    //       description: props.modelName + ' PATCH success',
-    //     },
-    //   },
-    // })
-    // async updateById(
-    //   @param.path.number('id') id: number,
-    //   @requestBody() obj: GenericEntity,
-    // ): Promise<void> {
-    //   // TODO: ACL
-    //   // TODO: JSON Schema Validation
-    //   await this.genericRepository.updateById(id, obj);
-    // }
+    @authenticate('PATCH.' + props.modelName + '.updateById')
+    @patch(props.basePath + '/{id}', {
+      operationId: props.modelName + '.updateById',
+      responses: {
+        '204': {
+          description: props.modelName + ' PATCH success',
+        },
+      },
+    })
+    async updateById(
+      @param.path.number('id') id: number,
+      @requestBody() obj: GenericEntity,
+    ): Promise<void> {
+      try {
+        return await this.genericRepository.updateById(id,
+          await validate<GenericEntity>({
+            $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
+            id: obj.id,
+            meta: obj.meta,
+          } as GenericEntity,
+            '/@dcic/signature-commons-schema/core/meta.json'
+          )
+        )
+      } catch (e) {
+        throw new HttpErrors.NotAcceptable(e)
+      }
+    }
 
-    // @del(props.basePath + '/{id}', {
-    //   operationId: props.modelName + '.deleteById',
-    //   responses: {
-    //     '204': {
-    //       description: props.modelName + ' DELETE success',
-    //     },
-    //   },
-    // })
-    // async deleteById(@param.path.number('id') id: number): Promise<void> {
-    //   // TODO: ACL
-    //   await this.genericRepository.deleteById(id);
-    // }
+    @authenticate('DELETE.' + props.modelName + '.deleteById')
+    @del(props.basePath + '/{id}', {
+      operationId: props.modelName + '.deleteById',
+      responses: {
+        '204': {
+          description: props.modelName + ' DELETE success',
+        },
+      },
+    })
+    async deleteById(@param.path.number('id') id: number): Promise<void> {
+      await this.genericRepository.deleteById(id);
+    }
   }
 
   return Controller
