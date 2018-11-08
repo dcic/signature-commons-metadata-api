@@ -1,16 +1,15 @@
-import { Provider, inject, ValueOrPromise } from '@loopback/context';
+import { AuthenticationBindings, AuthenticationMetadata, UserProfile as LbUserProfile } from '@loopback/authentication';
+import { inject, Provider, ValueOrPromise } from '@loopback/context';
+import { repository } from '@loopback/repository';
 import { Strategy } from 'passport';
-import {
-  AuthenticationBindings,
-  AuthenticationMetadata,
-  UserProfile,
-} from '@loopback/authentication';
 import { BasicStrategy } from 'passport-http';
+import { UserProfile } from '../models';
+import { UserProfileRepository } from '../repositories/user-profile.repository';
 
 export class AuthStrategyProvider implements Provider<Strategy | undefined> {
   constructor(
-    @inject(AuthenticationBindings.METADATA)
-    private metadata: AuthenticationMetadata,
+    @repository(UserProfileRepository) public userProfileRepository: UserProfileRepository,
+    @inject(AuthenticationBindings.METADATA) private metadata: AuthenticationMetadata,
   ) { }
 
   value(): ValueOrPromise<Strategy | undefined> {
@@ -27,25 +26,19 @@ export class AuthStrategyProvider implements Provider<Strategy | undefined> {
     strategy: string,
     username: string,
     password: string,
-    cb: (err: Error | null, user?: UserProfile | false) => void,
+    cb: (err: Error | null, user?: LbUserProfile | false) => void,
   ) {
-    const users = [
-      {
-        id: 'guest',
-        username: 'guest',
-        password: 'guest',
-        roles: /^GET\..+\.[^dbck]$/,
+    this.userProfileRepository.findOne({
+      where: {
+        username: username,
+        password: password,
       }
-    ]
-
-    const possible_users = users.filter(
-      (user) => username === user.username && password === user.password
-    )
-
-    if (possible_users.length >= 1 && possible_users[0].roles.test(strategy)) {
-      cb(null, possible_users[0])
-    } else {
-      cb(null, false)
-    }
+    }).then((user: UserProfile) => {
+      if (new RegExp(user.roles).test(strategy)) {
+        cb(null, user)
+      } else {
+        cb(null, false)
+      }
+    }).catch((e) => cb(null, false))
   }
 }
