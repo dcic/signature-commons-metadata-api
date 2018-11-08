@@ -1,6 +1,7 @@
-import { Entity, Library, Signature } from "../../../src/models";
-import { LibraryRepository, SignatureRepository, EntityRepository } from "../../../src/repositories";
+import { Entity, Library, Signature, UserProfile } from "../../../src/models";
+import { EntityRepository, LibraryRepository, SignatureRepository } from "../../../src/repositories";
 import { testdb } from "../fixtures/datasources/testdb.datasource";
+import { UserProfileRepository } from "../../../src/repositories/user-profile.repository";
 
 export async function givenValidLibraryData(data?: Partial<Library>) {
   return Object.assign(
@@ -149,8 +150,47 @@ export async function givenEntity(data?: Partial<Entity>) {
   )
 }
 
+export async function givenAdminUserProfileData(data?: Partial<UserProfile>) {
+  return Object.assign({
+    id: 'admin',
+    username: 'admin',
+    password: 'admin',
+    roles: /^.+$/,
+  },
+    data,
+  )
+}
+
+export async function givenAdminUserProfile(data?: Partial<UserProfile>) {
+  return await new UserProfileRepository(
+    testdb
+  ).create(
+    <Partial<UserProfile>>await givenAdminUserProfileData(data)
+  )
+}
+
+export async function givenGuestUserProfileData(data?: Partial<UserProfile>) {
+  return Object.assign({
+    id: 'guest',
+    username: 'guest',
+    password: 'guest',
+    roles: /^GET\..+\.[^dbck]$/,
+  },
+    data,
+  )
+}
+
+export async function givenGuestUserProfile(data?: Partial<UserProfile>) {
+  return await new UserProfileRepository(
+    testdb
+  ).create(
+    <Partial<UserProfile>>await givenGuestUserProfileData(data)
+  )
+}
+
 export async function givenEmptyDatabase() {
   await new LibraryRepository(testdb).deleteAll();
   await new SignatureRepository(testdb).deleteAll();
   await new EntityRepository(testdb).deleteAll();
+  await new UserProfileRepository(testdb).deleteAll();
 }

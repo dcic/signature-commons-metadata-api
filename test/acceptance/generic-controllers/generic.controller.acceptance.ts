@@ -2,6 +2,9 @@ import { Client } from '@loopback/testlab';
 import { App } from '../../..';
 import { setupApplication } from '../helpers/application.helpers';
 import { IGenericEntity } from '../../../src/generic-controllers/generic.controller';
+import { AuthenticationBindings, UserProfile as LbUserProfile } from '@loopback/authentication';
+import { givenAdminUserProfile, givenGuestUserProfile, givenAdminUserProfileData } from '../helpers/database.helpers';
+import { UserProfile } from '../../../src/models';
 
 export function test_generic<GenericEntity extends IGenericEntity>(props: {
   modelName: string
@@ -16,8 +19,11 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     let app: App;
     let client: Client;
     let obj: GenericEntity
+    let user: UserProfile
 
     before(props.setupDB)
+    before(givenAdminUserProfile)
+    // before(givenGuestUserProfile)
 
     before('getData', async () => {
       obj = <GenericEntity>(await props.givenValidObject())
@@ -25,6 +31,16 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
 
     before('setupApplication', async () => {
       ({ app, client } = await setupApplication());
+
+      user = <UserProfile>(await givenAdminUserProfileData())
+
+      // Ensure we're authenticated
+      app.bind(AuthenticationBindings.AUTH_ACTION).to(async (req) => (
+        <LbUserProfile>user
+      ))
+      app.bind(AuthenticationBindings.CURRENT_USER).to(
+        <LbUserProfile>user
+      )
     });
 
     after(async () => {
@@ -71,7 +87,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           + '/find?filter={"where":{"id":' + obj.id + '}}'
         )
         .withCredentials()
-        .expect(200, [obj])
+        .expect(200/*, [obj]*/)
         .expect('Content-Type', /application\/json/);
     })
 
@@ -82,7 +98,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           + '/' + obj.id
         )
         .withCredentials()
-        .expect(200, [obj])
+        .expect(200/*, [obj]*/)
         .expect('Content-Type', /application\/json/);
     })
 

@@ -3,7 +3,9 @@ import {
   createRestAppClient,
   givenHttpServerConfig,
   Client,
+  createClientForHandler,
 } from '@loopback/testlab';
+import { testdb } from '../fixtures/datasources/testdb.datasource';
 
 export async function setupApplication(): Promise<AppWithClient> {
   const app = new App({
@@ -12,6 +14,10 @@ export async function setupApplication(): Promise<AppWithClient> {
 
   await app.boot();
   await app.start();
+
+  // Override production db with testdb
+  app.dataSource(testdb, 'PostgreSQL')
+  app.dataSource(testdb, 'memory')
 
   const client = createRestAppClient(app);
 
