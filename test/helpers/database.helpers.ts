@@ -1,10 +1,10 @@
 import * as entityTest from "@dcic/signature-commons-schema/core/entity.test.json";
 import * as libraryTest from "@dcic/signature-commons-schema/core/library.test.json";
 import * as signatureTest from "@dcic/signature-commons-schema/core/signature.test.json";
-import { Entity, Library, Signature, UserProfile } from "../../../src/models";
-import { EntityRepository, LibraryRepository, SignatureRepository } from "../../../src/repositories";
+import { Entity, Library, Signature, UserProfile } from "../../src/models";
+import { EntityRepository, LibraryRepository, SignatureRepository } from "../../src/repositories";
 import { testdb } from "../fixtures/datasources/testdb.datasource";
-import { UserProfileRepository } from "../../../src/repositories/user-profile.repository";
+import { UserProfileRepository } from "../../src/repositories/user-profile.repository";
 
 export async function givenValidLibraryData(data?: Partial<Library>) {
   return Object.assign(

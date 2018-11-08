@@ -1,4 +1,4 @@
-import { App } from '../../..';
+import { App } from '../..';
 import {
   createRestAppClient,
   givenHttpServerConfig,
