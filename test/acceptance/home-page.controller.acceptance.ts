@@ -5,7 +5,7 @@
 
 import { Client } from '@loopback/testlab';
 import { App } from '../..';
-import { setupApplication } from './test-helper';
+import { setupApplication } from './helpers/application.helpers';
 
 describe('HomePageController', () => {
   let app: App;

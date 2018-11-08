@@ -1,35 +1,30 @@
 import { Client } from '@loopback/testlab';
 import { App } from '../../..';
-import { setupApplication } from '../test-helper';
+import { setupApplication } from '../helpers/application.helpers';
 import { IGenericEntity } from '../../../src/generic-controllers/generic.controller';
-import { AuthenticationBindings, StrategyAdapter } from '@loopback/authentication';
-import { BasicStrategy } from 'passport-http';
 
 export function test_generic<GenericEntity extends IGenericEntity>(props: {
   modelName: string
   basePath: string
-  obj_valid: Partial<GenericEntity>
-  obj_invalid: Partial<GenericEntity>
-  obj_update_valid: Partial<GenericEntity>
-  obj_update_invalid: Partial<GenericEntity>
+  givenValidObject: () => Promise<Partial<GenericEntity>>
+  givenInvalidObject: () => Promise<Partial<GenericEntity>>
+  givenValidUpdatedObject: () => Promise<Partial<GenericEntity>>
+  givenInvalidUpdatedObject: () => Promise<Partial<GenericEntity>>
+  setupDB: () => Promise<void>
 }) {
   return describe(props.modelName + 'Controller', () => {
     let app: App;
     let client: Client;
     let obj: GenericEntity
 
+    before(props.setupDB)
+
+    before('getData', async () => {
+      obj = <GenericEntity>(await props.givenValidObject())
+    })
+
     before('setupApplication', async () => {
       ({ app, client } = await setupApplication());
-
-      obj = JSON.parse(
-        (await client
-          .post(props.basePath)
-          .withCredentials()
-          .send(props.obj_valid)
-          .expect(200)
-          .expect('Content-Type', /application\/json/)
-        ).read() as string
-      ) as GenericEntity
     });
 
     after(async () => {
@@ -91,10 +86,19 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .expect('Content-Type', /application\/json/);
     })
 
+    it("can create valid", async () => {
+      await client
+        .post(props.basePath)
+        .withCredentials()
+        .send(await props.givenValidObject())
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+    })
+
     it("can't create invalid", async () => {
       await client
         .post(props.basePath)
-        .send(props.obj_invalid)
+        .send(await props.givenInvalidObject())
         .withCredentials()
         .expect(400)
         .expect('Content-Type', /application\/json/);
@@ -103,9 +107,9 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     it("can updateAll", async () => {
       await client
         .patch(props.basePath)
-        .send([props.obj_update_valid])
+        .send([await props.givenValidUpdatedObject()])
         .withCredentials()
-        .expect(200, 1)
+        .expect(200)
         .expect('Content-Type', /application\/json/);
     })
 
@@ -116,7 +120,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           + '/'
           + obj.id
         )
-        .send(props.obj_update_valid)
+        .send(await props.givenValidUpdatedObject())
         .withCredentials()
         .expect(200)
         .expect('Content-Type', /application\/json/);
@@ -129,7 +133,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           + '/'
           + obj.id
         )
-        .send(props.obj_update_invalid)
+        .send(await props.givenInvalidUpdatedObject())
         .withCredentials()
         .expect(400)
         .expect('Content-Type', /application\/json/);
@@ -138,7 +142,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     it("can't updateAll invalid", async () => {
       await client
         .put(props.basePath)
-        .send([props.obj_update_invalid])
+        .send([await props.givenInvalidUpdatedObject()])
         .withCredentials()
         .expect(400)
         .expect('Content-Type', /application\/json/);
