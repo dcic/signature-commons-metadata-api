@@ -1,6 +1,6 @@
 import { test_generic } from './generic.controller.acceptance'
 import { Entity } from '../../../src/models';
-import { givenEmptyDatabase, givenValidEntityData, givenInvalidEntityData, givenEntity } from '../../helpers/database.helpers';
+import { givenEmptyDatabase, givenValidEntityData, givenInvalidEntityData, givenEntity, givenAdminUserProfile } from '../../helpers/database.helpers';
 
 test_generic<Entity>({
   modelName: 'entity',
@@ -12,5 +12,6 @@ test_generic<Entity>({
   setupDB: async () => {
     await givenEmptyDatabase()
     await givenEntity()
+    await givenAdminUserProfile()
   }
 })

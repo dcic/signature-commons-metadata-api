@@ -22,7 +22,6 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     let user: UserProfile
 
     before(props.setupDB)
-    before(givenAdminUserProfile)
     // before(givenGuestUserProfile)
 
     before('getData', async () => {
@@ -95,7 +94,8 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
       await client
         .get(
           props.basePath
-          + '/' + obj.id
+          + '/'
+          + obj.id
         )
         .withCredentials()
         .expect(200/*, [obj]*/)
@@ -116,7 +116,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .post(props.basePath)
         .send(await props.givenInvalidObject())
         .withCredentials()
-        .expect(400)
+        .expect(406)
         .expect('Content-Type', /application\/json/);
     });
 
@@ -151,7 +151,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         )
         .send(await props.givenInvalidUpdatedObject())
         .withCredentials()
-        .expect(400)
+        .expect(406)
         .expect('Content-Type', /application\/json/);
     });
 
@@ -160,7 +160,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .put(props.basePath)
         .send([await props.givenInvalidUpdatedObject()])
         .withCredentials()
-        .expect(400)
+        .expect(406)
         .expect('Content-Type', /application\/json/);
     });
   });
