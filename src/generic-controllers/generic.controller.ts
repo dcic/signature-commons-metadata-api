@@ -80,7 +80,11 @@ export function GenericControllerFactory<
     })
     async count(
       @param.query.object('where', getWhereSchemaFor(props.GenericEntity)) where?: Where<GenericEntity>,
+      @param.query.string('where_str') where_str: string = '',
     ): Promise<Count> {
+      if (where_str !== '' && where === {})
+        where = JSON.parse(where_str)
+
       return await this.genericRepository.count(where);
     }
 
@@ -106,9 +110,13 @@ export function GenericControllerFactory<
     })
     async key_count(
       @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
+      @param.query.string('filter_str') filter_str: string = '',
       @param.query.number('depth') depth: number = 0,
       @param.query.boolean('values') values: boolean = false,
     ): Promise<{ [key: string]: number }> {
+      if (filter_str !== '' && filter === {})
+        filter = JSON.parse(filter_str)
+
       if (depth < 0)
         throw new Error("Depth must be greater than 0")
 
@@ -139,7 +147,11 @@ export function GenericControllerFactory<
     })
     async dbck(
       @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter: Filter<GenericEntity> = {},
+      @param.query.string('filter_str') filter_str: string = '',
     ): Promise<object> {
+      if (filter_str !== '' && filter === {})
+        filter = JSON.parse(filter_str)
+
       const objs = await this.genericRepository.find(filter);
       let results: Array<object> = []
 
@@ -178,7 +190,11 @@ export function GenericControllerFactory<
     })
     async find(
       @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
+      @param.query.string('filter_str') filter_str: string = '',
     ): Promise<GenericEntity[]> {
+      if (filter_str !== '' && filter === {})
+        filter = JSON.parse(filter_str)
+
       return await this.genericRepository.find(filter);
     }
 
@@ -195,7 +211,11 @@ export function GenericControllerFactory<
     async updateAll(
       @requestBody() body: DataObject<GenericEntity>,
       @param.query.object('where', getWhereSchemaFor(props.GenericEntity)) where?: Where<GenericEntity>,
+      @param.query.string('where_str') where_str: string = '',
     ): Promise<Count> {
+      if (where_str !== '' && where === {})
+        where = JSON.parse(where_str)
+
       const objs: GenericEntity[] = await this.genericRepository.find({ where })
       let results: Array<object> = []
 
