@@ -20,6 +20,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     let client: Client;
     let obj: GenericEntity
     let user: UserProfile
+    let auth: string
 
     before(props.setupDB)
     // before(givenGuestUserProfile)
@@ -32,14 +33,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
       ({ app, client } = await setupApplication());
 
       user = <UserProfile>(await givenAdminUserProfileData())
-
-      // Ensure we're authenticated
-      app.bind(AuthenticationBindings.AUTH_ACTION).to(async (req) => (
-        <LbUserProfile>user
-      ))
-      app.bind(AuthenticationBindings.CURRENT_USER).to(
-        <LbUserProfile>user
-      )
+      auth = Buffer.from(user.username + ':' + user.password).toString('base64')
     });
 
     after(async () => {
@@ -52,7 +46,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           props.basePath
           + '/count'
         )
-        .withCredentials()
+        .set('Authorization', 'Basic ' + auth)
         .expect(200)
         .expect('Content-Type', /application\/json/);
     });
@@ -63,7 +57,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           props.basePath
           + '/key_count'
         )
-        .withCredentials()
+        .set('Authorization', 'Basic ' + auth)
         .expect(200)
         .expect('Content-Type', /application\/json/);
     });
@@ -74,7 +68,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           props.basePath
           + '/dbck'
         )
-        .withCredentials()
+        .set('Authorization', 'Basic ' + auth)
         .expect(200, [])
         .expect('Content-Type', /application\/json/)
     });
@@ -85,7 +79,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           props.basePath
           + '/find?filter={"where":{"id":' + obj.id + '}}'
         )
-        .withCredentials()
+        .set('Authorization', 'Basic ' + auth)
         .expect(200/*, [obj]*/)
         .expect('Content-Type', /application\/json/);
     })
@@ -97,7 +91,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           + '/'
           + obj.id
         )
-        .withCredentials()
+        .set('Authorization', 'Basic ' + auth)
         .expect(200/*, [obj]*/)
         .expect('Content-Type', /application\/json/);
     })
@@ -105,7 +99,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     it("can create valid", async () => {
       await client
         .post(props.basePath)
-        .withCredentials()
+        .set('Authorization', 'Basic ' + auth)
         .send(await props.givenValidObject())
         .expect(200)
         .expect('Content-Type', /application\/json/)
@@ -115,7 +109,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
       await client
         .post(props.basePath)
         .send(await props.givenInvalidObject())
-        .withCredentials()
+        .set('Authorization', 'Basic ' + auth)
         .expect(406)
         .expect('Content-Type', /application\/json/);
     });
@@ -124,7 +118,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
       await client
         .patch(props.basePath)
         .send([await props.givenValidUpdatedObject()])
-        .withCredentials()
+        .set('Authorization', 'Basic ' + auth)
         .expect(200)
         .expect('Content-Type', /application\/json/);
     })
@@ -137,7 +131,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           + obj.id
         )
         .send(await props.givenValidUpdatedObject())
-        .withCredentials()
+        .set('Authorization', 'Basic ' + auth)
         .expect(200)
         .expect('Content-Type', /application\/json/);
     })
@@ -150,7 +144,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           + obj.id
         )
         .send(await props.givenInvalidUpdatedObject())
-        .withCredentials()
+        .set('Authorization', 'Basic ' + auth)
         .expect(406)
         .expect('Content-Type', /application\/json/);
     });
@@ -159,7 +153,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
       await client
         .put(props.basePath)
         .send([await props.givenInvalidUpdatedObject()])
-        .withCredentials()
+        .set('Authorization', 'Basic ' + auth)
         .expect(406)
         .expect('Content-Type', /application\/json/);
     });
