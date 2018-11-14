@@ -9,7 +9,8 @@ import { sortedDict } from '../util/sorted-dict';
 
 export class IGenericEntity extends Entity {
   $validator?: string
-  id: number
+  _id: number
+  id: string
   meta: object
 }
 
@@ -258,8 +259,8 @@ export function GenericControllerFactory<
         },
       },
     })
-    async findById(@param.path.number('id') id: number): Promise<GenericEntity> {
-      return await this.genericRepository.findById(id);
+    async findById(@param.path.number('id') _id: number): Promise<GenericEntity> {
+      return await this.genericRepository.findById(_id);
     }
 
     @authenticate('PATCH.' + props.modelName + '.updateById')
@@ -273,11 +274,11 @@ export function GenericControllerFactory<
       },
     })
     async updateById(
-      @param.path.number('id') id: number,
+      @param.path.number('id') _id: number,
       @requestBody() obj: GenericEntity,
     ): Promise<void> {
       try {
-        return await this.genericRepository.updateById(id,
+        return await this.genericRepository.updateById(_id,
           await validate<GenericEntity>({
             $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
             id: obj.id,
@@ -301,8 +302,8 @@ export function GenericControllerFactory<
         },
       },
     })
-    async deleteById(@param.path.number('id') id: number): Promise<void> {
-      await this.genericRepository.deleteById(id);
+    async deleteById(@param.path.number('id') _id: number): Promise<void> {
+      await this.genericRepository.deleteById(_id);
     }
   }
 

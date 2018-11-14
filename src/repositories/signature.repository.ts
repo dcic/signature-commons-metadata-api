@@ -5,7 +5,7 @@ import { inject } from '@loopback/core';
 
 export class SignatureRepository extends DefaultCrudRepository<
   Signature,
-  typeof Signature.prototype.id
+  typeof Signature.prototype._id
   > {
   constructor(
     @inject('datasources.PostgreSQL') dataSource: PostgreSQLDataSource,

@@ -5,7 +5,7 @@ import { inject } from '@loopback/core';
 
 export class EntityRepository extends DefaultCrudRepository<
   Entity,
-  typeof Entity.prototype.id
+  typeof Entity.prototype._id
   > {
   constructor(
     @inject('datasources.PostgreSQL') dataSource: PostgreSQLDataSource,

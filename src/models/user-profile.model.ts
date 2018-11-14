@@ -1,6 +1,9 @@
 import { Entity, model, property } from '@loopback/repository';
 
-@model()
+@model({
+  name: 'UserProfile',
+  description: 'The profile of a registered user of this microservice.'
+})
 export class UserProfile extends Entity {
   @property({
     type: 'string',

@@ -11,18 +11,26 @@ import { getJsonSchema } from '@loopback/rest';
   },
 })
 export class Library extends Entity {
+  $validator = '/@dcic/signature-commons-schema/core/entity.json'
+
   @property({
     type: 'number',
     id: true,
     required: true,
+    postgresql: {
+      columnName: 'id',
+    },
   })
-  id: number;
+  _id: number;
 
   @property({
     type: 'string',
     required: true,
+    postgresql: {
+      columnName: 'uuid',
+    },
   })
-  uuid: string;
+  id: string;
 
   @property({
     type: 'object',

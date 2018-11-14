@@ -10,8 +10,9 @@ export async function givenValidLibraryData(data?: Partial<Library>) {
   const d = libraryTest.tests.filter((test) => test.valid)[0].data
   return Object.assign(
     {
-      id: 0,
-      uuid: d.id,
+      _id: 0,
+      // $validator: d.$validator,
+      id: d.id,
       meta: d.meta,
     },
     data,
@@ -22,8 +23,9 @@ export async function givenInvalidLibraryData(data?: Partial<Library>) {
   const d = libraryTest.tests.filter((test) => !test.valid)[0].data
   return Object.assign(
     {
-      id: 0,
-      uuid: d.id,
+      _id: 0,
+      // $validator: d.$validator,
+      id: d.id,
       meta: d.meta,
     },
     data,
@@ -42,10 +44,11 @@ export async function givenValidSignatureData(data?: Partial<Signature>) {
   const d = signatureTest.tests.filter((test) => test.valid)[0].data
   return Object.assign(
     {
-      id: 0,
-      uuid: d.id,
-      library: d.library,
+      _id: 0,
+      // $validator: d.$validator,
+      id: d.id,
       meta: d.meta,
+      library: d.library,
     },
     data,
   )
@@ -55,10 +58,11 @@ export async function givenInvalidSignatureData(data?: Partial<Signature>) {
   const d = signatureTest.tests.filter((test) => !test.valid)[0].data
   return Object.assign(
     {
-      id: 0,
-      uuid: d.id,
-      library: d.library,
+      _id: 0,
+      // $validator: d.$validator,
+      id: d.id,
       meta: d.meta,
+      library: d.library,
     },
     data,
   )
@@ -76,8 +80,9 @@ export async function givenValidEntityData(data?: Partial<Entity>) {
   const d = entityTest.tests.filter((test) => test.valid)[0].data
   return Object.assign(
     {
-      id: 0,
-      uuid: d.id,
+      _id: 0,
+      // $validator: d.$validator,
+      id: d.id,
       meta: d.meta,
     },
     data,
@@ -88,8 +93,9 @@ export async function givenInvalidEntityData(data?: Partial<Entity>) {
   const d = entityTest.tests.filter((test) => !test.valid)[0].data
   return Object.assign(
     {
-      id: 0,
-      uuid: d.id,
+      _id: 0,
+      // $validator: d.$validator,
+      id: d.id,
       meta: d.meta,
     },
     data,
@@ -109,7 +115,7 @@ export async function givenAdminUserProfileData(data?: Partial<UserProfile>) {
     id: 'admin',
     username: 'admin',
     password: 'admin',
-    roles: /^.+$/,
+    roles: '^.+$',
   },
     data,
   )
