@@ -2,8 +2,13 @@ import { Entity as LBEntity, model, property } from '@loopback/repository';
 import { getJsonSchema } from '@loopback/rest';
 
 @model({
-  name: 'entities',
+  name: 'Entity',
   description: 'Singular entities of a signature (e.g. Gene, Protein, Compound, etc..)',
+  settings: {
+    postgresql: {
+      table: 'entities'
+    },
+  },
 })
 export class Entity extends LBEntity {
   @property({

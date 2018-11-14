@@ -2,8 +2,13 @@ import { Entity, model, property } from '@loopback/repository';
 import { getJsonSchema } from '@loopback/rest';
 
 @model({
-  name: 'signatures',
+  name: 'Signature',
   description: 'A single signature consisting of weighted associations of entities',
+  settings: {
+    postgresql: {
+      table: 'signatures'
+    },
+  },
 })
 export class Signature extends Entity {
   @property({

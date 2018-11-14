@@ -2,8 +2,13 @@ import { Entity, model, property } from '@loopback/repository';
 import { getJsonSchema } from '@loopback/rest';
 
 @model({
-  name: 'libraries',
+  name: 'Library',
   description: 'Collections of related signatures',
+  settings: {
+    postgresql: {
+      table: 'libraries'
+    },
+  },
 })
 export class Library extends Entity {
   @property({
