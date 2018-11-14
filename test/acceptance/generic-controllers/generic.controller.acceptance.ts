@@ -9,10 +9,10 @@ import { UserProfile } from '../../../src/models';
 export function test_generic<GenericEntity extends IGenericEntity>(props: {
   modelName: string
   basePath: string
-  givenValidObject: () => Promise<Partial<GenericEntity>>
-  givenInvalidObject: () => Promise<Partial<GenericEntity>>
-  givenValidUpdatedObject: () => Promise<Partial<GenericEntity>>
-  givenInvalidUpdatedObject: () => Promise<Partial<GenericEntity>>
+  givenValidObject: (obj?: Partial<GenericEntity>) => Promise<Partial<GenericEntity>>
+  givenInvalidObject: (obj?: Partial<GenericEntity>) => Promise<Partial<GenericEntity>>
+  givenValidUpdatedObject: (obj?: Partial<GenericEntity>) => Promise<Partial<GenericEntity>>
+  givenInvalidUpdatedObject: (obj?: Partial<GenericEntity>) => Promise<Partial<GenericEntity>>
   setupDB: () => Promise<void>
 }) {
   return describe(props.modelName + 'Controller', () => {
@@ -22,11 +22,13 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     let user: UserProfile
     let auth: string
 
-    before(props.setupDB)
+    beforeEach(props.setupDB)
     // before(givenGuestUserProfile)
 
     before('getData', async () => {
-      obj = <GenericEntity>(await props.givenValidObject())
+      obj = <GenericEntity>(await props.givenValidObject(<object>{
+        $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
+      }))
     })
 
     before('setupApplication', async () => {
@@ -42,7 +44,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
 
     it("can count", async () => {
       await client
-        .post(
+        .get(
           props.basePath
           + '/count'
         )
@@ -77,7 +79,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
       await client
         .get(
           props.basePath
-          + '/find?filter={"where":{"id":' + obj.id + '}}'
+          + '?filter={"where":{"id":"' + obj.id + '"}}'
         )
         .set('Authorization', 'Basic ' + auth)
         .expect(200/*, [obj]*/)
@@ -89,7 +91,19 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .get(
           props.basePath
           + '/'
-          + obj.id
+          + obj._id
+        )
+        .set('Authorization', 'Basic ' + auth)
+        .expect(200/*, [obj]*/)
+        .expect('Content-Type', /application\/json/);
+    })
+
+    it("can delete", async () => {
+      await client
+        .delete(
+          props.basePath
+          + '/'
+          + obj._id
         )
         .set('Authorization', 'Basic ' + auth)
         .expect(200/*, [obj]*/)
@@ -100,7 +114,9 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
       await client
         .post(props.basePath)
         .set('Authorization', 'Basic ' + auth)
-        .send(await props.givenValidObject())
+        .send(await props.givenValidObject(<object>{
+          $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
+        }))
         .expect(200)
         .expect('Content-Type', /application\/json/)
     })
@@ -108,7 +124,9 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     it("can't create invalid", async () => {
       await client
         .post(props.basePath)
-        .send(await props.givenInvalidObject())
+        .send(await props.givenInvalidObject(<object>{
+          $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
+        }))
         .set('Authorization', 'Basic ' + auth)
         .expect(406)
         .expect('Content-Type', /application\/json/);
@@ -117,7 +135,9 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     it("can updateAll", async () => {
       await client
         .patch(props.basePath)
-        .send([await props.givenValidUpdatedObject()])
+        .send([await props.givenValidUpdatedObject(<object>{
+          $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
+        })])
         .set('Authorization', 'Basic ' + auth)
         .expect(200)
         .expect('Content-Type', /application\/json/);
@@ -128,7 +148,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .patch(
           props.basePath
           + '/'
-          + obj.id
+          + obj._id
         )
         .send(await props.givenValidUpdatedObject())
         .set('Authorization', 'Basic ' + auth)
@@ -138,12 +158,14 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
 
     it("can't updateById invalid", async () => {
       await client
-        .put(
+        .patch(
           props.basePath
           + '/'
-          + obj.id
+          + obj._id
         )
-        .send(await props.givenInvalidUpdatedObject())
+        .send(await props.givenInvalidUpdatedObject(<object>{
+          $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
+        }))
         .set('Authorization', 'Basic ' + auth)
         .expect(406)
         .expect('Content-Type', /application\/json/);
@@ -151,7 +173,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
 
     it("can't updateAll invalid", async () => {
       await client
-        .put(props.basePath)
+        .patch(props.basePath)
         .send([await props.givenInvalidUpdatedObject()])
         .set('Authorization', 'Basic ' + auth)
         .expect(406)
