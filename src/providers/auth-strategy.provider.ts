@@ -28,17 +28,30 @@ export class AuthStrategyProvider implements Provider<Strategy | undefined> {
     password: string,
     cb: (err: Error | null, user?: LbUserProfile | false) => void,
   ) {
-    this.userProfileRepository.findOne({
-      where: {
-        username: username,
-        password: password,
+    (async () => {
+      let user
+      if (username === 'guest' && password === 'guest') {
+        user = {
+          id: 'guest',
+          username: 'guest',
+          password: 'guest',
+          roles: '^GET\\..+([^\\.dbck]|.+)$',
+        }
+      } else {
+        user = await this.userProfileRepository.findOne({
+          where: {
+            username: username,
+            password: password,
+          }
+        })
       }
-    }).then((user: UserProfile) => {
+      return user
+    })().then((user: UserProfile) => {
       if (new RegExp(user.roles).test(strategy)) {
         cb(null, user)
       } else {
         cb(null, false)
       }
-    }).catch((e) => cb(null, false))
+    }).catch((e) => cb(e, false))
   }
 }
