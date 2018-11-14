@@ -44,6 +44,7 @@ export function GenericControllerFactory<
 
     @authenticate('POST.' + props.modelName + '.create')
     @post(props.basePath + '', {
+      tags: [props.modelName],
       operationId: props.modelName + '.create',
       responses: {
         '200': {
@@ -70,6 +71,7 @@ export function GenericControllerFactory<
 
     @authenticate('GET.' + props.modelName + '.count')
     @get(props.basePath + '/count', {
+      tags: [props.modelName],
       operationId: props.modelName + '.count',
       responses: {
         '200': {
@@ -90,6 +92,7 @@ export function GenericControllerFactory<
 
     @authenticate('GET.' + props.modelName + '.key_count')
     @get(props.basePath + '/key_count', {
+      tags: [props.modelName],
       operationId: props.modelName + '.key_count',
       responses: {
         '200': {
@@ -128,6 +131,7 @@ export function GenericControllerFactory<
 
     @authenticate('GET.' + props.modelName + '.dbck')
     @get(props.basePath + '/dbck', {
+      tags: [props.modelName],
       operationId: props.modelName + '.dbck',
       responses: {
         '200': {
@@ -176,6 +180,7 @@ export function GenericControllerFactory<
 
     @authenticate('GET.' + props.modelName + '.find')
     @get(props.basePath + '', {
+      tags: [props.modelName],
       operationId: props.modelName + '.find',
       responses: {
         '200': {
@@ -200,6 +205,7 @@ export function GenericControllerFactory<
 
     @authenticate('PATCH.' + props.modelName + '.updateAll')
     @patch(props.basePath + '', {
+      tags: [props.modelName],
       operationId: props.modelName + '.updateAll',
       responses: {
         '200': {
@@ -243,6 +249,7 @@ export function GenericControllerFactory<
 
     @authenticate('GET.' + props.modelName + '.findById')
     @get(props.basePath + '/{id}', {
+      tags: [props.modelName],
       operationId: props.modelName + '.findById',
       responses: {
         '200': {
@@ -257,6 +264,7 @@ export function GenericControllerFactory<
 
     @authenticate('PATCH.' + props.modelName + '.updateById')
     @patch(props.basePath + '/{id}', {
+      tags: [props.modelName],
       operationId: props.modelName + '.updateById',
       responses: {
         '204': {
@@ -285,6 +293,7 @@ export function GenericControllerFactory<
 
     @authenticate('DELETE.' + props.modelName + '.deleteById')
     @del(props.basePath + '/{id}', {
+      tags: [props.modelName],
       operationId: props.modelName + '.deleteById',
       responses: {
         '204': {

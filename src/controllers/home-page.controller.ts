@@ -1,8 +1,8 @@
-import {get} from '@loopback/openapi-v3';
+import { get } from '@loopback/openapi-v3';
 import * as fs from 'fs';
 import * as path from 'path';
-import {inject} from '@loopback/context';
-import {RestBindings, Response} from '@loopback/rest';
+import { inject } from '@loopback/context';
+import { RestBindings, Response } from '@loopback/rest';
 
 export class HomePageController {
   private html: string;
@@ -14,6 +14,7 @@ export class HomePageController {
   }
 
   @get('/signature-commons-metadata-api/explorer', {
+    tags: [],
     responses: {
       '302': {
         description: 'API Explorer'
@@ -25,10 +26,11 @@ export class HomePageController {
   }
 
   @get('/signature-commons-metadata-api', {
+    tags: [],
     responses: {
       '200': {
         description: 'Home Page',
-        content: {'text/html': {schema: {type: 'string'}}},
+        content: { 'text/html': { schema: { type: 'string' } } },
       },
     },
   })
