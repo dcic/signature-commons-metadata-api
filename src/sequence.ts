@@ -19,13 +19,13 @@ export class Sequence implements SequenceHandler {
       const { request, response } = context;
       const route = this.findRoute(request);
 
+      if (request.headers === undefined) {
+        request.headers = {}
+      }
       if (request.headers.authorization === undefined) {
-        request.headers = {
-          ...request.headers,
-          authorization: 'Basic ' + Buffer.from(
-            'guest:guest'
-          ).toString('base64'),
-        }
+        request.headers.authorization = 'Basic ' + Buffer.from(
+          'guest:guest'
+        ).toString('base64')
       }
 
       await this.authenticateRequest(request);

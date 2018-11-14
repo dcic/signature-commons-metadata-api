@@ -3,7 +3,7 @@ import { App } from '../../..';
 import { setupApplication } from '../../helpers/application.helpers';
 import { IGenericEntity } from '../../../src/generic-controllers/generic.controller';
 import { AuthenticationBindings, UserProfile as LbUserProfile } from '@loopback/authentication';
-import { givenAdminUserProfile, givenGuestUserProfile, givenAdminUserProfileData } from '../../helpers/database.helpers';
+import { givenAdminUserProfile, givenAdminUserProfileData } from '../../helpers/database.helpers';
 import { UserProfile } from '../../../src/models';
 
 export function test_generic<GenericEntity extends IGenericEntity>(props: {
