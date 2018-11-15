@@ -1,17 +1,13 @@
-import { test_generic } from './generic.controller.acceptance'
 import { Signature } from '../../../src/models';
-import { givenValidSignatureData, givenInvalidSignatureData, givenEmptyDatabase, givenSignature, givenAdminUserProfile } from '../../helpers/database.helpers';
+import { givenInvalidSignatureData, givenSignature, givenValidSignatureData } from '../../helpers/database.helpers';
+import { test_generic } from './generic.controller.acceptance';
 
 test_generic<Signature>({
   modelName: 'signature',
   basePath: '/signature-commons-metadata-api/signatures',
+  givenObject: givenSignature,
   givenValidObject: givenValidSignatureData,
   givenInvalidObject: givenInvalidSignatureData,
   givenValidUpdatedObject: givenValidSignatureData,
   givenInvalidUpdatedObject: givenInvalidSignatureData,
-  setupDB: async () => {
-    await givenEmptyDatabase()
-    await givenSignature()
-    await givenAdminUserProfile()
-  }
 })

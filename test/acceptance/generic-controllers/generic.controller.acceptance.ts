@@ -1,41 +1,26 @@
 import { Client } from '@loopback/testlab';
 import { App } from '../../..';
-import { setupApplication } from '../../helpers/application.helpers';
 import { IGenericEntity } from '../../../src/generic-controllers/generic.controller';
-import { AuthenticationBindings, UserProfile as LbUserProfile } from '@loopback/authentication';
-import { givenAdminUserProfile, givenAdminUserProfileData } from '../../helpers/database.helpers';
-import { UserProfile } from '../../../src/models';
+import { setupApplication } from '../../helpers/application.helpers';
+import { givenAdminUserProfile, givenEmptyDatabase } from '../../helpers/database.helpers';
 
 export function test_generic<GenericEntity extends IGenericEntity>(props: {
   modelName: string
   basePath: string
+  givenObject: () => Promise<GenericEntity>
   givenValidObject: (obj?: Partial<GenericEntity>) => Promise<Partial<GenericEntity>>
   givenInvalidObject: (obj?: Partial<GenericEntity>) => Promise<Partial<GenericEntity>>
   givenValidUpdatedObject: (obj?: Partial<GenericEntity>) => Promise<Partial<GenericEntity>>
   givenInvalidUpdatedObject: (obj?: Partial<GenericEntity>) => Promise<Partial<GenericEntity>>
-  setupDB: () => Promise<void>
 }) {
   return describe(props.modelName + 'Controller', () => {
     let app: App;
     let client: Client;
-    let obj: GenericEntity
-    let user: UserProfile
-    let auth: string
 
-    beforeEach(props.setupDB)
-    // before(givenGuestUserProfile)
-
-    before('getData', async () => {
-      obj = <GenericEntity>(await props.givenValidObject(<object>{
-        $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
-      }))
-    })
+    beforeEach(givenEmptyDatabase)
 
     before('setupApplication', async () => {
       ({ app, client } = await setupApplication());
-
-      user = <UserProfile>(await givenAdminUserProfileData())
-      auth = Buffer.from(user.username + ':' + user.password).toString('base64')
     });
 
     after(async () => {
@@ -43,6 +28,10 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     });
 
     it("can count", async () => {
+      const user = await givenAdminUserProfile()
+      const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
+      await props.givenObject()
+
       await client
         .get(
           props.basePath
@@ -54,6 +43,10 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     });
 
     it("can key_count", async () => {
+      const user = await givenAdminUserProfile()
+      const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
+      await props.givenObject()
+
       await client
         .get(
           props.basePath
@@ -65,6 +58,10 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     });
 
     it("can dbck, and no errors", async () => {
+      const user = await givenAdminUserProfile()
+      const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
+      await props.givenObject()
+
       await client
         .get(
           props.basePath
@@ -76,6 +73,10 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     });
 
     it("can find", async () => {
+      const user = await givenAdminUserProfile()
+      const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
+      const obj = await props.givenObject()
+
       await client
         .get(
           props.basePath
@@ -87,11 +88,15 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     })
 
     it("can findById", async () => {
+      const user = await givenAdminUserProfile()
+      const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
+      const obj = await props.givenObject()
+
       await client
         .get(
           props.basePath
           + '/'
-          + obj._id
+          + obj.id
         )
         .set('Authorization', 'Basic ' + auth)
         .expect(200/*, [obj]*/)
@@ -99,82 +104,109 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     })
 
     it("can delete", async () => {
+      const user = await givenAdminUserProfile()
+      const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
+      const obj = await props.givenObject()
+
       await client
-        .delete(
+        .del(
           props.basePath
           + '/'
-          + obj._id
+          + obj.id
         )
         .set('Authorization', 'Basic ' + auth)
-        .expect(200/*, [obj]*/)
-        .expect('Content-Type', /application\/json/);
+        .expect(204);
     })
 
     it("can create valid", async () => {
+      const user = await givenAdminUserProfile()
+      const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
+      const validObj = await props.givenValidObject()
+
       await client
         .post(props.basePath)
         .set('Authorization', 'Basic ' + auth)
-        .send(await props.givenValidObject(<object>{
-          $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
-        }))
+        .send(validObj)
         .expect(200)
         .expect('Content-Type', /application\/json/)
     })
 
     it("can't create invalid", async () => {
+      const user = await givenAdminUserProfile()
+      const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
+      const invalidObj = await props.givenInvalidObject()
+
       await client
         .post(props.basePath)
-        .send(await props.givenInvalidObject(<object>{
-          $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
-        }))
+        .send(invalidObj)
         .set('Authorization', 'Basic ' + auth)
         .expect(406)
         .expect('Content-Type', /application\/json/);
     });
 
-    it("can updateAll", async () => {
+    it("can updateAll valid", async () => {
+      const user = await givenAdminUserProfile()
+      const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
+      const obj = await props.givenObject()
+      const validObj = await props.givenValidObject()
+      validObj.id = obj.id
+
       await client
         .patch(props.basePath)
-        .send([await props.givenValidUpdatedObject(<object>{
-          $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
-        })])
+        .send([validObj])
         .set('Authorization', 'Basic ' + auth)
         .expect(200)
         .expect('Content-Type', /application\/json/);
     })
 
+    it("can't updateAll invalid", async () => {
+      const user = await givenAdminUserProfile()
+      const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
+      const obj = await props.givenObject()
+      const invalidObj = await props.givenInvalidObject()
+      invalidObj.id = obj.id
+
+      await client
+        .patch(props.basePath)
+        .send([invalidObj])
+        .set('Authorization', 'Basic ' + auth)
+        .expect(406)
+        .expect('Content-Type', /application\/json/);
+    });
+
     it("can updateById", async () => {
+      const user = await givenAdminUserProfile()
+      const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
+      const obj = await props.givenObject()
+      const validObj = await props.givenValidObject()
+      validObj.id = obj.id
+
       await client
         .patch(
           props.basePath
           + '/'
-          + obj._id
+          + obj.id
         )
-        .send(await props.givenValidUpdatedObject())
+        .send(validObj)
         .set('Authorization', 'Basic ' + auth)
         .expect(200)
         .expect('Content-Type', /application\/json/);
     })
 
     it("can't updateById invalid", async () => {
+      const user = await givenAdminUserProfile()
+      const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
+      const obj = await props.givenObject()
+      const invalidObj = await props.givenInvalidObject()
+      invalidObj.id = obj.id
+
       await client
         .patch(
           props.basePath
           + '/'
-          + obj._id
+          + obj.id
         )
-        .send(await props.givenInvalidUpdatedObject(<object>{
-          $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
-        }))
-        .set('Authorization', 'Basic ' + auth)
-        .expect(406)
-        .expect('Content-Type', /application\/json/);
-    });
-
-    it("can't updateAll invalid", async () => {
-      await client
-        .patch(props.basePath)
-        .send([await props.givenInvalidUpdatedObject()])
+        .send(invalidObj)
         .set('Authorization', 'Basic ' + auth)
         .expect(406)
         .expect('Content-Type', /application\/json/);
