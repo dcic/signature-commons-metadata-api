@@ -27,7 +27,19 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
       await app.stop();
     });
 
-    it("can count", async () => {
+    it("can count anonymous", async () => {
+      await props.givenObject()
+
+      await client
+        .get(
+          props.basePath
+          + '/count'
+        )
+        .expect(200)
+        .expect('Content-Type', /application\/json/);
+    });
+
+    it("can count authenticated", async () => {
       const user = await givenAdminUserProfile()
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
       await props.givenObject()
@@ -42,7 +54,18 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .expect('Content-Type', /application\/json/);
     });
 
-    it("can key_count", async () => {
+    it("can't key_count anonymous", async () => {
+      await props.givenObject()
+
+      await client
+        .get(
+          props.basePath
+          + '/key_count'
+        )
+        .expect(401);
+    });
+
+    it("can key_count authenticated", async () => {
       const user = await givenAdminUserProfile()
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
       await props.givenObject()
@@ -57,7 +80,17 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .expect('Content-Type', /application\/json/);
     });
 
-    it("can dbck, and no errors", async () => {
+    it("can't dbck anonymous", async () => {
+      await props.givenObject()
+      await client
+        .get(
+          props.basePath
+          + '/dbck'
+        )
+        .expect(401);
+    });
+
+    it("can dbck, and no errors authenticated", async () => {
       const user = await givenAdminUserProfile()
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
       await props.givenObject()
@@ -72,7 +105,19 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .expect('Content-Type', /application\/json/)
     });
 
-    it("can find", async () => {
+    it("can find anonymous", async () => {
+      const obj = await props.givenObject()
+
+      await client
+        .get(
+          props.basePath
+          + '?filter={"where":{"id":"' + obj.id + '"}}'
+        )
+        .expect(200/*, [obj]*/)
+        .expect('Content-Type', /application\/json/);
+    })
+
+    it("can find authenticated", async () => {
       const user = await givenAdminUserProfile()
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
       const obj = await props.givenObject()
@@ -87,7 +132,20 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .expect('Content-Type', /application\/json/);
     })
 
-    it("can findById", async () => {
+    it("can findById anonymous", async () => {
+      const obj = await props.givenObject()
+
+      await client
+        .get(
+          props.basePath
+          + '/'
+          + obj.id
+        )
+        .expect(200/*, [obj]*/)
+        .expect('Content-Type', /application\/json/);
+    })
+
+    it("can findById authenticated", async () => {
       const user = await givenAdminUserProfile()
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
       const obj = await props.givenObject()
@@ -103,7 +161,19 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .expect('Content-Type', /application\/json/);
     })
 
-    it("can delete", async () => {
+    it("can't delete anonymous", async () => {
+      const obj = await props.givenObject()
+
+      await client
+        .del(
+          props.basePath
+          + '/'
+          + obj.id
+        )
+        .expect(401);
+    })
+
+    it("can delete authenticated", async () => {
       const user = await givenAdminUserProfile()
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
       const obj = await props.givenObject()
@@ -118,7 +188,16 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .expect(204);
     })
 
-    it("can create valid", async () => {
+    it("can't create valid anonymous", async () => {
+      const validObj = await props.givenValidObject()
+
+      await client
+        .post(props.basePath)
+        .send(validObj)
+        .expect(401);
+    })
+
+    it("can create valid authenticated", async () => {
       const user = await givenAdminUserProfile()
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
       const validObj = await props.givenValidObject()
@@ -131,7 +210,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .expect('Content-Type', /application\/json/)
     })
 
-    it("can't create invalid", async () => {
+    it("can't create invalid authenticated", async () => {
       const user = await givenAdminUserProfile()
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
       const invalidObj = await props.givenInvalidObject()
@@ -144,7 +223,18 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .expect('Content-Type', /application\/json/);
     });
 
-    it("can updateAll valid", async () => {
+    it("can't updateAll valid anonymous", async () => {
+      const obj = await props.givenObject()
+      const validObj = await props.givenValidObject()
+      validObj.id = obj.id
+
+      await client
+        .patch(props.basePath)
+        .send(validObj)
+        .expect(401);
+    })
+
+    it("can updateAll valid authenticated", async () => {
       const user = await givenAdminUserProfile()
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
       const obj = await props.givenObject()
@@ -159,7 +249,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .expect('Content-Type', /application\/json/);
     })
 
-    it("can't updateAll invalid", async () => {
+    it("can't updateAll invalid authenticated", async () => {
       const user = await givenAdminUserProfile()
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
       const obj = await props.givenObject()
@@ -174,7 +264,22 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .expect('Content-Type', /application\/json/);
     });
 
-    it("can updateById valid", async () => {
+    it("can't updateById valid anonymous", async () => {
+      const obj = await props.givenObject()
+      const validObj = await props.givenValidObject()
+      validObj.id = obj.id
+
+      await client
+        .patch(
+          props.basePath
+          + '/'
+          + obj.id
+        )
+        .send(validObj)
+        .expect(401);
+    })
+
+    it("can updateById valid authenticated", async () => {
       const user = await givenAdminUserProfile()
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
       const obj = await props.givenObject()
@@ -192,7 +297,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .expect(204);
     })
 
-    it("can't updateById invalid", async () => {
+    it("can't updateById invalid authenticated", async () => {
       const user = await givenAdminUserProfile()
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
       const obj = await props.givenObject()
