@@ -44,7 +44,7 @@
     "src"
   ],
   "dependencies": {
-    "@dcic/signature-commons-schema": "^1.0.5",
+    "@dcic/signature-commons-schema": "^1.0.7",
     "@loopback/authentication": "^1.0.3",
     "@loopback/boot": "^1.0.3",
     "@loopback/context": "^1.0.1",
@@ -62,7 +62,7 @@
     "@loopback/build": "^1.0.1",
     "@loopback/testlab": "^1.0.1",
     "@types/assert": "^1.4.0",
-    "@types/node": "^10.12.4",
+    "@types/node": "^10.12.8",
     "@types/passport": "^0.4.7",
     "@types/passport-http": "^0.3.6",
     "assert": "^1.4.1",

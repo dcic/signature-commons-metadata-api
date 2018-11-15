@@ -222,11 +222,12 @@ export function GenericControllerFactory<
       let results: Array<object> = []
 
       for await (let obj of objs) {
-        obj = Object.assign(obj, body)
-
         try {
           obj = await validate<GenericEntity>(
-            obj,
+            {
+              ...<object>obj,
+              ...<object>body,
+            },
             '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json'
           )
         } catch (e) {

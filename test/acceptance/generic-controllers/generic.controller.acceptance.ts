@@ -153,7 +153,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
 
       await client
         .patch(props.basePath)
-        .send([validObj])
+        .send(validObj)
         .set('Authorization', 'Basic ' + auth)
         .expect(200)
         .expect('Content-Type', /application\/json/);
@@ -168,13 +168,13 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
 
       await client
         .patch(props.basePath)
-        .send([invalidObj])
+        .send(invalidObj)
         .set('Authorization', 'Basic ' + auth)
         .expect(406)
         .expect('Content-Type', /application\/json/);
     });
 
-    it("can updateById", async () => {
+    it("can updateById valid", async () => {
       const user = await givenAdminUserProfile()
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
       const obj = await props.givenObject()
@@ -189,8 +189,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         )
         .send(validObj)
         .set('Authorization', 'Basic ' + auth)
-        .expect(200)
-        .expect('Content-Type', /application\/json/);
+        .expect(204);
     })
 
     it("can't updateById invalid", async () => {
@@ -208,8 +207,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         )
         .send(invalidObj)
         .set('Authorization', 'Basic ' + auth)
-        .expect(406)
-        .expect('Content-Type', /application\/json/);
+        .expect(406);
     });
   });
 }
