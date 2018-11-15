@@ -4,17 +4,17 @@ import { inject } from '@loopback/context';
 import { Constructor } from '@loopback/core';
 import { Count, CountSchema, DataObject, DefaultCrudRepository, Entity, Filter, repository, Where } from '@loopback/repository';
 import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param, patch, post, requestBody } from '@loopback/rest';
+import debug from '../util/debug';
 import { keyCounts } from '../util/key-counts';
 import { sortedDict } from '../util/sorted-dict';
 
 export class IGenericEntity extends Entity {
   $validator?: string
-  _id: number
   id: string
   meta: object
 }
 
-export class IGenericRepository<T extends IGenericEntity> extends DefaultCrudRepository<T, number> {
+export class IGenericRepository<T extends IGenericEntity> extends DefaultCrudRepository<T, string> {
 }
 
 export function GenericControllerFactory<
@@ -57,15 +57,13 @@ export function GenericControllerFactory<
     async create(@requestBody() obj: GenericEntity): Promise<GenericEntity> {
       try {
         return await this.genericRepository.create(
-          await validate<GenericEntity>({
-            $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
-            id: obj.id,
-            meta: obj.meta,
-          } as GenericEntity,
-            '/@dcic/signature-commons-schema/core/meta.json'
+          await validate<GenericEntity>(
+            obj,
+            '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json'
           )
         )
       } catch (e) {
+        debug(JSON.stringify(e))
         throw new HttpErrors.NotAcceptable(e)
       }
     }
@@ -164,12 +162,9 @@ export function GenericControllerFactory<
         if (results.length === filter.limit)
           break
         try {
-          obj = await validate<GenericEntity>({
-            $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
-            id: obj.id,
-            meta: obj.meta,
-          } as GenericEntity,
-            '/@dcic/signature-commons-schema/core/meta.json'
+          obj = await validate<GenericEntity>(
+            obj,
+            '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json'
           )
         } catch (e) {
           results = results.concat(e)
@@ -220,7 +215,7 @@ export function GenericControllerFactory<
       @param.query.object('where', getWhereSchemaFor(props.GenericEntity)) where?: Where<GenericEntity>,
       @param.query.string('where_str') where_str: string = '',
     ): Promise<Count> {
-      if (where_str !== '' && where === {})
+      if (where_str !== '' && where === undefined)
         where = JSON.parse(where_str)
 
       const objs: GenericEntity[] = await this.genericRepository.find({ where })
@@ -230,20 +225,19 @@ export function GenericControllerFactory<
         obj = Object.assign(obj, body)
 
         try {
-          obj = await validate<GenericEntity>({
-            $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
-            id: obj.id,
-            meta: obj.meta,
-          } as GenericEntity,
-            '/@dcic/signature-commons-schema/core/meta.json'
+          obj = await validate<GenericEntity>(
+            obj,
+            '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json'
           )
         } catch (e) {
           results = results.concat(e)
         }
       }
 
-      if (results.length > 0)
+      if (results.length > 0) {
+        debug(JSON.stringify(results))
         throw new HttpErrors.NotAcceptable(JSON.stringify(results))
+      }
 
       return await this.genericRepository.updateAll(body, where)
     }
@@ -259,8 +253,8 @@ export function GenericControllerFactory<
         },
       },
     })
-    async findById(@param.path.number('id') _id: number): Promise<GenericEntity> {
-      return await this.genericRepository.findById(_id);
+    async findById(@param.path.number('id') id: string): Promise<GenericEntity> {
+      return await this.genericRepository.findById(id);
     }
 
     @authenticate('PATCH.' + props.modelName + '.updateById')
@@ -274,20 +268,18 @@ export function GenericControllerFactory<
       },
     })
     async updateById(
-      @param.path.number('id') _id: number,
+      @param.path.number('id') id: string,
       @requestBody() obj: GenericEntity,
     ): Promise<void> {
       try {
-        return await this.genericRepository.updateById(_id,
-          await validate<GenericEntity>({
-            $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
-            id: obj.id,
-            meta: obj.meta,
-          } as GenericEntity,
-            '/@dcic/signature-commons-schema/core/meta.json'
+        return await this.genericRepository.updateById(id,
+          await validate<GenericEntity>(
+            obj,
+            '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json'
           )
         )
       } catch (e) {
+        debug(JSON.stringify(e))
         throw new HttpErrors.NotAcceptable(e)
       }
     }
@@ -302,8 +294,8 @@ export function GenericControllerFactory<
         },
       },
     })
-    async deleteById(@param.path.number('id') _id: number): Promise<void> {
-      await this.genericRepository.deleteById(_id);
+    async deleteById(@param.path.number('id') id: string): Promise<void> {
+      await this.genericRepository.deleteById(id);
     }
   }
 

@@ -10,8 +10,7 @@ export async function givenValidLibraryData(data?: Partial<Library>) {
   const d = libraryTest.tests.filter((test) => test.valid)[0].data
   return Object.assign(
     {
-      _id: 0,
-      // $validator: d.$validator,
+      $validator: d.$validator,
       id: d.id,
       meta: d.meta,
     },
@@ -23,8 +22,7 @@ export async function givenInvalidLibraryData(data?: Partial<Library>) {
   const d = libraryTest.tests.filter((test) => !test.valid)[0].data
   return Object.assign(
     {
-      _id: 0,
-      // $validator: d.$validator,
+      $validator: d.$validator,
       id: d.id,
       meta: d.meta,
     },
@@ -44,8 +42,7 @@ export async function givenValidSignatureData(data?: Partial<Signature>) {
   const d = signatureTest.tests.filter((test) => test.valid)[0].data
   return Object.assign(
     {
-      _id: 0,
-      // $validator: d.$validator,
+      $validator: d.$validator,
       id: d.id,
       meta: d.meta,
       library: d.library,
@@ -58,8 +55,7 @@ export async function givenInvalidSignatureData(data?: Partial<Signature>) {
   const d = signatureTest.tests.filter((test) => !test.valid)[0].data
   return Object.assign(
     {
-      _id: 0,
-      // $validator: d.$validator,
+      $validator: d.$validator,
       id: d.id,
       meta: d.meta,
       library: d.library,
@@ -80,8 +76,7 @@ export async function givenValidEntityData(data?: Partial<Entity>) {
   const d = entityTest.tests.filter((test) => test.valid)[0].data
   return Object.assign(
     {
-      _id: 0,
-      // $validator: d.$validator,
+      $validator: d.$validator,
       id: d.id,
       meta: d.meta,
     },
@@ -93,8 +88,7 @@ export async function givenInvalidEntityData(data?: Partial<Entity>) {
   const d = entityTest.tests.filter((test) => !test.valid)[0].data
   return Object.assign(
     {
-      _id: 0,
-      // $validator: d.$validator,
+      $validator: d.$validator,
       id: d.id,
       meta: d.meta,
     },

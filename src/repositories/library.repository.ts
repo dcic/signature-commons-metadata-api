@@ -5,7 +5,7 @@ import { inject } from '@loopback/core';
 
 export class LibraryRepository extends DefaultCrudRepository<
   Library,
-  typeof Library.prototype._id
+  typeof Library.prototype.id
   > {
   constructor(
     @inject('datasources.PostgreSQL') dataSource: PostgreSQLDataSource,

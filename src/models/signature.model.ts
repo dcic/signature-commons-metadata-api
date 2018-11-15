@@ -1,5 +1,6 @@
 import { Entity, model, property } from '@loopback/repository';
 import { getJsonSchema } from '@loopback/rest';
+import { strict as assert } from 'assert'
 
 @model({
   name: 'Signature',
@@ -8,23 +9,24 @@ import { getJsonSchema } from '@loopback/rest';
     postgresql: {
       table: 'signatures'
     },
+    allowExtendedOperators: true,
   },
 })
 export class Signature extends Entity {
-  $validator = '/@dcic/signature-commons-schema/core/signature.json'
-
   @property({
-    type: 'number',
-    id: true,
-    required: true,
-    postgresql: {
-      columnName: 'id',
-    },
+    type: 'string',
+    required: true
   })
-  _id: number;
+  get $validator() {
+    return '/@dcic/signature-commons-schema/core/signature.json'
+  }
+  set $validator(v) {
+    assert.equal(v, this.$validator)
+  }
 
   @property({
     type: 'string',
+    id: true,
     required: true,
     postgresql: {
       columnName: 'uuid',
