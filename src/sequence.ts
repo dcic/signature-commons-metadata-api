@@ -1,6 +1,6 @@
 import { AuthenticateFn, AuthenticationBindings } from '@loopback/authentication';
 import { inject } from '@loopback/context';
-import { FindRoute, InvokeMethod, ParseParams, Reject, RequestContext, RestBindings, Send, SequenceHandler } from '@loopback/rest';
+import { FindRoute, InvokeMethod, ParseParams, Reject, RequestContext, RestBindings, Send, SequenceHandler, StaticAssetsRoute } from '@loopback/rest';
 
 const SequenceActions = RestBindings.SequenceActions;
 
@@ -19,16 +19,19 @@ export class Sequence implements SequenceHandler {
       const { request, response } = context;
       const route = this.findRoute(request);
 
-      if (request.headers === undefined) {
-        request.headers = {}
-      }
-      if (request.headers.authorization === undefined) {
-        request.headers.authorization = 'Basic ' + Buffer.from(
-          'guest:guest'
-        ).toString('base64')
-      }
+      // Hotfix from https://github.com/strongloop/loopback-next/issues/1144#issuecomment-438359985
+      if (!(route instanceof StaticAssetsRoute)) {
+        if (request.headers === undefined) {
+          request.headers = {}
+        }
+        if (request.headers.authorization === undefined) {
+          request.headers.authorization = 'Basic ' + Buffer.from(
+            'guest:guest'
+          ).toString('base64')
+        }
 
-      await this.authenticateRequest(request);
+        await this.authenticateRequest(request);
+      }
 
       const args = await this.parseParams(request, route);
       const result = await this.invoke(route, args);

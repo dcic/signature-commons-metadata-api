@@ -25,4 +25,10 @@ describe('HomePageController', () => {
       .expect(200)
       .expect('Content-Type', /text\/html/);
   });
+
+  it('returns 404 errors on missing pages', async () => {
+    await client
+      .get('/page_that_doesnt_exist')
+      .expect(404);
+  });
 });
