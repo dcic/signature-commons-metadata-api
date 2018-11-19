@@ -1,6 +1,6 @@
-import { Entity, model, property } from '@loopback/repository';
+import { Entity, model, Options, property } from '@loopback/repository';
 import { getJsonSchema } from '@loopback/rest';
-import { strict as assert } from 'assert'
+import { strict as assert } from 'assert';
 
 @model({
   name: 'Library',
@@ -10,13 +10,10 @@ import { strict as assert } from 'assert'
       table: 'libraries'
     },
     allowExtendedOperators: true,
+    strict: false,
   },
 })
 export class Library extends Entity {
-  @property({
-    type: 'string',
-    required: true
-  })
   get $validator() {
     return '/@dcic/signature-commons-schema/core/library.json'
   }
@@ -45,6 +42,13 @@ export class Library extends Entity {
 
   constructor(data?: Partial<Library>) {
     super(data);
+  }
+
+  toObject(options?: Options): Object {
+    return {
+      $validator: this.$validator,
+      ...super.toObject(options),
+    }
   }
 }
 

@@ -1,6 +1,6 @@
-import { Entity as LBEntity, model, property } from '@loopback/repository';
+import { Entity as LBEntity, model, Options, property } from '@loopback/repository';
 import { getJsonSchema } from '@loopback/rest';
-import { strict as assert } from 'assert'
+import { strict as assert } from 'assert';
 
 @model({
   name: 'Entity',
@@ -10,13 +10,10 @@ import { strict as assert } from 'assert'
       table: 'entities'
     },
     allowExtendedOperators: true,
+    strict: false,
   },
 })
 export class Entity extends LBEntity {
-  @property({
-    type: 'string',
-    required: true
-  })
   get $validator() {
     return '/@dcic/signature-commons-schema/core/entity.json'
   }
@@ -46,6 +43,13 @@ export class Entity extends LBEntity {
 
   constructor(data?: Partial<Entity>) {
     super(data);
+  }
+
+  toObject(options?: Options): Object {
+    return {
+      $validator: this.$validator,
+      ...super.toObject(options),
+    }
   }
 }
 

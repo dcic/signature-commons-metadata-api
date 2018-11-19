@@ -1,6 +1,6 @@
-import { Entity, model, property } from '@loopback/repository';
+import { Entity, model, Options, property } from '@loopback/repository';
 import { getJsonSchema } from '@loopback/rest';
-import { strict as assert } from 'assert'
+import { strict as assert } from 'assert';
 
 @model({
   name: 'Signature',
@@ -10,13 +10,10 @@ import { strict as assert } from 'assert'
       table: 'signatures'
     },
     allowExtendedOperators: true,
+    strict: false,
   },
 })
 export class Signature extends Entity {
-  @property({
-    type: 'string',
-    required: true
-  })
   get $validator() {
     return '/@dcic/signature-commons-schema/core/signature.json'
   }
@@ -55,6 +52,13 @@ export class Signature extends Entity {
 
   constructor(data?: Partial<Signature>) {
     super(data);
+  }
+
+  toObject(options?: Options): Object {
+    return {
+      $validator: this.$validator,
+      ...super.toObject(options),
+    }
   }
 }
 export const SignatureSchema = getJsonSchema(Signature)
