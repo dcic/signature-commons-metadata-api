@@ -68,3 +68,6 @@ api-docs/
 
 # VSCode
 .vscode
+
+# Memory store
+store
