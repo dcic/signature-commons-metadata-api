@@ -1,5 +1,6 @@
 .env
-.vscode
+.git/
+.vscode/
 api-docs/
 dist/
 node_modules/
