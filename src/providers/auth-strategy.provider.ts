@@ -35,7 +35,7 @@ export class AuthStrategyProvider implements Provider<Strategy | undefined> {
           id: 'guest',
           username: 'guest',
           password: 'guest',
-          roles: '^GET\\.+$',
+          roles: '^GET\\..+$',
         }
       } else {
         user = await this.userProfileRepository.findOne({
