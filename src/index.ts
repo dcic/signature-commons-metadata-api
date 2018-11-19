@@ -22,9 +22,10 @@ export async function main(options: ApplicationConfig = {}) {
     process.env['ADMIN_USERNAME'] !== undefined
     && process.env['ADMIN_PASSWORD'] !== undefined
   ) {
+    const userRepo = await app.getRepository(UserProfileRepository)
     console.log('Creating admin...');
-
-    (await app.getRepository(UserProfileRepository)).create({
+    await userRepo.deleteAll();
+    await userRepo.create({
       id: 'admin',
       username: process.env['ADMIN_USERNAME'],
       password: process.env['ADMIN_PASSWORD'],
