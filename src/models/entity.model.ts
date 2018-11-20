@@ -36,6 +36,7 @@ export class Entity extends LBEntity {
     required: true,
     postgresql: {
       dataType: 'json',
+      tsVector: 'english',
     },
     default: {},
   })

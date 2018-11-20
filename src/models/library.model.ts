@@ -35,6 +35,7 @@ export class Library extends Entity {
     type: 'object',
     postgresql: {
       dataType: 'json',
+      tsVector: 'english',
     },
     required: true,
   })

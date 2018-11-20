@@ -44,6 +44,7 @@ export class Signature extends Entity {
     type: 'object',
     postgresql: {
       dataType: 'json',
+      tsVector: 'english',
     },
     required: true,
     default: {},
