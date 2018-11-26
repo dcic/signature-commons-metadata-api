@@ -155,11 +155,15 @@ export function GenericControllerFactory<
       if (filter_str !== '' && filter === {})
         filter = JSON.parse(filter_str)
 
+      // Take limit out of query, we'll use it to count results
+      const limit = filter.limit || 1
+      delete filter.limit
+
       const objs = await this.genericRepository.find(filter);
       let results: Array<object> = []
 
       for await (let obj of objs) {
-        if (results.length === filter.limit)
+        if (results.length >= limit)
           break
         try {
           obj = await validate<GenericEntity>(
