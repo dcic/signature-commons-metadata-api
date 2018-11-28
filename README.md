@@ -14,7 +14,7 @@ export POSTGRESQL=posgresql://${user}:${pass}@${host}:${port}/${db}
 
 Where the ${} variables should be substituted with your own values.
 
-### Deployment 
+### Deployment
 ```bash
 docker build -t maayanlab/signature-commons-metadata-api:1.0.0 .
 docker push maayanlab/signature-commons-metadata-api:1.0.0
@@ -34,6 +34,14 @@ npm start
 ```
 
 ### Testing
+Docker is required for testing with a true postgresql database. The following
+ command will setup a postgresql database for testing.
+```bash
+source setup-postgresql.sh
+```
+
+This command will perform the tests, it will use `POSTGRESQL_TEST_URL` if defined
+ (is is after the above command), else it will fallback to a memory db replacement.
 ```bash
 npm test
 ```
