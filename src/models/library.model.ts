@@ -10,17 +10,9 @@ import { strict as assert } from 'assert';
       table: 'libraries'
     },
     allowExtendedOperators: true,
-    strict: false,
   },
 })
 export class Library extends Entity {
-  get $validator() {
-    return '/@dcic/signature-commons-schema/core/library.json'
-  }
-  set $validator(v) {
-    assert.equal(v, this.$validator)
-  }
-
   @property({
     type: 'string',
     id: true,
@@ -43,13 +35,6 @@ export class Library extends Entity {
 
   constructor(data?: Partial<Library>) {
     super(data);
-  }
-
-  toObject(options?: Options): Object {
-    return {
-      $validator: this.$validator,
-      ...super.toObject(options),
-    }
   }
 }
 

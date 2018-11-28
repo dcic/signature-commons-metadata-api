@@ -56,12 +56,15 @@ export function GenericControllerFactory<
     })
     async create(@requestBody() obj: GenericEntity): Promise<GenericEntity> {
       try {
-        return await this.genericRepository.create(
-          await validate<GenericEntity>(
-            obj,
-            '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json'
-          )
+        const entity = await validate<GenericEntity>(
+          {
+            $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
+            ...(<any>obj)
+          },
+          '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json'
         )
+        delete entity.$validator
+        return await this.genericRepository.create(entity)
       } catch (e) {
         debug(JSON.stringify(e))
         throw new HttpErrors.NotAcceptable(e)
@@ -167,7 +170,10 @@ export function GenericControllerFactory<
           break
         try {
           obj = await validate<GenericEntity>(
-            obj,
+            {
+              $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
+              ...(<any>obj)
+            },
             '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json'
           )
         } catch (e) {
@@ -228,7 +234,8 @@ export function GenericControllerFactory<
       for await (let obj of objs) {
         try {
           obj = await validate<GenericEntity>(
-            {
+            <GenericEntity>{
+              $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
               ...<object>obj,
               ...<object>body,
             },
@@ -279,7 +286,10 @@ export function GenericControllerFactory<
       try {
         return await this.genericRepository.updateById(id,
           await validate<GenericEntity>(
-            obj,
+            {
+              $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
+              ...(<any>obj)
+            },
             '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json'
           )
         )

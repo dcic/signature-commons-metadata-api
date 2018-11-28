@@ -10,17 +10,9 @@ import { strict as assert } from 'assert';
       table: 'signatures'
     },
     allowExtendedOperators: true,
-    strict: false,
   },
 })
 export class Signature extends Entity {
-  get $validator() {
-    return '/@dcic/signature-commons-schema/core/signature.json'
-  }
-  set $validator(v) {
-    assert.equal(v, this.$validator)
-  }
-
   @property({
     type: 'string',
     id: true,
@@ -53,13 +45,6 @@ export class Signature extends Entity {
 
   constructor(data?: Partial<Signature>) {
     super(data);
-  }
-
-  toObject(options?: Options): Object {
-    return {
-      $validator: this.$validator,
-      ...super.toObject(options),
-    }
   }
 }
 export const SignatureSchema = getJsonSchema(Signature)

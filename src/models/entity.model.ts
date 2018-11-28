@@ -10,17 +10,9 @@ import { strict as assert } from 'assert';
       table: 'entities'
     },
     allowExtendedOperators: true,
-    strict: false,
   },
 })
 export class Entity extends LBEntity {
-  get $validator() {
-    return '/@dcic/signature-commons-schema/core/entity.json'
-  }
-  set $validator(v) {
-    assert.equal(v, this.$validator)
-  }
-
   @property({
     type: 'string',
     id: true,
@@ -44,13 +36,6 @@ export class Entity extends LBEntity {
 
   constructor(data?: Partial<Entity>) {
     super(data);
-  }
-
-  toObject(options?: Options): Object {
-    return {
-      $validator: this.$validator,
-      ...super.toObject(options),
-    }
   }
 }
 
