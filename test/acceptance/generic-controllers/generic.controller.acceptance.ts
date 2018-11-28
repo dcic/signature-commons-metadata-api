@@ -54,7 +54,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .expect('Content-Type', /application\/json/);
     });
 
-    it("can't key_count anonymous", async () => {
+    it("can key_count anonymous", async () => {
       await props.givenObject()
 
       await client
@@ -62,7 +62,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           props.basePath
           + '/key_count'
         )
-        .expect(401);
+        .expect(200);
     });
 
     it("can key_count authenticated", async () => {
@@ -80,14 +80,14 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .expect('Content-Type', /application\/json/);
     });
 
-    it("can't dbck anonymous", async () => {
+    it("can dbck anonymous", async () => {
       await props.givenObject()
       await client
         .get(
           props.basePath
           + '/dbck'
         )
-        .expect(401);
+        .expect(200);
     });
 
     it("can dbck, and no errors authenticated", async () => {
