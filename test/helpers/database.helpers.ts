@@ -3,13 +3,19 @@ import * as libraryTest from "@dcic/signature-commons-schema/core/library.test.j
 import * as signatureTest from "@dcic/signature-commons-schema/core/signature.test.json";
 import { Entity, Library, Signature, UserProfile } from "../../src/models";
 import { EntityRepository, LibraryRepository, SignatureRepository, UserProfileRepository } from "../../src/repositories";
-import { testdb } from "../fixtures/datasources/testdb.datasource";
+import { memory_factory, postgresql_factory } from "../fixtures/datasources/testdb.datasource";
+
+const memory_db = memory_factory()
+export { memory_db }
+
+const postgresql_db = postgresql_factory()
+export { postgresql_db }
 
 export async function givenValidLibraryData(data?: Partial<Library>) {
   const d = libraryTest.tests.filter((test) => test.valid)[0].data
   return Object.assign(
     {
-      $validator: d.$validator,
+      // $validator: d.$validator,
       id: d.id,
       meta: d.meta,
     },
@@ -21,7 +27,7 @@ export async function givenInvalidLibraryData(data?: Partial<Library>) {
   const d = libraryTest.tests.filter((test) => !test.valid)[0].data
   return Object.assign(
     {
-      $validator: d.$validator,
+      // $validator: d.$validator,
       id: d.id,
       meta: d.meta,
     },
@@ -31,7 +37,7 @@ export async function givenInvalidLibraryData(data?: Partial<Library>) {
 
 export async function givenLibrary(data?: Partial<Library>) {
   return await new LibraryRepository(
-    testdb
+    postgresql_db
   ).create(
     <Partial<Library>>await givenValidLibraryData(data)
   )
@@ -41,7 +47,7 @@ export async function givenValidSignatureData(data?: Partial<Signature>) {
   const d = signatureTest.tests.filter((test) => test.valid)[0].data
   return Object.assign(
     {
-      $validator: d.$validator,
+      // $validator: d.$validator,
       id: d.id,
       meta: d.meta,
       library: d.library,
@@ -54,7 +60,7 @@ export async function givenInvalidSignatureData(data?: Partial<Signature>) {
   const d = signatureTest.tests.filter((test) => !test.valid)[0].data
   return Object.assign(
     {
-      $validator: d.$validator,
+      // $validator: d.$validator,
       id: d.id,
       meta: d.meta,
       library: d.library,
@@ -65,7 +71,7 @@ export async function givenInvalidSignatureData(data?: Partial<Signature>) {
 
 export async function givenSignature(data?: Partial<Signature>) {
   return await new SignatureRepository(
-    testdb
+    postgresql_db
   ).create(
     <Partial<Signature>>await givenValidSignatureData(data)
   )
@@ -75,7 +81,7 @@ export async function givenValidEntityData(data?: Partial<Entity>) {
   const d = entityTest.tests.filter((test) => test.valid)[0].data
   return Object.assign(
     {
-      $validator: d.$validator,
+      // $validator: d.$validator,
       id: d.id,
       meta: d.meta,
     },
@@ -87,7 +93,7 @@ export async function givenInvalidEntityData(data?: Partial<Entity>) {
   const d = entityTest.tests.filter((test) => !test.valid)[0].data
   return Object.assign(
     {
-      $validator: d.$validator,
+      // $validator: d.$validator,
       id: d.id,
       meta: d.meta,
     },
@@ -97,7 +103,7 @@ export async function givenInvalidEntityData(data?: Partial<Entity>) {
 
 export async function givenEntity(data?: Partial<Entity>) {
   return await new EntityRepository(
-    testdb
+    postgresql_db
   ).create(
     <Partial<Entity>>await givenValidEntityData(data)
   )
@@ -116,15 +122,15 @@ export async function givenAdminUserProfileData(data?: Partial<UserProfile>) {
 
 export async function givenAdminUserProfile(data?: Partial<UserProfile>) {
   return await new UserProfileRepository(
-    testdb
+    memory_db
   ).create(
     <Partial<UserProfile>>await givenAdminUserProfileData(data)
   )
 }
 
 export async function givenEmptyDatabase() {
-  await new LibraryRepository(testdb).deleteAll();
-  await new SignatureRepository(testdb).deleteAll();
-  await new EntityRepository(testdb).deleteAll();
-  await new UserProfileRepository(testdb).deleteAll();
+  await new LibraryRepository(postgresql_db).deleteAll();
+  await new SignatureRepository(postgresql_db).deleteAll();
+  await new EntityRepository(postgresql_db).deleteAll();
+  await new UserProfileRepository(memory_db).deleteAll();
 }
