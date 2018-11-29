@@ -29,6 +29,9 @@ export function GenericControllerFactory<
       basePath: string
     }
   ): Constructor<any> {
+
+  const modelSchema = '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json'
+
   @api({
     paths: {},
     components: {
@@ -58,15 +61,15 @@ export function GenericControllerFactory<
       try {
         const entity = await validate<GenericEntity>(
           {
-            $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
+            $validator: modelSchema,
             ...(<any>obj)
           },
-          '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json'
+          modelSchema
         )
         delete entity.$validator
         return await this.genericRepository.create(entity)
       } catch (e) {
-        debug(JSON.stringify(e))
+        debug(e)
         throw new HttpErrors.NotAcceptable(e)
       }
     }
@@ -171,10 +174,10 @@ export function GenericControllerFactory<
         try {
           obj = await validate<GenericEntity>(
             {
-              $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
+              $validator: modelSchema,
               ...(<any>obj)
             },
-            '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json'
+            modelSchema
           )
         } catch (e) {
           results = results.concat(e)
@@ -235,11 +238,11 @@ export function GenericControllerFactory<
         try {
           obj = await validate<GenericEntity>(
             <GenericEntity>{
-              $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
+              $validator: modelSchema,
               ...<object>obj,
               ...<object>body,
             },
-            '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json'
+            modelSchema
           )
         } catch (e) {
           results = results.concat(e)
@@ -287,10 +290,10 @@ export function GenericControllerFactory<
         return await this.genericRepository.updateById(id,
           await validate<GenericEntity>(
             {
-              $validator: '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json',
+              $validator: modelSchema,
               ...(<any>obj)
             },
-            '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json'
+            modelSchema
           )
         )
       } catch (e) {
