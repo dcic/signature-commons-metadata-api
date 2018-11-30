@@ -5,8 +5,10 @@ import { Constructor } from '@loopback/core';
 import { Count, CountSchema, DataObject, DefaultCrudRepository, Entity, Filter, repository, Where } from '@loopback/repository';
 import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param, patch, post, requestBody } from '@loopback/rest';
 import debug from '../util/debug';
-import { keyCounts } from '../util/key-counts';
+import { keyCounts, valueCounts } from '../util/key-counts';
 import { sortedDict } from '../util/sorted-dict';
+import { sum } from '../util/sum';
+import { applyFieldsFilter } from '../util/applyFieldsFilter';
 
 export class IGenericEntity extends Entity {
   $validator?: string
@@ -67,7 +69,11 @@ export function GenericControllerFactory<
           modelSchema
         )
         delete entity.$validator
-        return await this.genericRepository.create(entity)
+
+        return {
+          $validator: modelSchema,
+          ...(<any>await this.genericRepository.create(entity))
+        }
       } catch (e) {
         debug(e)
         throw new HttpErrors.NotAcceptable(e)
@@ -120,7 +126,6 @@ export function GenericControllerFactory<
       @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
       @param.query.string('filter_str') filter_str: string = '',
       @param.query.number('depth') depth: number = 0,
-      @param.query.boolean('values') values: boolean = false,
     ): Promise<{ [key: string]: number }> {
       if (filter_str !== '' && filter === {})
         filter = JSON.parse(filter_str)
@@ -129,8 +134,60 @@ export function GenericControllerFactory<
         throw new Error("Depth must be greater than 0")
 
       return sortedDict(
-        keyCounts((await this.genericRepository.find(filter)).map((obj) => obj.meta), depth, values),
+        keyCounts(
+          (await this.genericRepository.find({
+            ...filter, fields: undefined
+          })).map(
+            (obj) => applyFieldsFilter(obj, ((filter || {}).fields || []))
+          ),
+          depth
+        ),
         (a, b) => b - a
+      )
+    }
+
+    @authenticate('GET.' + props.modelName + '.value_count')
+    @get(props.basePath + '/value_count', {
+      tags: [props.modelName],
+      operationId: props.modelName + '.value_count',
+      responses: {
+        '200': {
+          description: props.modelName + ' model value_count (number of unique keys and values which appear in the query results)',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  description: 'The key-values in the database paired with the number of those key-values'
+                }
+              }
+            }
+          },
+        },
+      },
+    })
+    async value_count(
+      @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
+      @param.query.string('filter_str') filter_str: string = '',
+      @param.query.number('depth') depth: number = 0,
+    ): Promise<{ [key: string]: { [value: string]: number } }> {
+      if (filter_str !== '' && filter === {})
+        filter = JSON.parse(filter_str)
+
+      if (depth < 0)
+        throw new Error("Depth must be greater than 0")
+
+      return sortedDict(
+        valueCounts(
+          (await this.genericRepository.find({
+            ...filter, fields: undefined
+          })).map(
+            (obj) => applyFieldsFilter(obj, ((filter || {}).fields || []))
+          ),
+          depth
+        ),
+        (a, b) => sum(Object.values(b)) - sum(Object.values(a))
       )
     }
 
@@ -209,7 +266,19 @@ export function GenericControllerFactory<
       if (filter_str !== '' && filter === {})
         filter = JSON.parse(filter_str)
 
-      return await this.genericRepository.find(filter);
+      return (
+        await this.genericRepository.find({
+          ...filter, fields: undefined
+        })
+      ).map(
+        (obj) => applyFieldsFilter(
+          {
+            $validator: modelSchema,
+            ...(<any>obj),
+          },
+          ((filter || {}).fields || [])
+        )
+      );
     }
 
     @authenticate('PATCH.' + props.modelName + '.updateAll')
@@ -269,7 +338,10 @@ export function GenericControllerFactory<
       },
     })
     async findById(@param.path.number('id') id: string): Promise<GenericEntity> {
-      return await this.genericRepository.findById(id);
+      return {
+        $validator: modelSchema,
+        ...(<any>await this.genericRepository.findById(id)),
+      };
     }
 
     @authenticate('PATCH.' + props.modelName + '.updateById')

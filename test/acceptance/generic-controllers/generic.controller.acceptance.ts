@@ -80,6 +80,32 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .expect('Content-Type', /application\/json/);
     });
 
+    it("can value_count anonymous", async () => {
+      await props.givenObject()
+
+      await client
+        .get(
+          props.basePath
+          + '/value_count'
+        )
+        .expect(200);
+    });
+
+    it("can value_count authenticated", async () => {
+      const user = await givenAdminUserProfile()
+      const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
+      await props.givenObject()
+
+      await client
+        .get(
+          props.basePath
+          + '/value_count'
+        )
+        .set('Authorization', 'Basic ' + auth)
+        .expect(200)
+        .expect('Content-Type', /application\/json/);
+    });
+
     it("can dbck anonymous", async () => {
       await props.givenObject()
       await client
