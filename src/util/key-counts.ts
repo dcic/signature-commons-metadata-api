@@ -43,7 +43,7 @@ export function keyCounts(objs: any[], depth: number = 0) {
  * @param objs The objects to enumerate the values of
  * @param depth The depth to go into object keys
  */
-export function valueCounts(objs: any[], depth: number = 0, values: boolean = false) {
+export function valueCounts(objs: any[], depth: number = 0) {
   const key_value_counts: { [key: string]: { [value: string]: number } } = {}
 
   for (const obj of objs) {
