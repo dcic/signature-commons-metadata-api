@@ -138,7 +138,7 @@ export function GenericControllerFactory<
           (await this.genericRepository.find({
             ...filter, fields: undefined
           })).map(
-            (obj) => applyFieldsFilter(obj, ((filter || {}).fields || []))
+            (obj) => applyFieldsFilter(obj.meta, ((filter || {}).fields || []))
           ),
           depth
         ),
@@ -183,7 +183,7 @@ export function GenericControllerFactory<
           (await this.genericRepository.find({
             ...filter, fields: undefined
           })).map(
-            (obj) => applyFieldsFilter(obj, ((filter || {}).fields || []))
+            (obj) => applyFieldsFilter(obj.meta, ((filter || {}).fields || []))
           ),
           depth
         ),
