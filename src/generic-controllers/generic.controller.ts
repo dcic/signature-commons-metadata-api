@@ -337,7 +337,7 @@ export function GenericControllerFactory<
         },
       },
     })
-    async findById(@param.path.number('id') id: string): Promise<GenericEntity> {
+    async findById(@param.path.string('id') id: string): Promise<GenericEntity> {
       return {
         $validator: modelSchema,
         ...(<any>await this.genericRepository.findById(id)),
@@ -355,7 +355,7 @@ export function GenericControllerFactory<
       },
     })
     async updateById(
-      @param.path.number('id') id: string,
+      @param.path.string('id') id: string,
       @requestBody() obj: GenericEntity,
     ): Promise<void> {
       try {
@@ -384,7 +384,7 @@ export function GenericControllerFactory<
         },
       },
     })
-    async deleteById(@param.path.number('id') id: string): Promise<void> {
+    async deleteById(@param.path.string('id') id: string): Promise<void> {
       await this.genericRepository.deleteById(id);
     }
   }
