@@ -263,7 +263,10 @@ export function GenericControllerFactory<
       @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
       @param.query.string('filter_str') filter_str: string = '',
     ): Promise<GenericEntity[]> {
-      return await this.find(filter, filter_str)
+      if (filter_str !== '' && filter === {})
+        filter = JSON.parse(filter_str)
+
+      return await this.find({ filter })
     }
 
     @authenticate('GET.' + props.modelName + '.find')
@@ -282,12 +285,10 @@ export function GenericControllerFactory<
       },
     })
     async find(
-      @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
-      @param.query.string('filter_str') filter_str: string = '',
+      @requestBody() { filter }: {
+        filter?: Filter<GenericEntity>
+      }
     ): Promise<GenericEntity[]> {
-      if (filter_str !== '' && filter === {})
-        filter = JSON.parse(filter_str)
-
       return (
         await this.genericRepository.find({
           ...filter, fields: undefined
