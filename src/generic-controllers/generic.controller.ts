@@ -247,6 +247,28 @@ export function GenericControllerFactory<
     @authenticate('GET.' + props.modelName + '.find')
     @get(props.basePath + '', {
       tags: [props.modelName],
+      operationId: props.modelName + '.find_get',
+      responses: {
+        '200': {
+          description: 'Array of ' + props.modelName + ' model instances',
+          content: {
+            'application/json': {
+              schema: { type: 'array', items: { 'x-ts-type': props.GenericEntity } },
+            },
+          },
+        },
+      },
+    })
+    async find_get(
+      @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
+      @param.query.string('filter_str') filter_str: string = '',
+    ): Promise<GenericEntity[]> {
+      return await this.find(filter, filter_str)
+    }
+
+    @authenticate('GET.' + props.modelName + '.find')
+    @post(props.basePath + '/find', {
+      tags: [props.modelName],
       operationId: props.modelName + '.find',
       responses: {
         '200': {
