@@ -80,6 +80,27 @@ describe('util', () => {
         )
       })
     })
+    describe('lists', () => {
+      it('works properly', () => {
+        assert.deepEqual(
+          keyCounts([{
+            'a': [
+              {
+                'b': 'c'
+              },
+              {
+                'd': 'e'
+              },
+            ]
+          }], 2),
+          {
+            'a': 3,
+            'a.b': 1,
+            'a.d': 1,
+          }
+        )
+      })
+    })
   })
   describe('value-counts', () => {
     describe('depth 0', () => {
@@ -191,6 +212,34 @@ describe('util', () => {
             },
           }
         )
+      })
+      describe('lists', () => {
+        it('works properly', () => {
+          assert.deepEqual(
+            valueCounts([{
+              'a': [
+                {
+                  'b': 'c'
+                },
+                {
+                  'd': 'e'
+                },
+              ]
+            }], 2),
+            {
+              'a': {
+                '[array]': 1,
+                '[object]': 2,
+              },
+              'a.b': {
+                'c': 1,
+              },
+              'a.d': {
+                'e': 1,
+              },
+            }
+          )
+        })
       })
     })
   })

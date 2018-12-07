@@ -21,7 +21,14 @@ export function keyCounts(objs: any[], depth: number = 0) {
 
       if (k.replace(/[^\.]/g, '').length < d) {
         try {
-          if (typeof v === 'object') {
+          if (Array.isArray(v)) {
+            Q = Q.concat(
+              v.map(
+                (vv) =>
+                  [k, vv] as [string, any]
+              )
+            )
+          } else if (typeof v === 'object') {
             Q = Q.concat(
               ObjectItems(v).map(
                 ([kk, vv]) =>
@@ -52,15 +59,30 @@ export function valueCounts(objs: any[], depth: number = 0) {
     while (Q.length > 0) {
       let [k, v] = Q.pop() as [string, any]
 
+      let v_str
+      if (Array.isArray(v))
+        v_str = '[array]'
+      else if (typeof v === 'object')
+        v_str = '[object]'
+      else
+        v_str = v + ''
+
       if (key_value_counts[k] === undefined)
         key_value_counts[k] = {}
-      if (key_value_counts[k][v] === undefined)
-        key_value_counts[k][v] = 0
-      key_value_counts[k][v] += 1
+      if (key_value_counts[k][v_str] === undefined)
+        key_value_counts[k][v_str] = 0
+      key_value_counts[k][v_str] += 1
 
       if (k.replace(/[^\.]/g, '').length < d) {
         try {
-          if (typeof v === 'object') {
+          if (Array.isArray(v)) {
+            Q = Q.concat(
+              v.map(
+                (vv) =>
+                  [k, vv] as [string, any]
+              )
+            )
+          } else if (typeof v === 'object') {
             Q = Q.concat(
               ObjectItems(v).map(
                 ([kk, vv]) =>
