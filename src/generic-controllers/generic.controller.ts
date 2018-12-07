@@ -127,7 +127,7 @@ export function GenericControllerFactory<
       @param.query.string('filter_str') filter_str: string = '',
       @param.query.number('depth') depth: number = 0,
     ): Promise<{ [key: string]: number }> {
-      if (filter_str !== '' && filter === {})
+      if (filter_str !== '' && filter == null)
         filter = JSON.parse(filter_str)
 
       if (depth < 0)
@@ -172,7 +172,7 @@ export function GenericControllerFactory<
       @param.query.string('filter_str') filter_str: string = '',
       @param.query.number('depth') depth: number = 0,
     ): Promise<{ [key: string]: { [value: string]: number } }> {
-      if (filter_str !== '' && filter === {})
+      if (filter_str !== '' && filter == null)
         filter = JSON.parse(filter_str)
 
       if (depth < 0)
@@ -215,7 +215,7 @@ export function GenericControllerFactory<
       @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter: Filter<GenericEntity> = {},
       @param.query.string('filter_str') filter_str: string = '',
     ): Promise<object> {
-      if (filter_str !== '' && filter === {})
+      if (filter_str !== '' && filter == null)
         filter = JSON.parse(filter_str)
 
       // Take limit out of query, we'll use it to count results
@@ -263,7 +263,7 @@ export function GenericControllerFactory<
       @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
       @param.query.string('filter_str') filter_str: string = '',
     ): Promise<GenericEntity[]> {
-      if (filter_str !== '' && filter === {})
+      if (filter_str !== '' && filter == null)
         filter = JSON.parse(filter_str)
 
       return await this.find({ filter })
