@@ -115,7 +115,7 @@ describe('util', () => {
               '2': 1,
             },
             'd': {
-              '[object Object]': 2,
+              '[object]': 2,
             },
           }
         )
@@ -133,13 +133,13 @@ describe('util', () => {
               '2': 1,
             },
             'd': {
-              '[object Object]': 2,
+              '[object]': 2,
             },
             'd.e': {
-              '[object Object]': 2,
+              '[object]': 2,
             },
             'd.g': {
-              '[object Object]': 1,
+              '[object]': 1,
             },
           }
         )
@@ -157,10 +157,10 @@ describe('util', () => {
               '2': 1,
             },
             'd': {
-              '[object Object]': 2
+              '[object]': 2
             },
             'd.e': {
-              '[object Object]': 2
+              '[object]': 2
             },
             'd.e.b': {
               '0': 1
@@ -169,10 +169,10 @@ describe('util', () => {
               '0': 1
             },
             'd.g': {
-              '[object Object]': 1
+              '[object]': 1
             },
             'd.g.h': {
-              '[object Object]': 1
+              '[object]': 1
             },
           }
         )
@@ -190,10 +190,10 @@ describe('util', () => {
               "2": 1
             },
             "d": {
-              "[object Object]": 2
+              "[object]": 2
             },
             "d.e": {
-              "[object Object]": 2
+              "[object]": 2
             },
             "d.e.b": {
               "0": 1
@@ -202,10 +202,10 @@ describe('util', () => {
               "0": 1
             },
             "d.g": {
-              "[object Object]": 1
+              "[object]": 1
             },
             "d.g.h": {
-              "[object Object]": 1
+              "[object]": 1
             },
             "d.g.h.i": {
               "1": 1
