@@ -19,20 +19,19 @@ export function keyCounts(objs: any[], depth: number = 0) {
         key_counts[k] = 0
       key_counts[k] += 1
 
+
       if (k.replace(/[^\.]/g, '').length < d) {
         try {
-          if (Array.isArray(v)) {
-            Q = Q.concat(
-              v.map(
-                (vv) =>
-                  [k, vv] as [string, any]
-              )
-            )
-          } else if (typeof v === 'object') {
+          if (typeof v === 'object') {
             Q = Q.concat(
               ObjectItems(v).map(
                 ([kk, vv]) =>
-                  [k + '.' + kk, vv] as [string, any]
+                  [
+                    [k, kk].filter(
+                      (k) => k !== ''
+                    ).join('.'),
+                    vv
+                  ] as [string, any]
               ) as [string, any][]
             )
           }
@@ -54,7 +53,7 @@ export function valueCounts(objs: any[], depth: number = 0) {
   const key_value_counts: { [key: string]: { [value: string]: number } } = {}
 
   for (const obj of objs) {
-    let Q = ObjectItems(obj) as [string, any][]
+    let Q = ObjectItems(obj)
     let d = depth
     while (Q.length > 0) {
       let [k, v] = Q.pop() as [string, any]
@@ -75,18 +74,16 @@ export function valueCounts(objs: any[], depth: number = 0) {
 
       if (k.replace(/[^\.]/g, '').length < d) {
         try {
-          if (Array.isArray(v)) {
-            Q = Q.concat(
-              v.map(
-                (vv) =>
-                  [k, vv] as [string, any]
-              )
-            )
-          } else if (typeof v === 'object') {
+          if (typeof v === 'object') {
             Q = Q.concat(
               ObjectItems(v).map(
                 ([kk, vv]) =>
-                  [k + '.' + kk, vv] as [string, any]
+                  [
+                    [k, kk].filter(
+                      (k) => k !== ''
+                    ).join('.'),
+                    vv
+                  ] as [string, any]
               ) as [string, any][]
             )
           }

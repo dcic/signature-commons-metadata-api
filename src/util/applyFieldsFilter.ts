@@ -1,14 +1,27 @@
+import { ObjectItems } from "./object-items";
+
 /**
  * A workaround function which applies the fields filter to an object
  */
-export function applyFieldsFilter(obj: object, fields: any) {
+export function applyFieldsFilter(obj: object, fields: any): any {
   const top_fields = new Set(
     fields.map((field: string) => field.split('.')[0])
   )
-  return Object.keys(obj).reduce<any>((filtered_obj, key) => {
+
+  if (Array.isArray(obj)) {
+    return obj.reduce((objs, v) => {
+      if (typeof v === 'object' && v !== null) {
+        objs = [...objs, applyFieldsFilter(v, fields)]
+      } else if (fields.length === 0 || top_fields.has(v)) {
+        objs = [...objs, v]
+      }
+      return objs
+    }, [])
+  }
+
+  return ObjectItems(obj).reduce<any>((filtered_obj, [key, value]) => {
     if (fields.length === 0 || top_fields.has(key)) {
-      const value = (<any>obj)[key]
-      if (typeof (value) === 'object') {
+      if (typeof (value) === 'object' && value !== null) {
         filtered_obj[key] = applyFieldsFilter(
           value,
           fields.reduce(
