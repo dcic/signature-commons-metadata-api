@@ -18,6 +18,7 @@ export class Sequence implements SequenceHandler {
     try {
       const { request, response } = context;
       const route = this.findRoute(request);
+      request.setTimeout(0, () => { });
 
       // Hotfix from https://github.com/strongloop/loopback-next/issues/1144#issuecomment-438359985
       if (!(route instanceof StaticAssetsRoute)) {
