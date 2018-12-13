@@ -18,228 +18,260 @@ describe('util', () => {
       }
     }
   ]
-  describe('key-counts', () => {
-    describe('depth 0', () => {
-      it('works properly', () => {
-        assert.deepEqual(
-          keyCounts(testObj),
-          {
-            'a': 2,
-            'c': 1,
-            'd': 2,
-          }
-        )
-      })
+  describe('depth 0', () => {
+    it('key-counts', () => {
+      assert.deepEqual(
+        keyCounts(testObj, 0),
+        {
+          'a': 2,
+          'c': 1,
+          'd': 2,
+        }
+      )
     })
+    it('value-counts', () => {
+      assert.deepEqual(
+        valueCounts(testObj, 0),
+        {
+          'a': {
+            'b': 2,
+          },
+          'c': {
+            '2': 1,
+          },
+          'd': {
+            '[object]': 2,
+          },
+        }
+      )
+    })
+  })
+  describe('depth 1', () => {
+    it('key-counts', () => {
+      assert.deepEqual(
+        keyCounts(testObj, 1),
+        {
+          'a': 2,
+          'c': 1,
+          'd': 2,
+          'd.e': 2,
+          'd.g': 1,
+        }
+      )
+    })
+    it('value-counts', () => {
+      assert.deepEqual(
+        valueCounts(testObj, 1),
+        {
+          'a': {
+            'b': 2,
+          },
+          'c': {
+            '2': 1,
+          },
+          'd': {
+            '[object]': 2,
+          },
+          'd.e': {
+            '[object]': 2,
+          },
+          'd.g': {
+            '[object]': 1,
+          },
+        }
+      )
+    })
+  })
+  describe('depth 2', () => {
+    it('key-counts', () => {
+      assert.deepEqual(
+        keyCounts(testObj, 2),
+        {
+          'a': 2,
+          'c': 1,
+          'd': 2,
+          'd.e': 2,
+          'd.g': 1,
+          'd.e.f': 1,
+          'd.e.b': 1,
+          'd.g.h': 1
+        }
+      )
+    })
+    it('value-counts', () => {
+      assert.deepEqual(
+        valueCounts(testObj, 2),
+        {
+          'a': {
+            'b': 2,
+          },
+          'c': {
+            '2': 1,
+          },
+          'd': {
+            '[object]': 2
+          },
+          'd.e': {
+            '[object]': 2
+          },
+          'd.e.b': {
+            '0': 1
+          },
+          'd.e.f': {
+            '0': 1
+          },
+          'd.g': {
+            '[object]': 1
+          },
+          'd.g.h': {
+            '[object]': 1
+          },
+        }
+      )
+    })
+  })
+  describe('depth 3', () => {
+    it('key-counts', () => {
+      assert.deepEqual(
+        keyCounts(testObj, 3),
+        {
+          'a': 2,
+          'c': 1,
+          'd': 2,
+          'd.e': 2,
+          'd.g': 1,
+          'd.e.f': 1,
+          'd.e.b': 1,
+          'd.g.h': 1,
+          "d.g.h.i": 1,
+        }
+      )
+    })
+    it('value-counts', () => {
+      assert.deepEqual(
+        valueCounts(testObj, 3),
+        {
+          "a": {
+            "b": 2
+          },
+          "c": {
+            "2": 1
+          },
+          "d": {
+            "[object]": 2
+          },
+          "d.e": {
+            "[object]": 2
+          },
+          "d.e.b": {
+            "0": 1
+          },
+          "d.e.f": {
+            "0": 1
+          },
+          "d.g": {
+            "[object]": 1
+          },
+          "d.g.h": {
+            "[object]": 1
+          },
+          "d.g.h.i": {
+            "1": 1
+          },
+        }
+      )
+    })
+  })
+
+  describe('lists', () => {
+    const testObj = [
+      {
+        'a': [
+          {
+            'b': {
+              'd': 'e'
+            },
+          },
+          {
+            'd': 'e'
+          },
+        ]
+      },
+      {
+        'a': [
+          {
+            'b': {
+              'd': 'c'
+            },
+          },
+          {
+            'd': 'e'
+          },
+        ]
+      },
+    ]
     describe('depth 1', () => {
-      it('works properly', () => {
+      it('key-counts', () => {
         assert.deepEqual(
           keyCounts(testObj, 1),
           {
-            'a': 2,
-            'c': 1,
-            'd': 2,
-            'd.e': 2,
-            'd.g': 1,
+            'a': 6,
+            'a.b': 2,
+            'a.d': 2,
           }
         )
       })
-    })
-    describe('depth 2', () => {
-      it('works properly', () => {
-        assert.deepEqual(
-          keyCounts(testObj, 2),
-          {
-            'a': 2,
-            'c': 1,
-            'd': 2,
-            'd.e': 2,
-            'd.g': 1,
-            'd.e.f': 1,
-            'd.e.b': 1,
-            'd.g.h': 1
-          }
-        )
-      })
-    })
-    describe('depth 3', () => {
-      it('works properly', () => {
-        assert.deepEqual(
-          keyCounts(testObj, 3),
-          {
-            'a': 2,
-            'c': 1,
-            'd': 2,
-            'd.e': 2,
-            'd.g': 1,
-            'd.e.f': 1,
-            'd.e.b': 1,
-            'd.g.h': 1,
-            "d.g.h.i": 1,
-          }
-        )
-      })
-    })
-    describe('lists', () => {
-      it('works properly', () => {
-        assert.deepEqual(
-          keyCounts([{
-            'a': [
-              {
-                'b': 'c'
-              },
-              {
-                'd': 'e'
-              },
-            ]
-          }], 2),
-          {
-            'a': 3,
-            'a.b': 1,
-            'a.d': 1,
-          }
-        )
-      })
-    })
-  })
-  describe('value-counts', () => {
-    describe('depth 0', () => {
-      it('works properly', () => {
-        assert.deepEqual(
-          valueCounts(testObj, 0),
-          {
-            'a': {
-              'b': 2,
-            },
-            'c': {
-              '2': 1,
-            },
-            'd': {
-              '[object]': 2,
-            },
-          }
-        )
-      })
-    })
-    describe('depth 1', () => {
-      it('works properly with values', () => {
+      it('value-counts', () => {
         assert.deepEqual(
           valueCounts(testObj, 1),
           {
             'a': {
-              'b': 2,
+              '[array]': 2,
+              '[object]': 4,
             },
-            'c': {
-              '2': 1,
-            },
-            'd': {
+            'a.b': {
               '[object]': 2,
             },
-            'd.e': {
-              '[object]': 2,
-            },
-            'd.g': {
-              '[object]': 1,
+            'a.d': {
+              'e': 2,
             },
           }
         )
       })
     })
+
     describe('depth 2', () => {
-      it('with values works properly', () => {
+      it('key-counts', () => {
+        assert.deepEqual(
+          keyCounts(testObj, 2),
+          {
+            'a': 6,
+            'a.b': 2,
+            'a.b.d': 2,
+            'a.d': 2,
+          }
+        )
+      })
+      it('value-counts', () => {
         assert.deepEqual(
           valueCounts(testObj, 2),
           {
             'a': {
-              'b': 2,
+              '[array]': 2,
+              '[object]': 4,
             },
-            'c': {
-              '2': 1,
+            'a.b': {
+              '[object]': 2,
             },
-            'd': {
-              '[object]': 2
+            'a.b.d': {
+              'c': 1,
+              'e': 1,
             },
-            'd.e': {
-              '[object]': 2
-            },
-            'd.e.b': {
-              '0': 1
-            },
-            'd.e.f': {
-              '0': 1
-            },
-            'd.g': {
-              '[object]': 1
-            },
-            'd.g.h': {
-              '[object]': 1
+            'a.d': {
+              'e': 2,
             },
           }
         )
-      })
-    })
-    describe('depth 3', () => {
-      it('with values works properly', () => {
-        assert.deepEqual(
-          valueCounts(testObj, 3),
-          {
-            "a": {
-              "b": 2
-            },
-            "c": {
-              "2": 1
-            },
-            "d": {
-              "[object]": 2
-            },
-            "d.e": {
-              "[object]": 2
-            },
-            "d.e.b": {
-              "0": 1
-            },
-            "d.e.f": {
-              "0": 1
-            },
-            "d.g": {
-              "[object]": 1
-            },
-            "d.g.h": {
-              "[object]": 1
-            },
-            "d.g.h.i": {
-              "1": 1
-            },
-          }
-        )
-      })
-      describe('lists', () => {
-        it('works properly', () => {
-          assert.deepEqual(
-            valueCounts([{
-              'a': [
-                {
-                  'b': 'c'
-                },
-                {
-                  'd': 'e'
-                },
-              ]
-            }], 2),
-            {
-              'a': {
-                '[array]': 1,
-                '[object]': 2,
-              },
-              'a.b': {
-                'c': 1,
-              },
-              'a.d': {
-                'e': 1,
-              },
-            }
-          )
-        })
       })
     })
   })
