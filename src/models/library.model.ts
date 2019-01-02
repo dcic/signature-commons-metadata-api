@@ -1,6 +1,5 @@
-import { Entity, model, Options, property } from '@loopback/repository';
+import { Entity, model, property } from '@loopback/repository';
 import { getJsonSchema } from '@loopback/rest';
-import { strict as assert } from 'assert';
 
 @model({
   name: 'Library',

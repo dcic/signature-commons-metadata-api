@@ -1,6 +1,5 @@
-import { Entity as LBEntity, model, Options, property } from '@loopback/repository';
+import { Entity as LBEntity, model, property } from '@loopback/repository';
 import { getJsonSchema } from '@loopback/rest';
-import { strict as assert } from 'assert';
 
 @model({
   name: 'Entity',
