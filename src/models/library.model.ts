@@ -23,6 +23,15 @@ export class Library extends Entity {
   id: string;
 
   @property({
+    type: 'string',
+    required: true,
+    postgresql: {
+      columnName: 'dataset',
+    },
+  })
+  dataset: string;
+
+  @property({
     type: 'object',
     postgresql: {
       dataType: 'json',

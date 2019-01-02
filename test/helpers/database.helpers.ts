@@ -18,6 +18,7 @@ export async function givenValidLibraryData(data?: Partial<Library>) {
       // $validator: d.$validator,
       id: d.id,
       meta: d.meta,
+      dataset: d.dataset,
     },
     data,
   )
@@ -30,6 +31,7 @@ export async function givenInvalidLibraryData(data?: Partial<Library>) {
       // $validator: d.$validator,
       id: d.id,
       meta: d.meta,
+      dataset: d.dataset,
     },
     data,
   )
