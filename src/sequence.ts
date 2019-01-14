@@ -16,6 +16,7 @@ export class Sequence implements SequenceHandler {
 
   async handle(context: RequestContext) {
     try {
+      const start = Date.now()
       const { request, response } = context;
       const route = this.findRoute(request);
       request.setTimeout(0, () => { });
@@ -36,6 +37,8 @@ export class Sequence implements SequenceHandler {
 
       const args = await this.parseParams(request, route);
       const result = await this.invoke(route, args);
+      response.setHeader('X-Duration', JSON.stringify(Number(Date.now() - start) / 1000));
+
       this.send(response, result);
     } catch (err) {
       this.reject(context, err);
