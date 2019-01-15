@@ -37,7 +37,11 @@ export class Sequence implements SequenceHandler {
 
       const args = await this.parseParams(request, route);
       const result = await this.invoke(route, args);
-      response.setHeader('X-Duration', JSON.stringify(Number(Date.now() - start) / 1000));
+
+      // Don't throw errors when we can't do this because we don't care
+      try {
+        response.setHeader('X-Duration', JSON.stringify(Number(Date.now() - start) / 1000));
+      } catch (e) { }
 
       this.send(response, result);
     } catch (err) {
