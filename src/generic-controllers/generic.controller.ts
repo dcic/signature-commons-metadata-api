@@ -3,12 +3,12 @@ import { authenticate, AuthenticationBindings, UserProfile } from '@loopback/aut
 import { inject } from '@loopback/context';
 import { Constructor } from '@loopback/core';
 import { Count, CountSchema, DataObject, DefaultCrudRepository, Entity, Filter, repository, Where } from '@loopback/repository';
-import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param, patch, post, requestBody } from '@loopback/rest';
+import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param, patch, post, requestBody, Response, RestBindings } from '@loopback/rest';
+import { applyFieldsFilter } from '../util/applyFieldsFilter';
 import debug from '../util/debug';
 import { keyCounts, valueCounts } from '../util/key-counts';
 import { sortedDict } from '../util/sorted-dict';
 import { sum } from '../util/sum';
-import { applyFieldsFilter } from '../util/applyFieldsFilter';
 
 export class IGenericEntity extends Entity {
   $validator?: string
@@ -22,15 +22,15 @@ export class IGenericRepository<T extends IGenericEntity> extends DefaultCrudRep
 export function GenericControllerFactory<
   GenericEntity extends IGenericEntity,
   GenericRepository extends IGenericRepository<GenericEntity>
-  >(
-    props: {
-      GenericRepository: Constructor<GenericRepository>
-      GenericEntity: typeof IGenericEntity
-      GenericEntitySchema: any,
-      modelName: string
-      basePath: string
-    }
-  ): Constructor<any> {
+>(
+  props: {
+    GenericRepository: Constructor<GenericRepository>
+    GenericEntity: typeof IGenericEntity
+    GenericEntitySchema: any,
+    modelName: string
+    basePath: string
+  }
+): Constructor<any> {
 
   const modelSchema = '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json'
 
@@ -46,7 +46,34 @@ export function GenericControllerFactory<
     constructor(
       @repository(props.GenericRepository) public genericRepository: IGenericRepository<GenericEntity>,
       @inject(AuthenticationBindings.CURRENT_USER) private user: UserProfile,
+      @inject(RestBindings.Http.RESPONSE) private response: Response,
     ) { }
+
+    async set_content_range({ filter, results, contentRange }: { filter?: Filter<GenericEntity>, contentRange?: boolean, results: GenericEntity[] }) {
+      if (contentRange !== false) {
+        if (filter === undefined) filter = {}
+        let count: number
+        if (filter.limit === undefined)
+          count = results.length + (filter.skip || filter.offset || 0)
+        else
+          count = (await this.genericRepository.count(filter.where)).count
+
+        const start: number = filter.skip || filter.offset || 0
+        const end = Math.min(
+          start + (filter.limit || Infinity),
+          count,
+        )
+
+        this.response.setHeader(
+          'Access-Control-Expose-Headers',
+          [
+            ...this.response.getHeaderNames(),
+            'Content-Range',
+          ].join(',')
+        );
+        this.response.setHeader('Content-Range', `${start}-${end}/${count}`);
+      }
+    }
 
     @authenticate('POST.' + props.modelName + '.create')
     @post(props.basePath + '', {
@@ -126,6 +153,7 @@ export function GenericControllerFactory<
       @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
       @param.query.string('filter_str') filter_str: string = '',
       @param.query.number('depth') depth: number = 0,
+      @param.query.boolean('contentRange') contentRange: boolean = true,
     ): Promise<{ [key: string]: number }> {
       if (filter_str !== '' && filter == null)
         filter = JSON.parse(filter_str)
@@ -133,11 +161,15 @@ export function GenericControllerFactory<
       if (depth < 0)
         throw new Error("Depth must be greater than 0")
 
+      const results = await this.genericRepository.find({
+        ...filter, fields: undefined
+      })
+
+      await this.set_content_range({ filter, results, contentRange })
+
       return sortedDict(
         keyCounts(
-          (await this.genericRepository.find({
-            ...filter, fields: undefined
-          })).map(
+          results.map(
             (obj) => applyFieldsFilter(obj.meta, ((filter || {}).fields || []))
           ),
           depth
@@ -171,6 +203,7 @@ export function GenericControllerFactory<
       @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
       @param.query.string('filter_str') filter_str: string = '',
       @param.query.number('depth') depth: number = 0,
+      @param.query.boolean('contentRange') contentRange: boolean = true,
     ): Promise<{ [key: string]: { [value: string]: number } }> {
       if (filter_str !== '' && filter == null)
         filter = JSON.parse(filter_str)
@@ -178,11 +211,15 @@ export function GenericControllerFactory<
       if (depth < 0)
         throw new Error("Depth must be greater than 0")
 
+      const results = await this.genericRepository.find({
+        ...filter, fields: undefined
+      })
+
+      await this.set_content_range({ filter, results, contentRange })
+
       return sortedDict(
         valueCounts(
-          (await this.genericRepository.find({
-            ...filter, fields: undefined
-          })).map(
+          results.map(
             (obj) => applyFieldsFilter(obj.meta, ((filter || {}).fields || []))
           ),
           depth
@@ -214,18 +251,23 @@ export function GenericControllerFactory<
     async dbck(
       @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter: Filter<GenericEntity> = {},
       @param.query.string('filter_str') filter_str: string = '',
+      @param.query.boolean('contentRange') contentRange: boolean = true,
     ): Promise<object> {
       if (filter_str !== '' && filter == null)
         filter = JSON.parse(filter_str)
 
       // Take limit out of query, we'll use it to count results
       const limit = filter.limit || 1
-      delete filter.limit
 
-      const objs = await this.genericRepository.find(filter);
-      let results: Array<object> = []
+      const results = await this.genericRepository.find({
+        ...filter, limit: undefined
+      })
 
-      for await (let obj of objs) {
+      await this.set_content_range({ filter, results, contentRange })
+
+      let objs: Array<object> = []
+
+      for await (let obj of results) {
         if (results.length >= limit)
           break
         try {
@@ -237,11 +279,11 @@ export function GenericControllerFactory<
             modelSchema
           )
         } catch (e) {
-          results = results.concat(e)
+          objs = objs.concat(e)
         }
       }
 
-      return results
+      return objs
     }
 
     @authenticate('GET.' + props.modelName + '.find')
@@ -262,11 +304,12 @@ export function GenericControllerFactory<
     async find_get(
       @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
       @param.query.string('filter_str') filter_str: string = '',
+      @param.query.boolean('contentRange') contentRange: boolean = true,
     ): Promise<GenericEntity[]> {
       if (filter_str !== '' && filter == null)
         filter = JSON.parse(filter_str)
 
-      return await this.find({ filter })
+      return await this.find({ filter, contentRange })
     }
 
     @authenticate('GET.' + props.modelName + '.find')
@@ -285,15 +328,21 @@ export function GenericControllerFactory<
       },
     })
     async find(
-      @requestBody() { filter }: {
-        filter?: Filter<GenericEntity>
+      @requestBody() { filter, contentRange }: {
+        filter?: Filter<GenericEntity>,
+        contentRange?: boolean
       }
     ): Promise<GenericEntity[]> {
-      return (
-        await this.genericRepository.find({
-          ...filter, fields: undefined
-        })
-      ).map(
+      if (filter === undefined)
+        filter = {}
+
+      const results = await this.genericRepository.find({
+        ...filter, fields: undefined
+      })
+
+      await this.set_content_range({ filter, results, contentRange })
+
+      return results.map(
         (obj) => applyFieldsFilter(
           {
             $validator: modelSchema,

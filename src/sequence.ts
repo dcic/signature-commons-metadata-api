@@ -40,7 +40,13 @@ export class Sequence implements SequenceHandler {
 
       // Don't throw errors when we can't do this because we don't care
       try {
-        response.setHeader('Access-Control-Expose-Headers', 'X-Duration');
+        response.setHeader(
+          'Access-Control-Expose-Headers',
+          [
+            ...response.getHeaderNames(),
+            'X-Duration',
+          ].join(',')
+        );
         response.setHeader('X-Duration', JSON.stringify(Number(Date.now() - start) / 1000));
       } catch (e) { }
 
