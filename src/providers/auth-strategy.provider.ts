@@ -46,11 +46,15 @@ export class AuthStrategyProvider implements Provider<Strategy | undefined> {
         })
       }
       return user
-    })().then((user: UserProfile) => {
-      if (new RegExp(user.roles).test(strategy)) {
-        cb(null, user)
-      } else {
+    })().then((user: UserProfile | null) => {
+      if (user === null) {
         cb(null, false)
+      } else {
+        if (new RegExp(user.roles).test(strategy)) {
+          cb(null, user)
+        } else {
+          cb(null, false)
+        }
       }
     }).catch((e) => cb(e, false))
   }
