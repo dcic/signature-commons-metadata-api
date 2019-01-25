@@ -9,6 +9,7 @@ import debug from '../util/debug';
 import { keyCounts, valueCounts } from '../util/key-counts';
 import { sortedDict } from '../util/sorted-dict';
 import { sum } from '../util/sum';
+import { PriorityCache } from '../util/cache'
 
 export class IGenericEntity extends Entity {
   $validator?: string
@@ -18,6 +19,20 @@ export class IGenericEntity extends Entity {
 
 export class IGenericRepository<T extends IGenericEntity> extends DefaultCrudRepository<T, string> {
 }
+
+// 100,000 characters (~2 bytes ea) ~ 200K
+const cache = new PriorityCache(100 * 1000)
+
+function hashCode(str: string) {
+  var hash = 0, i, chr;
+  if (str.length === 0) return hash;
+  for (i = 0; i < str.length; i++) {
+    chr = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + chr;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
+};
 
 export function GenericControllerFactory<
   GenericEntity extends IGenericEntity,
@@ -211,21 +226,38 @@ export function GenericControllerFactory<
       if (depth < 0)
         throw new Error("Depth must be greater than 0")
 
-      const results = await this.genericRepository.find({
-        ...filter, fields: undefined
-      })
+      const cache_key = hashCode(JSON.stringify({ filter, depth })) + ''
+      let cache_val = cache.get(cache_key)
+      if (cache_val === undefined) {
+        const start = Date.now()
 
-      await this.set_content_range({ filter, results, contentRange })
+        const results = await this.genericRepository.find({
+          ...filter, fields: undefined
+        })
 
-      return sortedDict(
-        valueCounts(
-          results.map(
-            (obj) => applyFieldsFilter(obj.meta, ((filter || {}).fields || []))
+        await this.set_content_range({ filter, results, contentRange })
+
+        cache_val = sortedDict(
+          valueCounts(
+            results.map(
+              (obj) => applyFieldsFilter(obj.meta, ((filter || {}).fields || []))
+            ),
+            depth
           ),
-          depth
-        ),
-        (a, b) => sum(Object.values(b)) - sum(Object.values(a))
-      )
+          (a, b) => sum(Object.values(b)) - sum(Object.values(a))
+        )
+
+        cache.put(
+          cache_key,
+          cache_val,
+          {
+            size: JSON.stringify(cache_val).length,
+            cost: (Date.now() - start) / 1000,
+          }
+        )
+      }
+
+      return cache_val
     }
 
     @authenticate('GET.' + props.modelName + '.dbck')
