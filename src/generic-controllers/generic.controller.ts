@@ -19,6 +19,26 @@ export class IGenericEntity extends Entity {
 export class IGenericRepository<T extends IGenericEntity> extends DefaultCrudRepository<T, string> {
 }
 
+export interface GenericController<
+  GenericEntity extends IGenericEntity,
+  GenericRepository extends IGenericRepository<GenericEntity>
+  > {
+  genericRepository: IGenericRepository<GenericEntity>
+
+  set_content_range(props: { filter?: Filter<GenericEntity>, contentRange?: boolean, results: GenericEntity[] }): Promise<void>
+  create(obj: GenericEntity): Promise<GenericEntity>
+  count(where?: Where<GenericEntity>, where_str?: string): Promise<Count>
+  key_count(filter?: Filter<GenericEntity>, filter_str?: string, depth?: number, contentRange?: boolean): Promise<{ [key: string]: number }>
+  value_count(filter?: Filter<GenericEntity>, filter_str?: string, depth?: number, contentRange?: boolean, ): Promise<{ [key: string]: { [value: string]: number } }>
+  dbck(filter: Filter<GenericEntity>, filter_str?: string, contentRange?: boolean, ): Promise<object>
+  find_get(filter?: Filter<GenericEntity>, filter_str?: string, contentRange?: boolean, ): Promise<GenericEntity[]>
+  find(props: { filter?: Filter<GenericEntity>, contentRange?: boolean }): Promise<GenericEntity[]>
+  updateAll(body: DataObject<GenericEntity>, where?: Where<GenericEntity>, where_str?: string, ): Promise<Count>
+  findById(id: string): Promise<GenericEntity>
+  updateById(id: string, obj: GenericEntity, ): Promise<void>
+  deleteById(id: string): Promise<void>
+}
+
 export function GenericControllerFactory<
   GenericEntity extends IGenericEntity,
   GenericRepository extends IGenericRepository<GenericEntity>
@@ -30,11 +50,12 @@ export function GenericControllerFactory<
     modelName: string
     basePath: string
   }
-): Constructor<any> {
+): Constructor<GenericController<GenericEntity, GenericRepository>> {
 
   const modelSchema = '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json'
 
   @api({
+    basePath: props.basePath,
     paths: {},
     components: {
       schemas: {
@@ -76,7 +97,7 @@ export function GenericControllerFactory<
     }
 
     @authenticate('POST.' + props.modelName + '.create')
-    @post(props.basePath + '', {
+    @post('', {
       tags: [props.modelName],
       operationId: props.modelName + '.create',
       responses: {
@@ -108,7 +129,7 @@ export function GenericControllerFactory<
     }
 
     @authenticate('GET.' + props.modelName + '.count')
-    @get(props.basePath + '/count', {
+    @get('/count', {
       tags: [props.modelName],
       operationId: props.modelName + '.count',
       responses: {
@@ -129,7 +150,7 @@ export function GenericControllerFactory<
     }
 
     @authenticate('GET.' + props.modelName + '.key_count')
-    @get(props.basePath + '/key_count', {
+    @get('/key_count', {
       tags: [props.modelName],
       operationId: props.modelName + '.key_count',
       responses: {
@@ -179,7 +200,7 @@ export function GenericControllerFactory<
     }
 
     @authenticate('GET.' + props.modelName + '.value_count')
-    @get(props.basePath + '/value_count', {
+    @get('/value_count', {
       tags: [props.modelName],
       operationId: props.modelName + '.value_count',
       responses: {
@@ -229,7 +250,7 @@ export function GenericControllerFactory<
     }
 
     @authenticate('GET.' + props.modelName + '.dbck')
-    @get(props.basePath + '/dbck', {
+    @get('/dbck', {
       tags: [props.modelName],
       operationId: props.modelName + '.dbck',
       responses: {
@@ -287,7 +308,7 @@ export function GenericControllerFactory<
     }
 
     @authenticate('GET.' + props.modelName + '.find')
-    @get(props.basePath + '', {
+    @get('', {
       tags: [props.modelName],
       operationId: props.modelName + '.find_get',
       responses: {
@@ -313,7 +334,7 @@ export function GenericControllerFactory<
     }
 
     @authenticate('GET.' + props.modelName + '.find')
-    @post(props.basePath + '/find', {
+    @post('/find', {
       tags: [props.modelName],
       operationId: props.modelName + '.find',
       responses: {
@@ -354,7 +375,7 @@ export function GenericControllerFactory<
     }
 
     @authenticate('PATCH.' + props.modelName + '.updateAll')
-    @patch(props.basePath + '', {
+    @patch('', {
       tags: [props.modelName],
       operationId: props.modelName + '.updateAll',
       responses: {
@@ -399,7 +420,7 @@ export function GenericControllerFactory<
     }
 
     @authenticate('GET.' + props.modelName + '.findById')
-    @get(props.basePath + '/{id}', {
+    @get('/{id}', {
       tags: [props.modelName],
       operationId: props.modelName + '.findById',
       responses: {
@@ -417,7 +438,7 @@ export function GenericControllerFactory<
     }
 
     @authenticate('PATCH.' + props.modelName + '.updateById')
-    @patch(props.basePath + '/{id}', {
+    @patch('/{id}', {
       tags: [props.modelName],
       operationId: props.modelName + '.updateById',
       responses: {
@@ -447,7 +468,7 @@ export function GenericControllerFactory<
     }
 
     @authenticate('DELETE.' + props.modelName + '.deleteById')
-    @del(props.basePath + '/{id}', {
+    @del('/{id}', {
       tags: [props.modelName],
       operationId: props.modelName + '.deleteById',
       responses: {

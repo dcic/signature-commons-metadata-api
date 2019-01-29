@@ -4,7 +4,7 @@ import { ApplicationConfig } from '@loopback/core';
 import { RepositoryMixin } from '@loopback/repository';
 import { RestApplication, RestBindings } from '@loopback/rest';
 import { ServiceMixin } from '@loopback/service-proxy';
-import { EntityController, LibraryController, SignatureController } from './generic-controllers';
+import { Entity as EntityController, Library as LibraryController, Signature as SignatureController } from './generic-controllers';
 import { AuthStrategyProvider } from './providers/auth-strategy.provider';
 import { SmartTrieRouter } from './router';
 import { Sequence } from './sequence';

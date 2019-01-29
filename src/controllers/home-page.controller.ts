@@ -1,9 +1,14 @@
 import { get } from '@loopback/openapi-v3';
+import { api } from '@loopback/rest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { inject } from '@loopback/context';
 import { RestBindings, Response } from '@loopback/rest';
 
+@api({
+  basePath: '/signature-commons-metadata-api',
+  paths: {},
+})
 export class HomePageController {
   private html: string;
   constructor(@inject(RestBindings.Http.RESPONSE) private response: Response) {
@@ -13,7 +18,7 @@ export class HomePageController {
     );
   }
 
-  @get('/signature-commons-metadata-api/explorer', {
+  @get('/explorer', {
     tags: [],
     responses: {
       '302': {
@@ -25,7 +30,7 @@ export class HomePageController {
     return this.response.redirect('http://explorer.loopback.io/?url=http://amp.pharm.mssm.edu/signature-commons-metadata-api/openapi.json');
   }
 
-  @get('/signature-commons-metadata-api', {
+  @get('', {
     tags: [],
     responses: {
       '200': {
