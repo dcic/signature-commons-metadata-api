@@ -2,10 +2,11 @@ import { AuthenticationBindings, AuthenticationComponent } from '@loopback/authe
 import { BootMixin } from '@loopback/boot';
 import { ApplicationConfig } from '@loopback/core';
 import { RepositoryMixin } from '@loopback/repository';
-import { RestApplication } from '@loopback/rest';
+import { RestApplication, RestBindings } from '@loopback/rest';
 import { ServiceMixin } from '@loopback/service-proxy';
 import { EntityController, LibraryController, SignatureController } from './generic-controllers';
 import { AuthStrategyProvider } from './providers/auth-strategy.provider';
+import { SmartTrieRouter } from './router';
 import { Sequence } from './sequence';
 
 export class App extends BootMixin(
@@ -24,6 +25,9 @@ export class App extends BootMixin(
     this.controller(LibraryController, 'Library');
     this.controller(SignatureController, 'Signature');
     this.controller(EntityController, 'Entity');
+
+    // Set up custom router
+    this.bind(RestBindings.ROUTER).toClass(SmartTrieRouter);
 
     // Set up the custom sequence
     this.sequence(Sequence);
