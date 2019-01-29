@@ -1,5 +1,5 @@
 import { authenticate } from '@loopback/authentication';
-import { repository } from '@loopback/repository';
+import { repository, Filter } from '@loopback/repository';
 import { get, param } from '@loopback/rest';
 import { Library, Signature as SignatureEntity, SignatureSchema } from '../models';
 import { LibraryRepository, SignatureRepository } from '../repositories';
@@ -23,7 +23,7 @@ export class Signature extends GenericSignatureController {
     @repository(LibraryRepository) libraryRepository: IGenericRepository<Library>,
     @param.path.string('id') id: string
   ): Promise<Library> {
-    const signature = await this.genericRepository.findById(id)
+    const signature = await this.genericRepository.findById(id, { fields: ['library'] } as Filter<SignatureEntity>)
     const library = await libraryRepository.findById(signature.library)
     return library
   }
