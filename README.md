@@ -10,6 +10,8 @@ Some environment variables should be set to get things running--this can be done
 
 ```bash
 export POSTGRESQL=posgresql://${user}:${pass}@${host}:${port}/${db}
+export ADMIN_USERNAME="${api_admin_user}"
+export ADMIN_PASSWORD="${api_admin_pass}"
 ```
 
 Where the ${} variables should be substituted with your own values.
