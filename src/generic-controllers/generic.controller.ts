@@ -7,11 +7,9 @@ import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param
 import * as uuidv4 from 'uuid/v4';
 import { applyFieldsFilter } from '../util/applyFieldsFilter';
 import debug from '../util/debug';
-import { flatten_keys } from '../util/flatten-keys';
-import { keyCounts, valueCounts } from '../util/key-counts';
-import { sortedDict } from '../util/sorted-dict';
-import { sum } from '../util/sum';
 import serializeError from 'serialize-error'
+import { flatten_keys } from '../util/flatten-keys'
+import { PostgreSQLDataSource } from '../datasources';
 
 export class IGenericEntity extends Entity {
   $validator?: string
@@ -20,6 +18,7 @@ export class IGenericEntity extends Entity {
 }
 
 export class IGenericRepository<T extends IGenericEntity> extends DefaultCrudRepository<T, string> {
+  dataSource: PostgreSQLDataSource
 }
 
 export interface GenericController<
@@ -49,7 +48,7 @@ export function GenericControllerFactory<
   props: {
     GenericRepository: Constructor<GenericRepository>
     GenericEntity: typeof IGenericEntity
-    GenericEntitySchema: any,
+    GenericEntitySchema: any
     modelName: string
     basePath: string
   }
@@ -220,24 +219,7 @@ export function GenericControllerFactory<
       if (filter_str !== '' && filter == null)
         filter = JSON.parse(filter_str)
 
-      if (depth < 0)
-        throw new Error("Depth must be greater than 0")
-
-      const results = await this.genericRepository.find({
-        ...filter, fields: undefined
-      })
-
-      await this.set_content_range({ filter, results, contentRange })
-
-      return sortedDict(
-        keyCounts(
-          results.map(
-            (obj) => applyFieldsFilter(obj.meta, ((filter || {}).fields || []))
-          ),
-          depth
-        ),
-        (a, b) => b - a
-      )
+      return this.genericRepository.dataSource.key_counts(props.GenericEntity, filter)
     }
 
     @authenticate('GET.' + props.modelName + '.value_count')
@@ -273,24 +255,8 @@ export function GenericControllerFactory<
       if (filter_str !== '' && filter == null)
         filter = JSON.parse(filter_str)
 
-      if (depth < 0)
-        throw new Error("Depth must be greater than 0")
+      return this.genericRepository.dataSource.value_counts(props.GenericEntity, filter)
 
-      const results = await this.genericRepository.find({
-        ...filter, fields: undefined
-      })
-
-      await this.set_content_range({ filter, results, contentRange })
-
-      return sortedDict(
-        valueCounts(
-          results.map(
-            (obj) => applyFieldsFilter(obj.meta, ((filter || {}).fields || []))
-          ),
-          depth
-        ),
-        (a, b) => sum(Object.values(b)) - sum(Object.values(a))
-      )
     }
 
     @authenticate('GET.' + props.modelName + '.dbck')

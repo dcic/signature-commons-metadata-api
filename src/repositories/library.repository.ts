@@ -7,6 +7,8 @@ export class LibraryRepository extends DefaultCrudRepository<
   Library,
   typeof Library.prototype.id
   > {
+  dataSource: PostgreSQLDataSource
+
   constructor(
     @inject('datasources.PostgreSQL') dataSource: PostgreSQLDataSource,
   ) {

@@ -7,6 +7,8 @@ export class SignatureRepository extends DefaultCrudRepository<
   Signature,
   typeof Signature.prototype.id
   > {
+  dataSource: PostgreSQLDataSource
+
   constructor(
     @inject('datasources.PostgreSQL') dataSource: PostgreSQLDataSource,
   ) {

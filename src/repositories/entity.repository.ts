@@ -7,6 +7,8 @@ export class EntityRepository extends DefaultCrudRepository<
   Entity,
   typeof Entity.prototype.id
   > {
+  dataSource: PostgreSQLDataSource
+
   constructor(
     @inject('datasources.PostgreSQL') dataSource: PostgreSQLDataSource,
   ) {
