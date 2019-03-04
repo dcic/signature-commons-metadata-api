@@ -33,8 +33,8 @@
   "repository": {
     "type": "git"
   },
-  "author": "",
-  "license": "",
+  "author": "Daniel J. B. Clarke (u8sand@gmail.com)",
+  "license": "Apache-2.0",
   "files": [
     "README.md",
     "index.js",
@@ -44,7 +44,7 @@
     "src"
   ],
   "dependencies": {
-    "@dcic/signature-commons-schema": "^1.1.2",
+    "@dcic/signature-commons-schema": "^1.2.1",
     "@loopback/authentication": "^1.0.8",
     "@loopback/boot": "^1.0.8",
     "@loopback/context": "^1.4.0",
