@@ -28,7 +28,8 @@
     "test:dev": "lb-mocha --allow-console-logs dist/test/**/*.js && npm run posttest",
     "prestart": "npm run build",
     "start": "node .",
-    "prepublishOnly": "npm run test"
+    "prepublishOnly": "npm run test",
+    "deploy": "docker build -t maayanlab/signature-commons-metadata-api:${npm_package_version} . && docker push maayanlab/signature-commons-metadata-api:${npm_package_version} && docker tag maayanlab/signature-commons-metadata-api:${npm_package_version} maayanlab/signature-commons-metadata-api:latest && docker push maayanlab/signature-commons-metadata-api:latest"
   },
   "repository": {
     "type": "git"
@@ -53,6 +54,7 @@
     "@loopback/repository": "^1.1.1",
     "@loopback/rest": "^1.5.1",
     "@loopback/service-proxy": "^1.0.5",
+    "cross-env": "^5.2.0",
     "loopback-connector-postgresql": "github:u8sand/loopback-connector-postgresql#fullTextSearch",
     "memory": "0.0.3",
     "passport": "^0.4.0",
