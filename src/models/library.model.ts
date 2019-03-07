@@ -42,8 +42,9 @@ export class Library extends Entity {
   meta: JSON;
 
   @property({
-    type: 'string',
+    type: 'object',
     array: true,
+    itemType: 'string',
     postgresql: {
       dataType: 'json',
       columnName: 'signature_keys',
