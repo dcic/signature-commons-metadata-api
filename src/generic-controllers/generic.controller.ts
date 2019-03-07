@@ -7,6 +7,7 @@ import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param
 import * as uuidv4 from 'uuid/v4';
 import { applyFieldsFilter } from '../util/applyFieldsFilter';
 import debug from '../util/debug';
+import { flatten_keys } from '../util/flatten-keys';
 import { keyCounts, valueCounts } from '../util/key-counts';
 import { sortedDict } from '../util/sorted-dict';
 import { sum } from '../util/sum';
@@ -335,11 +336,22 @@ export function GenericControllerFactory<
         try {
           let resolved_obj: GenericEntity | undefined = undefined
 
-          const possibilities = await this.find({
-            filter: {
-              where: obj
-            }
-          })
+          const possibilities = obj.id !== undefined ? (
+            await this.find({
+              filter: {
+                where: {
+                  id: obj.id
+                }
+              } as any
+            })
+          ) : (
+              await this.find({
+                filter: {
+                  where: flatten_keys(obj)
+                }
+              })
+            )
+
           if (possibilities.length > 1)
             throw new Error(`Could not resolve single ${props.modelName} instance`)
           else if (possibilities.length > 0)
