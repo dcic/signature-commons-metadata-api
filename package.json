@@ -54,11 +54,13 @@
     "@loopback/repository": "^1.1.1",
     "@loopback/rest": "^1.5.1",
     "@loopback/service-proxy": "^1.0.5",
+    "@types/uuid": "^3.4.4",
     "cross-env": "^5.2.0",
     "loopback-connector-postgresql": "github:u8sand/loopback-connector-postgresql#fullTextSearch",
     "memory": "0.0.3",
     "passport": "^0.4.0",
-    "passport-http": "^0.3.0"
+    "passport-http": "^0.3.0",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@loopback/build": "^1.1.0",

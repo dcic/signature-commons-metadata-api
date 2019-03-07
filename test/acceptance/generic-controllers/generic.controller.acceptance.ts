@@ -340,5 +340,27 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .set('Authorization', 'Basic ' + auth)
         .expect(406);
     });
+
+    it("can find_or_create valid authenticated", async () => {
+      const user = await givenAdminUserProfile()
+      const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
+      const validObj = await props.givenValidObject()
+      const resolvedObj = {
+        $validator: `/@dcic/signature-commons-schema/core/${props.modelName}.json`,
+        ...validObj,
+      }
+      // If we can do this 3 times without error, then we
+      //  are properly resolving the previous version and sending it back.
+      await client
+        .post(
+          props.basePath
+          + '/find_or_create'
+        )
+        .set('Authorization', 'Basic ' + auth)
+        .send([validObj, validObj, validObj])
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+        .expect([{ ...resolvedObj }, { ...resolvedObj }, { ...resolvedObj }])
+    })
   });
 }

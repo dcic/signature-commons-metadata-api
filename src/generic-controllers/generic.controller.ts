@@ -4,6 +4,7 @@ import { inject } from '@loopback/context';
 import { Constructor } from '@loopback/core';
 import { Count, CountSchema, DataObject, DefaultCrudRepository, Entity, Filter, repository, Where } from '@loopback/repository';
 import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param, patch, post, requestBody, Response, RestBindings } from '@loopback/rest';
+import * as uuidv4 from 'uuid/v4';
 import { applyFieldsFilter } from '../util/applyFieldsFilter';
 import debug from '../util/debug';
 import { keyCounts, valueCounts } from '../util/key-counts';
@@ -305,6 +306,58 @@ export function GenericControllerFactory<
       }
 
       return objs
+    }
+
+    @authenticate('POST.' + props.modelName + '.find_or_create')
+    @post('/find_or_create', {
+      tags: [props.modelName],
+      operationId: props.modelName + '.find_or_create',
+      responses: {
+        '200': {
+          description: 'Array of ' + props.modelName + 'model instances',
+          content: {
+            'application/json': {
+              schema: { type: 'array', items: { 'x-ts-type': props.GenericEntity } },
+            },
+          },
+        },
+      },
+    })
+    async find_or_create(
+      @requestBody() body: DataObject<GenericEntity>[],
+    ): Promise<object[]> {
+      // TODO: fuzzy matching
+      // TODO: fuzzy merging (incorporate new incoming information)
+
+      const results: object[] = []
+
+      for (const obj of body) {
+        try {
+          let resolved_obj: GenericEntity | undefined = undefined
+
+          const possibilities = await this.find({
+            filter: {
+              where: obj
+            }
+          })
+          if (possibilities.length > 1)
+            throw new Error(`Could not resolve single ${props.modelName} instance`)
+          else if (possibilities.length > 0)
+            resolved_obj = possibilities[0]
+
+          if (resolved_obj === undefined) {
+            if (obj.id === undefined)
+              (obj as any).id = uuidv4()
+
+            resolved_obj = await this.create(obj as GenericEntity)
+          }
+
+          results.push(resolved_obj)
+        } catch (err) {
+          results.push({ 'error': JSON.stringify(err) })
+        }
+      }
+      return results
     }
 
     @authenticate('GET.' + props.modelName + '.find')
