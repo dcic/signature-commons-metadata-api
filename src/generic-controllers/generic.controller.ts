@@ -318,14 +318,35 @@ export function GenericControllerFactory<
           description: 'Array of ' + props.modelName + 'model instances',
           content: {
             'application/json': {
-              schema: { type: 'array', items: { 'x-ts-type': props.GenericEntity } },
+              schema: {
+                type: 'array',
+                items: {
+                  oneOf: [
+                    { 'x-ts-type': props.GenericEntity },
+                    { type: 'object', description: 'Error object' }
+                  ]
+                },
+              },
             },
           },
         },
-      },
+      }
     })
     async find_or_create(
-      @requestBody() body: DataObject<GenericEntity>[],
+      @requestBody({
+        description: 'Array of partial objects to be found or created',
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+              items: {
+                type: 'object',
+              }
+            }
+          }
+        }
+      }) body: DataObject<GenericEntity>[],
     ): Promise<object[]> {
       // TODO: fuzzy matching
       // TODO: fuzzy merging (incorporate new incoming information)
