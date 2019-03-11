@@ -21,9 +21,7 @@ describe('util', () => {
         }),
         {
           id: '1',
-          'meta.test.me': {
-            inq: ['plenty', 'always'],
-          },
+          'meta.test.me': ['plenty', 'always'],
           'meta.test.and': 2,
           'meta.best.nest.guest': '3'
         }
