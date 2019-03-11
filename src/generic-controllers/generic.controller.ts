@@ -3,7 +3,7 @@ import { authenticate, AuthenticationBindings, UserProfile } from '@loopback/aut
 import { inject } from '@loopback/context';
 import { Constructor } from '@loopback/core';
 import { Count, CountSchema, DataObject, DefaultCrudRepository, Entity, Filter, repository, Where } from '@loopback/repository';
-import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param, patch, post, requestBody, Response, RestBindings } from '@loopback/rest';
+import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param, patch, post, requestBody, Response, RestBindings, getFilterJsonSchemaFor, SchemaObject } from '@loopback/rest';
 import * as uuidv4 from 'uuid/v4';
 import { applyFieldsFilter } from '../util/applyFieldsFilter';
 import debug from '../util/debug';
@@ -105,11 +105,41 @@ export function GenericControllerFactory<
       responses: {
         '200': {
           description: props.modelName + ' model instance',
-          content: { 'application/json': { 'x-ts-type': props.GenericEntity } },
+          content: {
+            'application/json': {
+              schema: {
+                'x-ts-type': props.GenericEntity
+              }
+            }
+          },
         },
+        '401': {
+          description: 'Access denied'
+        },
+        '406': {
+          description: 'validation of model instance failed',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                description: 'ajv validation error'
+              }
+            }
+          },
+        }
       },
     })
-    async create(@requestBody() obj: GenericEntity): Promise<GenericEntity> {
+    async create(@requestBody({
+      description: 'Full object to be created',
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            'x-ts-type': props.GenericEntity
+          }
+        }
+      }
+    }) obj: GenericEntity): Promise<GenericEntity> {
       try {
         const entity = await validate<GenericEntity>(
           {
@@ -137,7 +167,11 @@ export function GenericControllerFactory<
       responses: {
         '200': {
           description: props.modelName + ' model count',
-          content: { 'application/json': { schema: CountSchema } },
+          content: {
+            'application/json': {
+              schema: CountSchema
+            }
+          },
         },
       },
     })
@@ -169,6 +203,9 @@ export function GenericControllerFactory<
               }
             }
           },
+        },
+        '401': {
+          description: 'Access denied'
         },
       },
     })
@@ -220,6 +257,9 @@ export function GenericControllerFactory<
             }
           },
         },
+        '401': {
+          description: 'Access denied'
+        },
       },
     })
     async value_count(
@@ -257,10 +297,11 @@ export function GenericControllerFactory<
       operationId: props.modelName + '.dbck',
       responses: {
         '200': {
-          description: 'Check model instances',
+          description: 'Check model instances and report errors',
           content: {
             'application/json': {
               schema: {
+                description: 'ajv errors experienced while validating database entries',
                 type: 'array',
                 items: {
                   type: 'object'
@@ -268,7 +309,10 @@ export function GenericControllerFactory<
               },
             },
           },
-        }
+        },
+        '401': {
+          description: 'Access denied'
+        },
       }
     })
     async dbck(
@@ -323,12 +367,18 @@ export function GenericControllerFactory<
                 items: {
                   oneOf: [
                     { 'x-ts-type': props.GenericEntity },
-                    { type: 'object', description: 'Error object' }
+                    {
+                      type: 'object',
+                      description: 'Error object'
+                    }
                   ]
                 },
               },
             },
           },
+        },
+        '401': {
+          description: 'Access denied'
         },
       }
     })
@@ -435,7 +485,24 @@ export function GenericControllerFactory<
       },
     })
     async find(
-      @requestBody() { filter, contentRange }: {
+      @requestBody({
+        description: 'JSON of the find GET parameters',
+        required: false,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                filter: getFilterJsonSchemaFor(props.GenericEntity) as SchemaObject,
+                contentRange: {
+                  type: 'boolean',
+                  description: 'whether or not to compute the contentRange header'
+                }
+              }
+            }
+          }
+        }
+      }) { filter, contentRange }: {
         filter?: Filter<GenericEntity>,
         contentRange?: boolean
       }
@@ -469,10 +536,37 @@ export function GenericControllerFactory<
           description: props.modelName + ' PATCH success count',
           content: { 'application/json': { schema: CountSchema } },
         },
+        '401': {
+          description: 'Access denied'
+        },
+        '406': {
+          description: 'validation error during update',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                description: 'Error object'
+              }
+            }
+          }
+        }
       },
     })
     async updateAll(
-      @requestBody() body: DataObject<GenericEntity>,
+      @requestBody({
+        description: 'Array of objects to be updated',
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+              items: {
+                'x-ts-type': props.GenericEntity
+              }
+            }
+          }
+        }
+      }) body: DataObject<GenericEntity>,
       @param.query.object('where', getWhereSchemaFor(props.GenericEntity)) where?: Where<GenericEntity>,
       @param.query.string('where_str') where_str: string = '',
     ): Promise<Count> {
@@ -531,11 +625,34 @@ export function GenericControllerFactory<
         '204': {
           description: props.modelName + ' PATCH success',
         },
+        '401': {
+          description: 'Access denied'
+        },
+        '406': {
+          description: 'ajv validation error',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object'
+              }
+            }
+          }
+        },
       },
     })
     async updateById(
       @param.path.string('id') id: string,
-      @requestBody() obj: GenericEntity,
+      @requestBody({
+        description: 'Updated object to replace the object with',
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              'x-ts-type': props.GenericEntity
+            }
+          }
+        }
+      }) obj: GenericEntity,
     ): Promise<void> {
       try {
         return await this.genericRepository.updateById(id,
@@ -560,6 +677,9 @@ export function GenericControllerFactory<
       responses: {
         '204': {
           description: props.modelName + ' DELETE success',
+        },
+        '401': {
+          description: 'Access denied'
         },
       },
     })
