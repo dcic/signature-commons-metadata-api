@@ -8,10 +8,7 @@ export function flatten_keys(obj: object) {
     for (const key of Object.keys(new_obj)) {
       if (done.has(key)) continue
 
-      if (Array.isArray(new_obj[key])) {
-        new_obj[key] = {
-          inq: new_obj[key]
-        }
+      if (Array.isArray(new_obj[key]) || typeof new_obj[key] !== 'object') {
         changed = true
         done.add(key)
       } else if (typeof new_obj[key] === 'object') {
@@ -20,9 +17,6 @@ export function flatten_keys(obj: object) {
           changed = true
         }
         delete new_obj[key]
-      } else {
-        changed = true
-        done.add(key)
       }
     }
   }
