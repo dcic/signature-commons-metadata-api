@@ -494,7 +494,10 @@ export function GenericControllerFactory<
             schema: {
               type: 'object',
               properties: {
-                filter: getFilterJsonSchemaFor(props.GenericEntity) as SchemaObject,
+                filter: {
+                  type: 'object',
+                  description: 'filter rules for entity',
+                },
                 contentRange: {
                   type: 'boolean',
                   description: 'whether or not to compute the contentRange header'
