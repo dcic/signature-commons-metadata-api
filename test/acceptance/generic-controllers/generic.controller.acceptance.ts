@@ -3,6 +3,31 @@ import { App } from '../../..';
 import { IGenericEntity } from '../../../src/generic-controllers/generic.controller';
 import { setupApplication } from '../../helpers/application.helpers';
 import { givenAdminUserProfile, givenEmptyDatabase } from '../../helpers/database.helpers';
+import debug from '../../../src/util/debug'
+import assert = require('assert');
+
+export function expect_response(obj: { status?: number | number[], body?: object }) {
+  return (resp: Response) => {
+    try {
+      if (obj.status !== undefined) {
+        let found = false
+        for (const status of (Array.isArray(obj.status) ? obj.status : [obj.status])) {
+          if (resp.status === status) {
+            found = true
+            break
+          }
+        }
+        assert.equal(found, true, `${resp.status} not in ${obj.status}`)
+      }
+      if (obj.body !== undefined)
+        assert.equal(resp.body, obj.body)
+    } catch (e) {
+      debug(JSON.stringify(resp.body))
+      throw e
+    }
+  }
+}
+
 
 export function test_generic<GenericEntity extends IGenericEntity>(props: {
   modelName: string
@@ -35,7 +60,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           props.basePath
           + '/count'
         )
-        .expect(200)
+        .expect(expect_response({ status: 200 }))
         .expect('Content-Type', /application\/json/);
     });
 
@@ -50,7 +75,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           + '/count'
         )
         .set('Authorization', 'Basic ' + auth)
-        .expect(200)
+        .expect(expect_response({ status: 200 }))
         .expect('Content-Type', /application\/json/);
     });
 
@@ -62,7 +87,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           props.basePath
           + '/key_count'
         )
-        .expect(200);
+        .expect(expect_response({ status: 200 }))
     });
 
     it("can key_count authenticated", async () => {
@@ -76,7 +101,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           + '/key_count'
         )
         .set('Authorization', 'Basic ' + auth)
-        .expect(200)
+        .expect(expect_response({ status: 200 }))
         .expect('Content-Type', /application\/json/);
     });
 
@@ -88,7 +113,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           props.basePath
           + '/value_count'
         )
-        .expect(200);
+        .expect(expect_response({ status: 200 }))
     });
 
     it("can value_count authenticated", async () => {
@@ -102,7 +127,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           + '/value_count'
         )
         .set('Authorization', 'Basic ' + auth)
-        .expect(200)
+        .expect(expect_response({ status: 200 }))
         .expect('Content-Type', /application\/json/);
     });
 
@@ -113,7 +138,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           props.basePath
           + '/dbck'
         )
-        .expect(200);
+        .expect(expect_response({ status: 200 }))
     });
 
     it("can dbck, and no errors authenticated", async () => {
@@ -127,7 +152,8 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           + '/dbck'
         )
         .set('Authorization', 'Basic ' + auth)
-        .expect(200, [])
+        .expect(expect_response({ status: 200 }))
+        .expect([])
         .expect('Content-Type', /application\/json/)
     });
 
@@ -139,7 +165,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           props.basePath
           + '?filter={"where":{"id":"' + obj.id + '"}}'
         )
-        .expect(200/*, [obj]*/)
+        .expect(expect_response({ status: 200 }))
         .expect('Content-Type', /application\/json/);
     })
 
@@ -154,7 +180,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           + '?filter={"where":{"id":"' + obj.id + '"}}'
         )
         .set('Authorization', 'Basic ' + auth)
-        .expect(200/*, [obj]*/)
+        .expect(expect_response({ status: 200 }))
         .expect('Content-Type', /application\/json/);
     })
 
@@ -167,7 +193,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           + '/'
           + obj.id
         )
-        .expect(200/*, [obj]*/)
+        .expect(expect_response({ status: 200 }))
         .expect('Content-Type', /application\/json/);
     })
 
@@ -183,7 +209,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           + obj.id
         )
         .set('Authorization', 'Basic ' + auth)
-        .expect(200/*, [obj]*/)
+        .expect(expect_response({ status: 200 }))
         .expect('Content-Type', /application\/json/);
     })
 
@@ -196,7 +222,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           + '/'
           + obj.id
         )
-        .expect(401);
+        .expect(expect_response({ status: 401 }))
     })
 
     it("can delete authenticated", async () => {
@@ -211,7 +237,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           + obj.id
         )
         .set('Authorization', 'Basic ' + auth)
-        .expect(204);
+        .expect(expect_response({ status: 204 }))
     })
 
     it("can't create valid anonymous", async () => {
@@ -220,7 +246,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
       await client
         .post(props.basePath)
         .send(validObj)
-        .expect(401);
+        .expect(expect_response({ status: 401 }))
     })
 
     it("can create valid authenticated", async () => {
@@ -232,7 +258,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .post(props.basePath)
         .set('Authorization', 'Basic ' + auth)
         .send(validObj)
-        .expect(200)
+        .expect(expect_response({ status: 200 }))
         .expect('Content-Type', /application\/json/)
     })
 
@@ -245,7 +271,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         .post(props.basePath)
         .send(invalidObj)
         .set('Authorization', 'Basic ' + auth)
-        .expect(406)
+        .expect(expect_response({ status: [422, 406] }))
         .expect('Content-Type', /application\/json/);
     });
 
@@ -255,9 +281,12 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
       validObj.id = obj.id
 
       await client
-        .patch(props.basePath)
+        .patch(
+          props.basePath
+          + '?where={}'
+        )
         .send(validObj)
-        .expect(401);
+        .expect(expect_response({ status: 401 }))
     })
 
     it("can updateAll valid authenticated", async () => {
@@ -268,10 +297,13 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
       validObj.id = obj.id
 
       await client
-        .patch(props.basePath)
+        .patch(
+          props.basePath
+          + '?where={}'
+        )
         .send(validObj)
         .set('Authorization', 'Basic ' + auth)
-        .expect(200)
+        .expect(expect_response({ status: 200 }))
         .expect('Content-Type', /application\/json/);
     })
 
@@ -283,10 +315,13 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
       invalidObj.id = obj.id
 
       await client
-        .patch(props.basePath)
+        .patch(
+          props.basePath
+          + '?where={}'
+        )
         .send(invalidObj)
         .set('Authorization', 'Basic ' + auth)
-        .expect(406)
+        .expect(expect_response({ status: [422, 406] }))
         .expect('Content-Type', /application\/json/);
     });
 
@@ -302,7 +337,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
           + obj.id
         )
         .send(validObj)
-        .expect(401);
+        .expect(expect_response({ status: 401 }))
     })
 
     it("can updateById valid authenticated", async () => {
@@ -320,7 +355,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         )
         .send(validObj)
         .set('Authorization', 'Basic ' + auth)
-        .expect(204);
+        .expect(expect_response({ status: 204 }))
     })
 
     it("can't updateById invalid authenticated", async () => {
@@ -338,7 +373,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         )
         .send(invalidObj)
         .set('Authorization', 'Basic ' + auth)
-        .expect(406);
+        .expect(expect_response({ status: [422, 406] }));
     });
 
     it("can find_or_create valid authenticated", async () => {
@@ -358,7 +393,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
         )
         .set('Authorization', 'Basic ' + auth)
         .send([validObj, validObj, validObj])
-        .expect(200)
+        .expect(expect_response({ status: 200 }))
         .expect('Content-Type', /application\/json/)
         .expect([{ ...resolvedObj }, { ...resolvedObj }, { ...resolvedObj }])
     })

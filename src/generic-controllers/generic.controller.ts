@@ -116,7 +116,7 @@ export function GenericControllerFactory<
         '401': {
           description: 'Access denied'
         },
-        '406': {
+        '422': {
           description: 'validation of model instance failed',
           content: {
             'application/json': {
@@ -141,6 +141,7 @@ export function GenericControllerFactory<
       }
     }) obj: GenericEntity): Promise<GenericEntity> {
       try {
+        debug('create', obj)
         const entity = await validate<GenericEntity>(
           {
             $validator: modelSchema,
@@ -539,7 +540,7 @@ export function GenericControllerFactory<
         '401': {
           description: 'Access denied'
         },
-        '406': {
+        '422': {
           description: 'validation error during update',
           content: {
             'application/json': {
@@ -554,15 +555,12 @@ export function GenericControllerFactory<
     })
     async updateAll(
       @requestBody({
-        description: 'Array of objects to be updated',
+        description: 'Object to replace all objects which match the `where` query with',
         required: true,
         content: {
           'application/json': {
             schema: {
-              type: 'array',
-              items: {
-                'x-ts-type': props.GenericEntity
-              }
+              'x-ts-type': props.GenericEntity
             }
           }
         }
@@ -628,7 +626,7 @@ export function GenericControllerFactory<
         '401': {
           description: 'Access denied'
         },
-        '406': {
+        '422': {
           description: 'ajv validation error',
           content: {
             'application/json': {
