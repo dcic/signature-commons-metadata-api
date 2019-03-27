@@ -106,7 +106,7 @@ CREATE TABLE public.libraries
     uuid uuid NOT NULL,
     meta jsonb,
     dataset character varying NOT NULL,
-    "signature-keys" jsonb
+    signature_keys jsonb
 );
 
 
