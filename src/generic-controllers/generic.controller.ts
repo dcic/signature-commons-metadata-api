@@ -11,6 +11,7 @@ import { flatten_keys } from '../util/flatten-keys';
 import { keyCounts, valueCounts } from '../util/key-counts';
 import { sortedDict } from '../util/sorted-dict';
 import { sum } from '../util/sum';
+import serializeError from 'serialize-error'
 
 export class IGenericEntity extends Entity {
   $validator?: string
@@ -157,7 +158,7 @@ export function GenericControllerFactory<
         }
       } catch (e) {
         debug(e)
-        throw new HttpErrors.NotAcceptable(e)
+        throw new HttpErrors.NotAcceptable(serializeError(e))
       }
     }
 
@@ -347,7 +348,7 @@ export function GenericControllerFactory<
             modelSchema
           )
         } catch (e) {
-          objs = objs.concat(e)
+          objs = objs.concat(serializeError(e))
         }
       }
 
@@ -438,7 +439,8 @@ export function GenericControllerFactory<
 
           results.push(resolved_obj)
         } catch (err) {
-          results.push({ 'error': JSON.stringify(err) })
+          debug(err)
+          results.push(serializeError(err))
         }
       }
       return results
@@ -588,14 +590,13 @@ export function GenericControllerFactory<
             modelSchema
           )
         } catch (e) {
-          results = results.concat(e)
+          debug(e)
+          results = results.concat(serializeError(e))
         }
       }
 
-      if (results.length > 0) {
-        debug(JSON.stringify(results))
+      if (results.length > 0)
         throw new HttpErrors.NotAcceptable(JSON.stringify(results))
-      }
 
       return await this.genericRepository.updateAll(body, where)
     }
@@ -666,8 +667,8 @@ export function GenericControllerFactory<
           )
         )
       } catch (e) {
-        debug(JSON.stringify(e))
-        throw new HttpErrors.NotAcceptable(e)
+        debug(e)
+        throw new HttpErrors.NotAcceptable(serializeError(e))
       }
     }
 

@@ -1,4 +1,4 @@
-import { Client } from '@loopback/testlab';
+import { Client, supertest } from '@loopback/testlab';
 import { App } from '../../..';
 import { IGenericEntity } from '../../../src/generic-controllers/generic.controller';
 import { setupApplication } from '../../helpers/application.helpers';
@@ -7,7 +7,7 @@ import debug from '../../../src/util/debug'
 import assert = require('assert');
 
 export function expect_response(obj: { status?: number | number[], body?: object }) {
-  return (resp: Response) => {
+  return (resp: supertest.Response) => {
     try {
       if (obj.status !== undefined) {
         let found = false
@@ -22,7 +22,7 @@ export function expect_response(obj: { status?: number | number[], body?: object
       if (obj.body !== undefined)
         assert.equal(resp.body, obj.body)
     } catch (e) {
-      debug(JSON.stringify(resp.body))
+      debug(resp)
       throw e
     }
   }

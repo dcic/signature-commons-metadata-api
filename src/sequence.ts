@@ -1,6 +1,7 @@
 import { AuthenticateFn, AuthenticationBindings } from '@loopback/authentication';
 import { inject } from '@loopback/context';
 import { FindRoute, InvokeMethod, ParseParams, Reject, RequestContext, RestBindings, Send, SequenceHandler, StaticAssetsRoute } from '@loopback/rest';
+import debug from './util/debug';
 
 const SequenceActions = RestBindings.SequenceActions;
 
@@ -48,10 +49,13 @@ export class Sequence implements SequenceHandler {
           ].join(',')
         );
         response.setHeader('X-Duration', JSON.stringify(Number(Date.now() - start) / 1000));
-      } catch (e) { }
+      } catch (e) {
+        debug(e)
+      }
 
       this.send(response, result);
     } catch (err) {
+      debug(err)
       this.reject(context, err);
     }
   }

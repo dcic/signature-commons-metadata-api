@@ -1,4 +1,5 @@
 import { ObjectItems } from './object-items'
+import debug from '../util/debug';
 
 /**
  * keyCounts helper function lets us count the number of keys
@@ -35,7 +36,9 @@ export function keyCounts(objs: any[], depth: number = 0) {
               ) as [string, any][]
             )
           }
-        } catch (e) { }
+        } catch (e) {
+          debug(e)
+        }
       }
     }
   }
