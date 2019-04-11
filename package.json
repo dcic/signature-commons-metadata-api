@@ -1,6 +1,6 @@
 {
   "name": "signature-commons-metadata-api",
-  "version": "1.0.22",
+  "version": "1.0.23",
   "description": "Signature Commons Metadata API Micro Service",
   "keywords": [
     "loopback-application",
@@ -45,7 +45,7 @@
     "src"
   ],
   "dependencies": {
-    "@dcic/signature-commons-schema": "^1.2.2",
+    "@dcic/signature-commons-schema": "^1.2.3",
     "@loopback/authentication": "^1.0.14",
     "@loopback/boot": "^1.0.14",
     "@loopback/context": "^1.6.0",
@@ -64,7 +64,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@loopback/build": "^1.1.0",
+    "@loopback/build": "^1.4.2",
     "@loopback/testlab": "^1.0.7",
     "@types/assert": "^1.4.2",
     "@types/node": "^10.12.30",
