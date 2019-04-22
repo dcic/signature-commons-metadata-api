@@ -1,6 +1,6 @@
 import { Client, supertest } from '@loopback/testlab';
 import { App } from '../../..';
-import { IGenericEntity } from '../../../src/generic-controllers/generic.controller';
+import { GenericEntity as IGenericEntity } from '../../../src/repositories/generic.repository';
 import { setupApplication } from '../../helpers/application.helpers';
 import { givenAdminUserProfile, givenEmptyDatabase } from '../../helpers/database.helpers';
 import debug from '../../../src/util/debug'

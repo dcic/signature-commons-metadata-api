@@ -9,7 +9,7 @@ import { getJsonSchema } from '@loopback/rest';
       table: 'entities'
     },
     allowExtendedOperators: true,
-  },
+  }
 })
 export class Entity extends LBEntity {
   @property({
@@ -38,4 +38,20 @@ export class Entity extends LBEntity {
   }
 }
 
-export const EntitySchema = getJsonSchema(Entity)
+const schema = getJsonSchema(Entity)
+export const EntitySchema = {
+  ...schema,
+  properties: {
+    ...schema.properties,
+    meta: {
+      $ref: '#/components/schemas/EntityMeta',
+    },
+  }
+}
+
+export const EntityMetaSchema = {
+  oneOf: [
+    { $ref: '//raw.githubusercontent.com/dcic/signature-commons-schema/master/meta/entity/draft-1.json' },
+    { $ref: '//raw.githubusercontent.com/dcic/signature-commons-schema/master/core/unknown.json' }
+  ],
+}

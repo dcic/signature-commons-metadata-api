@@ -66,4 +66,20 @@ export class Library extends Entity {
   }
 }
 
-export const LibrarySchema = getJsonSchema(Library)
+const schema = getJsonSchema(Library)
+export const LibrarySchema = {
+  ...schema,
+  properties: {
+    ...schema.properties,
+    meta: {
+      $ref: '#/components/schemas/LibraryMeta'
+    }
+  }
+}
+
+export const LibraryMetaSchema = {
+  oneOf: [
+    { $ref: '//raw.githubusercontent.com/dcic/signature-commons-schema/master/meta/library/draft-1.json' },
+    { $ref: '//raw.githubusercontent.com/dcic/signature-commons-schema/master/core/unknown.json' },
+  ],
+}

@@ -3,7 +3,6 @@ import {
   createRestAppClient,
   givenHttpServerConfig,
   Client,
-  createClientForHandler,
 } from '@loopback/testlab';
 import { postgresql_db, memory_db } from '../helpers/database.helpers';
 import { LibraryRepository, SignatureRepository, EntityRepository, UserProfileRepository } from '../../src/repositories';
