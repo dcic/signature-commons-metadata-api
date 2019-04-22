@@ -46,4 +46,21 @@ export class Signature extends Entity {
     super(data);
   }
 }
-export const SignatureSchema = getJsonSchema(Signature)
+
+const schema = getJsonSchema(Signature)
+export const SignatureSchema = {
+  ...schema,
+  properties: {
+    ...schema.properties,
+    meta: {
+      $ref: '#/components/schemas/SignatureMeta'
+    }
+  }
+}
+
+export const SignatureMetaSchema = {
+  oneOf: [
+    { $ref: '//raw.githubusercontent.com/dcic/signature-commons-schema/master/meta/signature/draft-1.json' },
+    { $ref: '//raw.githubusercontent.com/dcic/signature-commons-schema/master/core/unknown.json' },
+  ],
+}

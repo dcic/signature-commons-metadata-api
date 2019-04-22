@@ -1,0 +1,233 @@
+{
+  "type": "object",
+  "description": "Error object",
+  "properties": {
+    "message": {
+      "type": "string"
+    },
+    "errors": {
+      "type": "object",
+      "properties": {
+        "keyword": {
+          "type": "string"
+        },
+        "dataPath": {
+          "type": "string"
+        },
+        "schemaPath": {
+          "type": "string"
+        },
+        "propertyName": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "params": {
+          "oneOf": [
+            {
+              "description": "RefParams",
+              "type": "object",
+              "properties": {
+                "ref": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "description": "LimitParams",
+              "type": "object",
+              "properties": {
+                "limit": {
+                  "type": "number"
+                }
+              }
+            },
+            {
+              "description": "AdditionalPropertiesParams",
+              "type": "object",
+              "properties": {
+                "additionalProperty": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "description": "DependenciesParams",
+              "type": "object",
+              "properties": {
+                "property": {
+                  "type": "string"
+                },
+                "missingProperty": {
+                  "type": "string"
+                },
+                "depsCount": {
+                  "type": "number"
+                },
+                "deps": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "description": "FormatParams",
+              "type": "object",
+              "properties": {
+                "format": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "description": "ComparisonParams",
+              "type": "object",
+              "properties": {
+                "comparison": {
+                  "type": "string"
+                },
+                "limit": {
+                  "oneOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "exclusive": {
+                  "type": "boolean"
+                }
+              }
+            },
+            {
+              "description": "MultipleOfParams",
+              "type": "object",
+              "properties": {
+                "multipleOf": {
+                  "type": "number"
+                }
+              }
+            },
+            {
+              "description": "PatternParams",
+              "type": "object",
+              "properties": {
+                "pattern": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "description": "RequiredParams",
+              "type": "object",
+              "properties": {
+                "missingProperty": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "description": "TypeParams",
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "description": "UniqueItemsParams",
+              "type": "object",
+              "properties": {
+                "i": {
+                  "type": "number"
+                },
+                "j": {
+                  "type": "number"
+                }
+              }
+            },
+            {
+              "description": "CustomParams",
+              "type": "object",
+              "properties": {
+                "keyword": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "description": "PatternRequiredParams",
+              "type": "object",
+              "properties": {
+                "missingPattern": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "description": "PropertyNamesParams",
+              "type": "object",
+              "properties": {
+                "propertyName": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "description": "IfParams",
+              "type": "object",
+              "properties": {
+                "failingKeyword": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "description": "SwitchParams",
+              "type": "object",
+              "properties": {
+                "caseIndex": {
+                  "type": "number"
+                }
+              }
+            },
+            {
+              "description": "NoParams",
+              "type": "object",
+              "properties": {}
+            },
+            {
+              "description": "EnumParams",
+              "type": "object",
+              "properties": {
+                "allowedValues": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {}
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

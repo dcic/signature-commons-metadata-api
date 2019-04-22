@@ -1,12 +1,9 @@
-import { DefaultCrudRepository } from '@loopback/repository';
-import { Library } from '../models';
-import { PostgreSQLDataSource } from '../datasources';
 import { inject } from '@loopback/core';
+import { PostgreSQLDataSource } from '../datasources';
+import { Library } from '../models';
+import { GenericRepository } from './generic.repository';
 
-export class LibraryRepository extends DefaultCrudRepository<
-  Library,
-  typeof Library.prototype.id
-  > {
+export class LibraryRepository extends GenericRepository<Library> {
   constructor(
     @inject('datasources.PostgreSQL') dataSource: PostgreSQLDataSource,
   ) {

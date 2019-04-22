@@ -8,6 +8,7 @@ export async function main(options: ApplicationConfig = {}) {
   const app = new App({
     rest: {
       openApiSpec: {
+        setServersFromRequest: true,
         endpointMapping: {
           '/signature-commons-metadata-api/openapi.json': { version: '3.0.0', format: 'json' },
           '/signature-commons-metadata-api/openapi.yml': { version: '3.0.0', format: 'yaml' },

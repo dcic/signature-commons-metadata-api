@@ -2,25 +2,18 @@ import { validate } from '@dcic/signature-commons-schema';
 import { authenticate, AuthenticationBindings, UserProfile } from '@loopback/authentication';
 import { inject } from '@loopback/context';
 import { Constructor } from '@loopback/core';
-import { Count, CountSchema, DataObject, DefaultCrudRepository, Entity, Filter, repository, Where } from '@loopback/repository';
-import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param, patch, post, requestBody, Response, RestBindings, getFilterJsonSchemaFor, SchemaObject } from '@loopback/rest';
+import { Count, CountSchema, DataObject, Filter, repository, Where } from '@loopback/repository';
+import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param, patch, post, requestBody, Response, RestBindings } from '@loopback/rest';
+import serializeError from 'serialize-error';
 import * as uuidv4 from 'uuid/v4';
+import { GenericEntity as IGenericEntity, GenericRepository as IGenericRepository } from '../repositories/generic.repository';
+import * as AjvError from '../schemas/AjvError.json';
 import { applyFieldsFilter } from '../util/applyFieldsFilter';
 import debug from '../util/debug';
 import { flatten_keys } from '../util/flatten-keys';
 import { keyCounts, valueCounts } from '../util/key-counts';
 import { sortedDict } from '../util/sorted-dict';
 import { sum } from '../util/sum';
-import serializeError from 'serialize-error'
-
-export class IGenericEntity extends Entity {
-  $validator?: string
-  id: string
-  meta: object
-}
-
-export class IGenericRepository<T extends IGenericEntity> extends DefaultCrudRepository<T, string> {
-}
 
 export interface GenericController<
   GenericEntity extends IGenericEntity,
@@ -50,6 +43,7 @@ export function GenericControllerFactory<
     GenericRepository: Constructor<GenericRepository>
     GenericEntity: typeof IGenericEntity
     GenericEntitySchema: any,
+    GenericEntityMetaSchema: any,
     modelName: string
     basePath: string
   }
@@ -63,6 +57,8 @@ export function GenericControllerFactory<
     components: {
       schemas: {
         [props.modelName]: props.GenericEntitySchema,
+        [`${props.modelName}Meta`]: props.GenericEntityMetaSchema,
+        AjvError,
       },
     },
   })
@@ -109,7 +105,7 @@ export function GenericControllerFactory<
           content: {
             'application/json': {
               schema: {
-                'x-ts-type': props.GenericEntity
+                'x-ts-type': props.GenericEntity,
               }
             }
           },
@@ -122,8 +118,7 @@ export function GenericControllerFactory<
           content: {
             'application/json': {
               schema: {
-                type: 'object',
-                description: 'ajv validation error'
+                $ref: '#/components/schemas/AjvError'
               }
             }
           },
@@ -136,7 +131,7 @@ export function GenericControllerFactory<
       content: {
         'application/json': {
           schema: {
-            'x-ts-type': props.GenericEntity
+            'x-ts-type': props.GenericEntity,
           }
         }
       }
@@ -200,7 +195,7 @@ export function GenericControllerFactory<
                 type: 'array',
                 items: {
                   type: 'object',
-                  description: 'The key in the database paired with the number of those keys'
+                  description: 'The key in the database paired with the number of those keys',
                 }
               }
             }
@@ -306,8 +301,8 @@ export function GenericControllerFactory<
                 description: 'ajv errors experienced while validating database entries',
                 type: 'array',
                 items: {
-                  type: 'object'
-                },
+                  $ref: '#/components/schemas/AjvError'
+                }
               },
             },
           },
@@ -368,11 +363,8 @@ export function GenericControllerFactory<
                 type: 'array',
                 items: {
                   oneOf: [
-                    { 'x-ts-type': props.GenericEntity },
-                    {
-                      type: 'object',
-                      description: 'Error object'
-                    }
+                    { 'x-ts-type': props.GenericEntity, },
+                    { $ref: '#/components/schemas/AjvError' },
                   ]
                 },
               },
@@ -393,7 +385,7 @@ export function GenericControllerFactory<
             schema: {
               type: 'array',
               items: {
-                type: 'object',
+                'x-ts-type': props.GenericEntity,
               }
             }
           }
@@ -455,7 +447,12 @@ export function GenericControllerFactory<
           description: 'Array of ' + props.modelName + ' model instances',
           content: {
             'application/json': {
-              schema: { type: 'array', items: { 'x-ts-type': props.GenericEntity } },
+              schema: {
+                type: 'array',
+                items: {
+                  'x-ts-type': props.GenericEntity,
+                }
+              },
             },
           },
         },
@@ -481,7 +478,12 @@ export function GenericControllerFactory<
           description: 'Array of ' + props.modelName + ' model instances',
           content: {
             'application/json': {
-              schema: { type: 'array', items: { 'x-ts-type': props.GenericEntity } },
+              schema: {
+                type: 'array',
+                items: {
+                  'x-ts-type': props.GenericEntity,
+                }
+              },
             },
           },
         },
@@ -496,10 +498,7 @@ export function GenericControllerFactory<
             schema: {
               type: 'object',
               properties: {
-                filter: {
-                  type: 'object',
-                  description: 'filter rules for entity',
-                },
+                filter: getFilterSchemaFor(props.GenericEntity),
                 contentRange: {
                   type: 'boolean',
                   description: 'whether or not to compute the contentRange header'
@@ -543,15 +542,14 @@ export function GenericControllerFactory<
           content: { 'application/json': { schema: CountSchema } },
         },
         '401': {
-          description: 'Access denied'
+          description: 'Access denied',
         },
         '422': {
           description: 'validation error during update',
           content: {
             'application/json': {
               schema: {
-                type: 'object',
-                description: 'Error object'
+                $ref: '#/components/schemas/AjvError'
               }
             }
           }
@@ -565,7 +563,7 @@ export function GenericControllerFactory<
         content: {
           'application/json': {
             schema: {
-              'x-ts-type': props.GenericEntity
+              'x-ts-type': props.GenericEntity,
             }
           }
         }
@@ -608,7 +606,11 @@ export function GenericControllerFactory<
       responses: {
         '200': {
           description: props.modelName + ' model instance',
-          content: { 'application/json': { 'x-ts-type': props.GenericEntity } },
+          content: {
+            'application/json': {
+              'x-ts-type': props.GenericEntity,
+            }
+          },
         },
       },
     })
@@ -635,7 +637,7 @@ export function GenericControllerFactory<
           content: {
             'application/json': {
               schema: {
-                type: 'object'
+                $ref: '#/components/schemas/AjvError'
               }
             }
           }
@@ -650,7 +652,7 @@ export function GenericControllerFactory<
         content: {
           'application/json': {
             schema: {
-              'x-ts-type': props.GenericEntity
+              'x-ts-type': props.GenericEntity,
             }
           }
         }

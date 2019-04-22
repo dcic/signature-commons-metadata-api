@@ -8,12 +8,23 @@ import { Entity as EntityController, Library as LibraryController, Signature as 
 import { AuthStrategyProvider } from './providers/auth-strategy.provider';
 import { SmartTrieRouter } from './router';
 import { Sequence } from './sequence';
+import * as packageJson from '../package.json'
 
 export class App extends BootMixin(
   ServiceMixin(RepositoryMixin(RestApplication)),
 ) {
   constructor(options: ApplicationConfig = {}) {
     super(options);
+
+    // Initialize the api
+    this.api({
+      openapi: '3.0.0',
+      info: {
+        title: 'Signature Commons Metadata API',
+        version: packageJson.version,
+      },
+      paths: {},
+    })
 
     // Add authentication
     this.component(AuthenticationComponent);

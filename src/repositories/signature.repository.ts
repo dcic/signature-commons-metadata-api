@@ -1,12 +1,9 @@
-import { DefaultCrudRepository } from '@loopback/repository';
-import { Signature } from '../models';
-import { PostgreSQLDataSource } from '../datasources';
 import { inject } from '@loopback/core';
+import { PostgreSQLDataSource } from '../datasources';
+import { Signature } from '../models';
+import { GenericRepository } from './generic.repository';
 
-export class SignatureRepository extends DefaultCrudRepository<
-  Signature,
-  typeof Signature.prototype.id
-  > {
+export class SignatureRepository extends GenericRepository<Signature> {
   constructor(
     @inject('datasources.PostgreSQL') dataSource: PostgreSQLDataSource,
   ) {
