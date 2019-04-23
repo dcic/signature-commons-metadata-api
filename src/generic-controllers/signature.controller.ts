@@ -1,7 +1,7 @@
 import { authenticate } from '@loopback/authentication';
 import { Filter, repository } from '@loopback/repository';
 import { get, param } from '@loopback/rest';
-import { Library, Signature as SignatureEntity, SignatureSchema, SignatureMetaSchema } from '../models';
+import { Library, Signature as SignatureEntity, SignatureSchemas } from '../models';
 import { LibraryRepository, SignatureRepository } from '../repositories';
 import { GenericRepository as IGenericRepository } from '../repositories/generic.repository';
 import { GenericControllerFactory } from './generic.controller';
@@ -12,8 +12,7 @@ const GenericSignatureController = GenericControllerFactory<
 >({
   GenericRepository: SignatureRepository,
   GenericEntity: SignatureEntity,
-  GenericEntitySchema: SignatureSchema,
-  GenericEntityMetaSchema: SignatureMetaSchema,
+  GenericSchemas: SignatureSchemas,
   modelName: 'Signature',
   basePath: '/signature-commons-metadata-api/signatures',
 })

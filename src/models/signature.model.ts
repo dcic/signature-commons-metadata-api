@@ -1,5 +1,5 @@
 import { Entity, model, property } from '@loopback/repository';
-import { getJsonSchema } from '@loopback/rest';
+import { getJsonSchema, SchemasObject, SchemaObject } from '@loopback/rest';
 
 @model({
   name: 'Signature',
@@ -47,20 +47,29 @@ export class Signature extends Entity {
   }
 }
 
-const schema = getJsonSchema(Signature)
-export const SignatureSchema = {
-  ...schema,
-  properties: {
-    ...schema.properties,
-    meta: {
-      $ref: '#/components/schemas/SignatureMeta'
+const schema = getJsonSchema(Signature) as SchemaObject
+export const SignatureSchemas: SchemasObject = {
+  Signature: {
+    ...schema,
+    properties: {
+      ...schema.properties,
+      meta: {
+        $ref: '#/components/schemas/SignatureMeta'
+      }
     }
-  }
-}
-
-export const SignatureMetaSchema = {
-  oneOf: [
-    { $ref: '//raw.githubusercontent.com/dcic/signature-commons-schema/master/meta/signature/draft-1.json' },
-    { $ref: '//raw.githubusercontent.com/dcic/signature-commons-schema/master/core/unknown.json' },
-  ],
+  },
+  SignatureMeta: {
+    type: 'object',
+    oneOf: [
+      require('@dcic/signature-commons-schema/core/meta.json'),
+      require('@dcic/signature-commons-schema/core/unknown.json'),
+      require('@dcic/signature-commons-schema/meta/signature/draft-1.json'),
+    ],
+  },
+  Meta: require('@dcic/signature-commons-schema/core/meta.json'),
+  DiseasePerturbation: require('@dcic/signature-commons-schema/meta/signature/perturbation/disease.json'),
+  GenePerturbation: require('@dcic/signature-commons-schema/meta/signature/perturbation/gene.json'),
+  PhenotypePerturbation: require('@dcic/signature-commons-schema/meta/signature/perturbation/phenotype.json'),
+  SmallMoleculePerturbation: require('@dcic/signature-commons-schema/meta/signature/perturbation/small-molecule.json'),
+  OtherPerturbation: require('@dcic/signature-commons-schema/meta/signature/perturbation/other.json'),
 }

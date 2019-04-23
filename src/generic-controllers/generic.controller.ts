@@ -3,7 +3,7 @@ import { authenticate, AuthenticationBindings, UserProfile } from '@loopback/aut
 import { inject } from '@loopback/context';
 import { Constructor } from '@loopback/core';
 import { Count, CountSchema, DataObject, Filter, repository, Where } from '@loopback/repository';
-import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param, patch, post, requestBody, Response, RestBindings } from '@loopback/rest';
+import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param, patch, post, requestBody, Response, RestBindings, SchemaObject, ReferenceObject } from '@loopback/rest';
 import serializeError from 'serialize-error';
 import * as uuidv4 from 'uuid/v4';
 import { GenericEntity as IGenericEntity, GenericRepository as IGenericRepository } from '../repositories/generic.repository';
@@ -42,8 +42,7 @@ export function GenericControllerFactory<
   props: {
     GenericRepository: Constructor<GenericRepository>
     GenericEntity: typeof IGenericEntity
-    GenericEntitySchema: any,
-    GenericEntityMetaSchema: any,
+    GenericSchemas: { [schema: string]: SchemaObject | ReferenceObject },
     modelName: string
     basePath: string
   }
@@ -56,8 +55,7 @@ export function GenericControllerFactory<
     paths: {},
     components: {
       schemas: {
-        [props.modelName]: props.GenericEntitySchema,
-        [`${props.modelName}Meta`]: props.GenericEntityMetaSchema,
+        ...props.GenericSchemas,
         AjvError,
       },
     },

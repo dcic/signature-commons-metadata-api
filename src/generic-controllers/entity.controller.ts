@@ -1,7 +1,6 @@
-import { Entity as EntityEntity, EntitySchema, EntityMetaSchema } from '../models';
+import { Entity as EntityEntity, EntitySchemas } from '../models';
 import { EntityRepository } from '../repositories';
 import { GenericControllerFactory } from './generic.controller'
-import { api } from '@loopback/rest';
 
 const GenericEntityController = GenericControllerFactory<
   EntityEntity,
@@ -9,20 +8,10 @@ const GenericEntityController = GenericControllerFactory<
 >({
   GenericRepository: EntityRepository,
   GenericEntity: EntityEntity,
-  GenericEntitySchema: EntitySchema,
-  GenericEntityMetaSchema: EntityMetaSchema,
+  GenericSchemas: EntitySchemas,
   modelName: 'Entity',
   basePath: '/signature-commons-metadata-api/entities',
 })
 
-
-@api({
-  paths: {},
-  components: {
-    schemas: {
-      Entity: EntitySchema as any,
-    },
-  },
-})
 export class Entity extends GenericEntityController {
 }

@@ -1,5 +1,5 @@
 import { Entity, model, property } from '@loopback/repository';
-import { getJsonSchema } from '@loopback/rest';
+import { getJsonSchema, SchemasObject, SchemaObject } from '@loopback/rest';
 
 @model({
   name: 'Library',
@@ -66,20 +66,23 @@ export class Library extends Entity {
   }
 }
 
-const schema = getJsonSchema(Library)
-export const LibrarySchema = {
-  ...schema,
-  properties: {
-    ...schema.properties,
-    meta: {
-      $ref: '#/components/schemas/LibraryMeta'
+const schema = getJsonSchema(Library) as SchemaObject
+export const LibrarySchemas: SchemasObject = {
+  Library: {
+    ...schema,
+    properties: {
+      ...schema.properties,
+      meta: {
+        $ref: '#/components/schemas/LibraryMeta'
+      }
     }
-  }
-}
-
-export const LibraryMetaSchema = {
-  oneOf: [
-    { $ref: '//raw.githubusercontent.com/dcic/signature-commons-schema/master/meta/library/draft-1.json' },
-    { $ref: '//raw.githubusercontent.com/dcic/signature-commons-schema/master/core/unknown.json' },
-  ],
+  },
+  LibraryMeta: {
+    type: 'object',
+    oneOf: [
+      require('@dcic/signature-commons-schema/core/unknown.json'),
+      require('@dcic/signature-commons-schema/meta/library/draft-1.json'),
+    ],
+  },
+  Meta: require('@dcic/signature-commons-schema/core/meta.json'),
 }

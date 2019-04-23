@@ -1,5 +1,5 @@
 import { Entity as LBEntity, model, property } from '@loopback/repository';
-import { getJsonSchema } from '@loopback/rest';
+import { getJsonSchema, SchemasObject, SchemaObject } from '@loopback/rest';
 
 @model({
   name: 'Entity',
@@ -38,20 +38,14 @@ export class Entity extends LBEntity {
   }
 }
 
-const schema = getJsonSchema(Entity)
-export const EntitySchema = {
-  ...schema,
-  properties: {
-    ...schema.properties,
-    meta: {
-      $ref: '#/components/schemas/EntityMeta',
-    },
-  }
-}
-
-export const EntityMetaSchema = {
-  oneOf: [
-    { $ref: '//raw.githubusercontent.com/dcic/signature-commons-schema/master/meta/entity/draft-1.json' },
-    { $ref: '//raw.githubusercontent.com/dcic/signature-commons-schema/master/core/unknown.json' }
-  ],
+const schema = getJsonSchema(Entity) as SchemaObject
+export const EntitySchemas: SchemasObject = {
+  Entity: {
+    ...schema,
+    properties: {
+      ...schema.properties,
+      meta: require('@dcic/signature-commons-schema/meta/entity/draft-1.json'),
+    }
+  },
+  Meta: require('@dcic/signature-commons-schema/core/meta.json'),
 }
