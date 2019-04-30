@@ -1,6 +1,6 @@
 import { AuthenticateFn, AuthenticationBindings } from '@loopback/authentication';
 import { inject } from '@loopback/context';
-import { FindRoute, InvokeMethod, ParseParams, Reject, RequestContext, RestBindings, Send, SequenceHandler, StaticAssetsRoute } from '@loopback/rest';
+import { FindRoute, InvokeMethod, ParseParams, Reject, RequestContext, RestBindings, Send, SequenceHandler, ExternalExpressRoutes } from '@loopback/rest';
 import debug from './util/debug';
 
 const SequenceActions = RestBindings.SequenceActions;
@@ -23,7 +23,7 @@ export class Sequence implements SequenceHandler {
       request.setTimeout(0, () => { });
 
       // Hotfix from https://github.com/strongloop/loopback-next/issues/1144#issuecomment-438359985
-      if (!(route instanceof StaticAssetsRoute)) {
+      if (!(route instanceof ExternalExpressRoutes)) {
         if (request.headers === undefined) {
           request.headers = {}
         }

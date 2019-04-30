@@ -36,7 +36,7 @@ export class AuthStrategyProvider implements Provider<Strategy | undefined> {
           username: 'guest',
           password: 'guest',
           roles: '^GET\\..+$',
-        }
+        } as UserProfile
       } else {
         user = await this.userProfileRepository.findOne({
           where: {
@@ -51,11 +51,11 @@ export class AuthStrategyProvider implements Provider<Strategy | undefined> {
         cb(null, false)
       } else {
         if (new RegExp(user.roles).test(strategy)) {
-          cb(null, user)
+          cb(null, user as LbUserProfile)
         } else {
           cb(null, false)
         }
       }
-    }).catch((e) => cb(e, false))
+    }).catch((e: any) => cb(e, false))
   }
 }
