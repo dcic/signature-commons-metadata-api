@@ -1,4 +1,4 @@
-import { Entity as EntityEntity, EntitySchema } from '../models';
+import { Entity as EntityEntity, EntitySchema } from '../entities';
 import { EntityRepository } from '../repositories';
 import { GenericControllerFactory } from './generic.controller'
 import { api } from '@loopback/rest';

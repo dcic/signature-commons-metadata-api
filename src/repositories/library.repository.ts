@@ -1,14 +1,14 @@
-import { DefaultCrudRepository } from '@loopback/repository';
-import { Library } from '../models';
-import { PostgreSQLDataSource } from '../datasources';
+import { Library } from '../entities';
+import { TypeORMDataSource } from '../datasources';
 import { inject } from '@loopback/core';
+import { TypeORMRepository } from './typeorm-repository';
 
-export class LibraryRepository extends DefaultCrudRepository<
+export class LibraryRepository extends TypeORMRepository<
   Library,
   typeof Library.prototype.id
   > {
   constructor(
-    @inject('datasources.PostgreSQL') dataSource: PostgreSQLDataSource,
+    @inject('datasources.typeorm') dataSource: TypeORMDataSource,
   ) {
     super(Library, dataSource);
   }

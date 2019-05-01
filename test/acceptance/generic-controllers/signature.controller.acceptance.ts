@@ -1,4 +1,4 @@
-import { Signature } from '../../../src/models';
+import { Signature } from '../../../src/entities';
 import { givenInvalidSignatureData, givenSignature, givenValidSignatureData } from '../../helpers/database.helpers';
 import { test_generic } from './generic.controller.acceptance';
 

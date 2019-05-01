@@ -2,7 +2,7 @@ import { authenticate } from '@loopback/authentication';
 import { inject } from '@loopback/core';
 import { Filter } from '@loopback/repository';
 import { get, getFilterSchemaFor, param, api } from '@loopback/rest';
-import { Library as LibraryEntity, LibrarySchema, Signature } from '../models';
+import { Library as LibraryEntity, LibrarySchema, Signature } from '../entities';
 import { LibraryRepository } from '../repositories';
 import { GenericControllerFactory } from './generic.controller';
 import { Signature as SignatureController } from './signature.controller';

@@ -1,2 +1,2 @@
-export * from './postgre-sql.datasource';
+export * from './typeorm.datasource';
 export * from './memory.datasource';

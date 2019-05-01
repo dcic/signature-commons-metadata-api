@@ -1,4 +1,4 @@
-import { Library } from '../../../src/models';
+import { Library } from '../../../src/entities';
 import { givenInvalidLibraryData, givenLibrary, givenValidLibraryData } from '../../helpers/database.helpers';
 import { test_generic } from './generic.controller.acceptance';
 

@@ -1,4 +1,4 @@
-import { Entity } from '../../../src/models';
+import { Entity } from '../../../src/entities';
 import { givenEntity, givenInvalidEntityData, givenValidEntityData } from '../../helpers/database.helpers';
 import { test_generic } from './generic.controller.acceptance';
 

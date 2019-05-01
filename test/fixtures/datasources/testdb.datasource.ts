@@ -1,24 +1,19 @@
-import { juggler } from '@loopback/repository';
+import { TypeORMDataSource, MemoryDataSource } from "../../../src/datasources";
 
-export const postgresql_factory = () => {
-  if (process.env['POSTGRESQL_TEST_URL'] !== undefined) {
-    return new juggler.DataSource({
-      name: 'PostgreSQL',
-      connector: 'postgresql',
-      url: process.env['POSTGRESQL_TEST_URL'],
-    });
-  } else {
-    console.warn('POSTGRESQL_TEST_URL not provided, falling back to memory db')
-    return new juggler.DataSource({
-      name: 'PostgreSQL',
-      connector: 'memory',
-    });
+let n = 0
+
+export const typeorm_factory = () => {
+  if (process.env['POSTGRESQL_TEST_URL'] === undefined) {
+    throw new Error('POSTGRESQL_TEST_URL required to perform tests')
   }
+  const typeorm_ds = new TypeORMDataSource({
+    name: `default-${n}`,
+    url: process.env['POSTGRESQL_TEST_URL'],
+  });
+  n += 1
+  return typeorm_ds
 }
 
 export const memory_factory = () => {
-  return new juggler.DataSource({
-    name: 'memory',
-    connector: 'memory',
-  });
+  return new MemoryDataSource()
 }

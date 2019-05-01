@@ -1,15 +1,16 @@
 import * as entityTest from "@dcic/signature-commons-schema/core/entity.test.json";
 import * as libraryTest from "@dcic/signature-commons-schema/core/library.test.json";
 import * as signatureTest from "@dcic/signature-commons-schema/core/signature.test.json";
-import { Entity, Library, Signature, UserProfile } from "../../src/models";
+import { Entity, Library, Signature } from "../../src/entities";
+import { UserProfile } from "../../src/models";
 import { EntityRepository, LibraryRepository, SignatureRepository, UserProfileRepository } from "../../src/repositories";
-import { memory_factory, postgresql_factory } from "../fixtures/datasources/testdb.datasource";
+import { memory_factory, typeorm_factory } from "../fixtures/datasources/testdb.datasource";
 
 const memory_db = memory_factory()
 export { memory_db }
 
-const postgresql_db = postgresql_factory()
-export { postgresql_db }
+const typeorm_db = typeorm_factory()
+export { typeorm_db }
 
 export async function givenValidLibraryData(data?: Partial<Library>) {
   const d = libraryTest.tests.filter((test) => test.valid)[0].data
@@ -43,7 +44,7 @@ export async function givenInvalidLibraryData(data?: Partial<Library>) {
 
 export async function givenLibrary(data?: Partial<Library>) {
   return await new LibraryRepository(
-    postgresql_db
+    typeorm_db
   ).create(
     <Partial<Library>>await givenValidLibraryData(data)
   )
@@ -77,7 +78,7 @@ export async function givenInvalidSignatureData(data?: Partial<Signature>) {
 
 export async function givenSignature(data?: Partial<Signature>) {
   return await new SignatureRepository(
-    postgresql_db
+    typeorm_db
   ).create(
     <Partial<Signature>>await givenValidSignatureData(data)
   )
@@ -109,7 +110,7 @@ export async function givenInvalidEntityData(data?: Partial<Entity>) {
 
 export async function givenEntity(data?: Partial<Entity>) {
   return await new EntityRepository(
-    postgresql_db
+    typeorm_db
   ).create(
     <Partial<Entity>>await givenValidEntityData(data)
   )
@@ -135,8 +136,8 @@ export async function givenAdminUserProfile(data?: Partial<UserProfile>) {
 }
 
 export async function givenEmptyDatabase() {
-  await new LibraryRepository(postgresql_db).deleteAll();
-  await new SignatureRepository(postgresql_db).deleteAll();
-  await new EntityRepository(postgresql_db).deleteAll();
+  await new LibraryRepository(typeorm_db).deleteAll();
+  await new SignatureRepository(typeorm_db).deleteAll();
+  await new EntityRepository(typeorm_db).deleteAll();
   await new UserProfileRepository(memory_db).deleteAll();
 }

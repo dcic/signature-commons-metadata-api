@@ -9,7 +9,8 @@ Signature Commons Metadata API
 Some environment variables should be set to get things running--this can be done with a .env file.
 
 ```bash
-export POSTGRESQL=posgresql://${user}:${pass}@${host}:${port}/${db}
+export TYPEORM_CONNECTION=postgres
+export TYPEORM_URL=posgresql://${user}:${pass}@${host}:${port}/${db}
 export ADMIN_USERNAME="${api_admin_user}"
 export ADMIN_PASSWORD="${api_admin_pass}"
 ```

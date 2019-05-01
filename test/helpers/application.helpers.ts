@@ -5,9 +5,10 @@ import {
   Client,
   createClientForHandler,
 } from '@loopback/testlab';
-import { postgresql_db, memory_db } from '../helpers/database.helpers';
+import { memory_db, typeorm_db } from '../helpers/database.helpers';
 import { LibraryRepository, SignatureRepository, EntityRepository, UserProfileRepository } from '../../src/repositories';
 import { DataSource } from 'loopback-datasource-juggler';
+import { TypeORMDataSource } from '../../src/datasources';
 
 export async function setupApplication(): Promise<AppWithClient> {
   const app = new App({
@@ -17,17 +18,13 @@ export async function setupApplication(): Promise<AppWithClient> {
   await app.boot();
   await app.start();
 
-  // Override production db with testdb
-  app.dataSource(postgresql_db, 'PostgreSQL')
-  const postgresql_ds = await app.get<DataSource>('datasources.PostgreSQL')
-  await app.getRepository(LibraryRepository)
-  await app.getRepository(SignatureRepository)
-  await app.getRepository(EntityRepository)
-  await postgresql_ds.automigrate([
-    'Library',
-    'Signature',
-    'Entity',
-  ])
+  app.dataSource(typeorm_db, 'typeorm')
+  const typeorm_ds = await app.get<TypeORMDataSource>('datasources.typeorm')
+  await typeorm_ds.connect()
+  await (await app.getRepository(LibraryRepository)).init()
+  await (await app.getRepository(SignatureRepository)).init()
+  await (await app.getRepository(EntityRepository)).init()
+  await typeorm_ds.connection.synchronize()
 
   app.dataSource(memory_db, 'memory')
   const memory_ds = await app.get<DataSource>('datasources.memory')

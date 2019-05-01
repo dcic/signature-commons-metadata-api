@@ -2,7 +2,7 @@ import { validate } from '@dcic/signature-commons-schema';
 import { authenticate, AuthenticationBindings, UserProfile } from '@loopback/authentication';
 import { inject } from '@loopback/context';
 import { Constructor } from '@loopback/core';
-import { Count, CountSchema, DataObject, DefaultCrudRepository, Entity, Filter, repository, Where } from '@loopback/repository';
+import { Count, CountSchema, DataObject, EntityCrudRepository, Entity, Filter, repository, Where } from '@loopback/repository';
 import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param, patch, post, requestBody, Response, RestBindings, getFilterJsonSchemaFor, SchemaObject } from '@loopback/rest';
 import * as uuidv4 from 'uuid/v4';
 import { applyFieldsFilter } from '../util/applyFieldsFilter';
@@ -19,7 +19,7 @@ export class IGenericEntity extends Entity {
   meta: object
 }
 
-export class IGenericRepository<T extends IGenericEntity> extends DefaultCrudRepository<T, string> {
+export interface IGenericRepository<T extends IGenericEntity> extends EntityCrudRepository<T, string> {
 }
 
 export interface GenericController<
