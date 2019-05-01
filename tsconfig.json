@@ -10,5 +10,9 @@
     "node_modules/**",
     "packages/*/node_modules/**",
     "**/*.d.ts"
-  ]
+  ],
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "strictPropertyInitialization": false
+  }
 }
