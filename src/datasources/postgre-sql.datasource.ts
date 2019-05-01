@@ -73,41 +73,23 @@ export class PostgreSQLDataSource extends juggler.DataSource {
     const table_escaped = this.connector.tableEscaped(model.modelName)
     const filter_fields = ((filter || {}).fields || []) as string[]
     const where_meta_clause = (filter_fields.length <= 0) ? '' : filter_fields.map(
-      (field) => `key = ${escapeLiteral(field)}`
-    ).join(' and ')
+      (field) => `r.key = ${escapeLiteral(field)}`
+    ).join(' or ')
     const pagination_clause = buildLimit((filter || {}).limit, (filter || {}).offset || (filter || {}).skip)
 
     const results = await (new Promise((resolve, reject) => this.connector.execute(`
-        with recursive r as (
-            select
-              v.key::text as key,
-              v.value as value
-            from
-              ${table_escaped},
-              jsonb_each(${table_escaped}.meta::jsonb) as v
-          union all
-            select
-              concat(r.key::text, '.', _r.key::text) as key,
-              _r.value as value
-            from
-              r,
-              jsonb_each(r.value::jsonb)
-                cross join lateral
-                  jsonb_array_elements(r.value::jsonb)
-              as _r
-        )
-        select
-          r.key as "key",
-          count(*) as "count"
-        from
-          r
+      select
+        r.key, sum(r.count) as count
+      from
+        "${table_escaped.slice(1, -1)}_key_value_counts" as r
+      group by
+        r.key
+      having
         ${where_meta_clause}
-        group by
-          r.key
-        order by
-          "count" desc
-        ${pagination_clause}
-        ;
+      order by
+        count desc
+      ${pagination_clause}
+      ;
       `, [], (err, result) => {
         if (err) reject(err)
         else resolve(result)
@@ -124,42 +106,19 @@ export class PostgreSQLDataSource extends juggler.DataSource {
     const table_escaped = this.connector.tableEscaped(model.modelName)
     const filter_fields = ((filter || {}).fields || []) as string[]
     const where_meta_clause = (filter_fields.length <= 0) ? '' : filter_fields.map(
-      (field) => `key = ${escapeLiteral(field)}`
-    ).join(' and ')
+      (field) => `r.key = ${escapeLiteral(field)}`
+    ).join(' or ')
     const pagination_clause = buildLimit((filter || {}).limit, (filter || {}).offset || (filter || {}).skip)
 
     const results = await (new Promise((resolve, reject) => this.connector.execute(`
-        with recursive r as (
-            select
-              v.key::text as key,
-              v.value as value
-            from
-              ${table_escaped},
-              jsonb_each(${table_escaped}.meta::jsonb) as v
-          union all
-            select
-              concat(r.key::text, '.', _r.key::text) as key,
-              _r.value as value
-            from
-              r,
-              jsonb_each(r.value::jsonb) as _r
-            where
-              jsonb_typeof(r.value) = 'object'
-        )
-        select
-          r.key as "key",
-          r.value as "value",
-          count(*) as "count"
-        from
-          r
+      select
+        r.key, r.value, r.count
+      from
+        "${table_escaped.slice(1, -1)}_key_value_counts" as r
+      where
         ${where_meta_clause}
-        group by
-          r.key,
-          r.value
-        order by
-          "count" desc
-        ${pagination_clause}
-        ;
+      ${pagination_clause}
+      ;
       `, [], (err, result) => {
         if (err) reject(err)
         else resolve(result)
