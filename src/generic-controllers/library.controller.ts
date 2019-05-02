@@ -85,7 +85,7 @@ export class Library extends GenericLibraryController {
 
     const filter_fields = ((filter || {}).fields || []) as string[]
     const where_meta_clause = (filter_fields.length <= 0) ? '' : filter_fields.map(
-      (field) => `r.key = ${escapeLiteral(field)}`
+      (field) => `r.key = ${escapeLiteral(field)} or r.key like ${escapeLiteral(field)} || '.%'`
     ).join(' or ')
     const pagination_clause = buildLimit((filter || {}).limit, (filter || {}).offset || (filter || {}).skip)
 
@@ -138,7 +138,7 @@ export class Library extends GenericLibraryController {
 
     const filter_fields = ((filter || {}).fields || []) as string[]
     const where_meta_clause = (filter_fields.length <= 0) ? '' : filter_fields.map(
-      (field) => `r.key = ${escapeLiteral(field)}`
+      (field) => `r.key = ${escapeLiteral(field)} or r.key like ${escapeLiteral(field)} || '.%'`
     ).join(' or ')
     const pagination_clause = buildLimit((filter || {}).limit, (filter || {}).offset || (filter || {}).skip)
 
