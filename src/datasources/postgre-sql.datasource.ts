@@ -178,6 +178,7 @@ export class PostgreSQLDataSource extends juggler.DataSource {
   }
 
   async key_counts<TE extends typeof Entity, E extends Entity>(model: TE, filter?: Filter<E>): Promise<AnyObject> {
+    const table_escaped = this.connector.tableEscaped(model.modelName)
     const filter_fields = ((filter || {}).fields || []) as string[]
     const where_meta_clause = (filter_fields.length <= 0) ? '' : filter_fields.map(
       (field) => `r.key = ${escapeLiteral(field)} or r.key like ${escapeLiteral(field)} || '.%'`
@@ -188,7 +189,7 @@ export class PostgreSQLDataSource extends juggler.DataSource {
       select
         r.key, sum(r.count) as count
       from
-        "${model.modelName}_key_value_counts" as r
+        "${table_escaped.slice(1, -1)}_key_value_counts" as r
       group by
         r.key
       ${where_meta_clause ? `
@@ -218,6 +219,7 @@ export class PostgreSQLDataSource extends juggler.DataSource {
   }
 
   async value_counts<TE extends typeof Entity, E extends Entity>(model: TE, filter?: Filter<E>): Promise<AnyObject> {
+    const table_escaped = this.connector.tableEscaped(model.modelName)
     const filter_fields = ((filter || {}).fields || []) as string[]
     const where_meta_clause = (filter_fields.length <= 0) ? '' : filter_fields.map(
       (field) => `r.key = ${escapeLiteral(field)} or r.key like ${escapeLiteral(field)} || '.%'`
@@ -228,7 +230,7 @@ export class PostgreSQLDataSource extends juggler.DataSource {
       select
         r.key, r.value, r.count
       from
-        "${model.modelName}_key_value_counts" as r
+        "${table_escaped.slice(1, -1)}_key_value_counts" as r
       ${where_meta_clause ? `
         where
           ${where_meta_clause}
