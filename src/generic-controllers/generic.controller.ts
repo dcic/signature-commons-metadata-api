@@ -335,9 +335,10 @@ export function GenericControllerFactory<
       await this.set_content_range({ filter, results, contentRange })
 
       let objs: Array<object> = []
+      let n = 0
 
       for await (let obj of results) {
-        if (results.length >= limit)
+        if (n >= limit)
           break
         try {
           obj = await validate<GenericEntity>(
@@ -349,6 +350,7 @@ export function GenericControllerFactory<
           )
         } catch (e) {
           objs = objs.concat(serializeError(e))
+          n += 1;
         }
       }
 
