@@ -7,7 +7,7 @@ import { LibraryRepository } from '../repositories';
 import { GenericControllerFactory } from './generic.controller';
 import { Signature as SignatureController } from './signature.controller';
 import { AnyObject } from 'loopback-datasource-juggler';
-import { buildLimit } from '../util/sql_building';
+import { escapeLiteral, buildLimit } from '../util/sql_building';
 import debug from '../util/debug'
 
 const GenericLibraryController = GenericControllerFactory<
@@ -20,31 +20,6 @@ const GenericLibraryController = GenericControllerFactory<
   modelName: 'Library',
   basePath: '/signature-commons-metadata-api/libraries',
 })
-
-interface PostgreSQLConnector {
-  execute(sql: string, params: any[], callback: (err: Error, result: string) => void): void
-}
-
-function escapeLiteral(str: string, escape_val: string = '\'') {
-  var hasBackslash = false;
-  var escaped = escape_val;
-  for (var i = 0; i < str.length; i++) {
-    var c = str[i];
-    if (c === escape_val) {
-      escaped += c + c;
-    } else if (c === '\\') {
-      escaped += c + c;
-      hasBackslash = true;
-    } else {
-      escaped += c;
-    }
-  }
-  escaped += escape_val;
-  if (hasBackslash === true) {
-    escaped = ' E' + escaped;
-  }
-  return escaped;
-}
 
 export class Library extends GenericLibraryController {
   @authenticate('GET.libraries.signatures')
