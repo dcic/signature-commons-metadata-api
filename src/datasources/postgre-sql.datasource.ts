@@ -3,51 +3,12 @@ import { juggler, Entity, Connector, Filter } from '@loopback/repository';
 import { makeTemplate } from '../util/dynamic-template'
 import * as config from './postgre-sql.datasource.json';
 import { AnyObject } from 'loopback-datasource-juggler';
+import debug from '../util/debug'
+import { escapeLiteral, buildLimit } from '../util/sql_building';
 
 interface PostgreSQLConnector extends Connector {
   execute(sql: string, params: any[], callback: (err: Error, result: AnyObject) => void): Promise<AnyObject>
   tableEscaped(model: string): string
-}
-
-function escapeLiteral(str: string, escape_val: string = '\'') {
-  var hasBackslash = false;
-  var escaped = escape_val;
-  for (var i = 0; i < str.length; i++) {
-    var c = str[i];
-    if (c === escape_val) {
-      escaped += c + c;
-    } else if (c === '\\') {
-      escaped += c + c;
-      hasBackslash = true;
-    } else {
-      escaped += c;
-    }
-  }
-  escaped += escape_val;
-  if (hasBackslash === true) {
-    escaped = ' E' + escaped;
-  }
-  return escaped;
-}
-
-function buildLimit(limit?: number, offset?: number) {
-  var clause = [];
-  if (limit === undefined || isNaN(limit)) {
-    limit = 0;
-  }
-  if (offset === undefined || isNaN(offset)) {
-    offset = 0;
-  }
-  if (!limit && !offset) {
-    return '';
-  }
-  if (limit) {
-    clause.push('LIMIT ' + limit);
-  }
-  if (offset) {
-    clause.push('OFFSET ' + offset);
-  }
-  return clause.join(' ');
 }
 
 export class PostgreSQLDataSource extends juggler.DataSource {
@@ -77,24 +38,32 @@ export class PostgreSQLDataSource extends juggler.DataSource {
     ).join(' or ')
     const pagination_clause = buildLimit((filter || {}).limit, (filter || {}).offset || (filter || {}).skip)
 
-    const results = await (new Promise((resolve, reject) => this.connector.execute(`
+    const query = `
       select
         r.key, sum(r.count) as count
       from
         "${table_escaped.slice(1, -1)}_key_value_counts" as r
       group by
         r.key
-      having
-        ${where_meta_clause}
+      ${where_meta_clause ? `
+        having
+          ${where_meta_clause}
+      ` : ''}
       order by
         count desc
       ${pagination_clause}
       ;
-      `, [], (err, result) => {
-        if (err) reject(err)
-        else resolve(result)
-      })
-    ))
+    `
+    debug(query)
+
+    const results = await (
+      new Promise((resolve, reject) =>
+        this.connector.execute(query, [], (err, result) => {
+          if (err) reject(err)
+          else resolve(result)
+        })
+      )
+    )
 
     return (results as AnyObject[]).reduce<AnyObject>((grouped: any, { key, count }: any) => ({
       ...grouped,
@@ -110,20 +79,30 @@ export class PostgreSQLDataSource extends juggler.DataSource {
     ).join(' or ')
     const pagination_clause = buildLimit((filter || {}).limit, (filter || {}).offset || (filter || {}).skip)
 
-    const results = await (new Promise((resolve, reject) => this.connector.execute(`
+    const query = `
       select
         r.key, r.value, r.count
       from
         "${table_escaped.slice(1, -1)}_key_value_counts" as r
-      where
-        ${where_meta_clause}
+      ${where_meta_clause ? `
+        where
+          ${where_meta_clause}
+      ` : ''}
+      order by
+        count desc
       ${pagination_clause}
       ;
-      `, [], (err, result) => {
-        if (err) reject(err)
-        else resolve(result)
-      })
-    ))
+    `
+    debug(query)
+
+    const results = await (
+      new Promise((resolve, reject) =>
+        this.connector.execute(query, [], (err, result) => {
+          if (err) reject(err)
+          else resolve(result)
+        })
+      )
+    )
 
     return (results as AnyObject[]).reduce<AnyObject>((grouped: any, { key, value, count }: any) => ({
       ...grouped,
