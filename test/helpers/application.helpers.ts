@@ -23,7 +23,7 @@ export async function setupApplication(): Promise<AppWithClient> {
   await app.getRepository(LibraryRepository)
   await app.getRepository(SignatureRepository)
   await app.getRepository(EntityRepository)
-  await postgresql_ds.automigrate([
+  await postgresql_ds.autoupdate([
     'Library',
     'Signature',
     'Entity',
@@ -32,7 +32,7 @@ export async function setupApplication(): Promise<AppWithClient> {
   app.dataSource(memory_db, 'memory')
   const memory_ds = await app.get<DataSource>('datasources.memory')
   await app.getRepository(UserProfileRepository)
-  await memory_ds.automigrate([
+  await memory_ds.autoupdate([
     'UserProfile',
   ])
 
