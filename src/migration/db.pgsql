@@ -157,3 +157,50 @@ group by
   r.value
 order by
   "count" desc;
+
+create materialized view public.libraries_signatures_key_value_counts
+as
+with recursive r as (
+    select
+      s.libid as library,
+      v.key::text as key,
+      v.value as value
+    from
+      signatures as s,
+      jsonb_each(s.meta::jsonb) as v
+  union all
+    select _r.*
+    from
+      r cross join lateral (
+        select
+          r.library as library,
+          concat(r.key::text, '.', r_obj.key::text) as key,
+          r_obj.value as value
+        from jsonb_each(r.value) as r_obj
+        where jsonb_typeof(r.value) = 'object'
+          union
+        select
+          r.library as library,
+          r.key::text as key,
+          r_arr.value as value
+        from jsonb_array_elements(r.value) as r_arr
+        where jsonb_typeof(r.value) = 'array'
+      ) as _r
+)
+select
+  r.library as "library",
+  r.key as "key",
+  case
+    when jsonb_typeof(r.value) = 'object' then to_json('[object]'::text)::jsonb
+    when jsonb_typeof(r.value) = 'array' then to_json('[array]'::text)::jsonb
+    else r.value::jsonb
+  end as "value",
+  count(*) as "count"
+from
+  r
+group by
+  r.library,
+  r.key,
+  r.value
+order by
+  "count" desc;
