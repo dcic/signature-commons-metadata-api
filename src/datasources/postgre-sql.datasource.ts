@@ -214,7 +214,7 @@ export class PostgreSQLDataSource extends juggler.DataSource {
 
     return (results as AnyObject[]).reduce<AnyObject>((grouped: any, { key, count }: any) => ({
       ...grouped,
-      [key]: count
+      [key]: parseInt(count)
     }), {})
   }
 
@@ -255,7 +255,7 @@ export class PostgreSQLDataSource extends juggler.DataSource {
       ...grouped,
       [key]: {
         ...grouped[key],
-        [value]: count,
+        [value]: parseInt(count),
       },
     }), {})
   }
