@@ -1,12 +1,12 @@
 import { authenticate } from '@loopback/authentication';
 import { inject } from '@loopback/core';
-import { Filter } from '@loopback/repository';
-import { get, getFilterSchemaFor, param, api } from '@loopback/rest';
+import { Filter, Where } from '@loopback/repository';
+import { get, getFilterSchemaFor, param, api, getWhereSchemaFor } from '@loopback/rest';
 import { Library as LibraryEntity, LibrarySchema, Signature } from '../models';
 import { LibraryRepository } from '../repositories';
 import { GenericControllerFactory } from './generic.controller';
 import { Signature as SignatureController } from './signature.controller';
-import { AnyObject } from 'loopback-datasource-juggler';
+import { AnyObject, Count } from 'loopback-datasource-juggler';
 import { escapeLiteral, buildLimit } from '../util/sql_building';
 import debug from '../util/debug'
 
@@ -48,9 +48,30 @@ export class Library extends GenericLibraryController {
     return signatures
   }
 
+  @authenticate('GET.libraries.signatures.count')
+  @get('/{id}/signatures/count')
+  async signatures_count(
+    @inject('controllers.Signature') signatureController: SignatureController,
+    @param.path.string('id') id: string,
+    @param.query.object('where', getWhereSchemaFor(Signature)) where?: Where<Signature>,
+    @param.query.string('where_str') where_str: string = '',
+  ): Promise<Count> {
+    if (where_str !== '' && where == null)
+      where = JSON.parse(where_str)
+
+    const count = await signatureController.count(
+      {
+        ...(where || {}),
+        library: id
+      },
+    )
+
+    return count
+  }
+
   @authenticate('GET.libraries.signatures.key_count')
   @get('/{id}/signatures/key_count')
-  async key_counts(
+  async signatures_key_counts(
     @param.path.string('id') id: string,
     @param.query.object('filter', getFilterSchemaFor(Signature)) filter?: Filter<Signature>,
     @param.query.string('filter_str') filter_str: string = '',
@@ -103,7 +124,7 @@ export class Library extends GenericLibraryController {
 
   @authenticate('GET.libraries.signatures.value_count')
   @get('/{id}/signatures/value_count')
-  async value_counts(
+  async signatures_value_counts(
     @param.path.string('id') id: string,
     @param.query.object('filter', getFilterSchemaFor(Signature)) filter?: Filter<Signature>,
     @param.query.string('filter_str') filter_str: string = '',
