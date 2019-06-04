@@ -259,6 +259,42 @@ export function GenericControllerFactory<
 
     }
 
+    @authenticate('GET.' + props.modelName + '.distinct_value_count')
+    @get('/distinct_value_count', {
+      tags: [props.modelName],
+      operationId: props.modelName + '.distinct_value_count',
+      responses: {
+        '200': {
+          description: props.modelName + ' model distinct_value_count (number of unique values which appear in the query results)',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  description: 'The key in the database paired with the number of disticting values for those keys'
+                }
+              }
+            }
+          },
+        },
+        '401': {
+          description: 'Access denied'
+        },
+      },
+    })
+    async distinct_value_count(
+      @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
+      @param.query.string('filter_str') filter_str: string = '',
+      @param.query.number('depth') depth: number = 0,
+      @param.query.boolean('contentRange') contentRange: boolean = true,
+    ): Promise<{ [key: string]: number }> {
+      if (filter_str !== '' && filter == null)
+        filter = JSON.parse(filter_str)
+
+      return this.genericRepository.dataSource.distinct_value_counts(props.GenericEntity, filter)
+    }
+
     @authenticate('GET.' + props.modelName + '.dbck')
     @get('/dbck', {
       tags: [props.modelName],

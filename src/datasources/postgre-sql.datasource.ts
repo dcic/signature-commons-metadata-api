@@ -236,7 +236,7 @@ export class PostgreSQLDataSource extends juggler.DataSource {
           ${where_meta_clause}
       ` : ''}
       order by
-        count desc
+        r.count desc
       ${pagination_clause}
       ;
     `
@@ -257,6 +257,47 @@ export class PostgreSQLDataSource extends juggler.DataSource {
         ...grouped[key],
         [value]: parseInt(count),
       },
+    }), {})
+  }
+
+  async distinct_value_counts<TE extends typeof Entity, E extends Entity>(model: TE, filter?: Filter<E>): Promise<AnyObject> {
+    const table_escaped = this.connector.tableEscaped(model.modelName)
+    const filter_fields = ((filter || {}).fields || []) as string[]
+    const where_meta_clause = (filter_fields.length <= 0) ? '' : filter_fields.map(
+      (field) => `r.key = ${escapeLiteral(field)} or r.key like ${escapeLiteral(field)} || '.%'`
+    ).join(' or ')
+    const pagination_clause = buildLimit((filter || {}).limit, (filter || {}).offset || (filter || {}).skip)
+
+    const query = `
+      select distinct
+        r.key, count(*) as count
+      from
+        "${table_escaped.slice(1, -1)}_key_value_counts" as r
+      group by
+        r.key
+      ${where_meta_clause ? `
+        having
+          ${where_meta_clause}
+      ` : ''}
+      order by
+        count desc
+      ${pagination_clause}
+      ;
+    `
+    debug(query)
+
+    const results = await (
+      new Promise((resolve, reject) =>
+        this.connector.execute(query, [], (err, result) => {
+          if (err) reject(err)
+          else resolve(result)
+        })
+      )
+    )
+
+    return (results as AnyObject[]).reduce<AnyObject>((grouped: any, { key, count }: any) => ({
+      ...grouped,
+      [key]: parseInt(count)
     }), {})
   }
 }
