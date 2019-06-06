@@ -1,6 +1,6 @@
 {
   "name": "signature-commons-metadata-api",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "Signature Commons Metadata API Micro Service",
   "keywords": [
     "loopback-application",
@@ -45,15 +45,15 @@
     "src"
   ],
   "dependencies": {
-    "@dcic/signature-commons-schema": "^1.3.1",
+    "@dcic/signature-commons-schema": "^1.3.2",
     "@loopback/authentication": "^1.2.1",
-    "@loopback/boot": "^1.2.7",
-    "@loopback/context": "^1.15.0",
-    "@loopback/core": "^1.7.0",
-    "@loopback/openapi-v3": "^1.3.11",
-    "@loopback/repository": "^1.5.5",
-    "@loopback/rest": "^1.11.2",
-    "@loopback/service-proxy": "^1.1.10",
+    "@loopback/boot": "^1.3.0",
+    "@loopback/context": "^1.18.0",
+    "@loopback/core": "^1.8.0",
+    "@loopback/openapi-v3": "^1.6.0",
+    "@loopback/repository": "^1.6.0",
+    "@loopback/rest": "^1.14.0",
+    "@loopback/service-proxy": "^1.2.0",
     "@types/uuid": "^3.4.4",
     "cross-env": "^5.2.0",
     "loopback-connector-postgresql": "github:u8sand/loopback-connector-postgresql#fullTextSearch",
@@ -64,14 +64,14 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@loopback/build": "^1.5.4",
-    "@loopback/testlab": "^1.2.9",
+    "@loopback/build": "^1.7.0",
+    "@loopback/testlab": "^1.4.0",
     "@types/assert": "^1.4.2",
-    "@types/node": "^10.14.7",
+    "@types/node": "^10.14.8",
     "@types/passport": "^0.4.7",
     "@types/passport-http": "^0.3.8",
     "assert": "^1.5.0",
-    "tslint": "^5.16.0",
-    "typescript": "^3.4.5"
+    "tslint": "^5.17.0",
+    "typescript": "^3.5.1"
   }
 }
