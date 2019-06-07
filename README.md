@@ -12,14 +12,12 @@ Some environment variables should be set to get things running--this can be done
 ADMIN_USERNAME=signaturestore
 ADMIN_PASSWORD=signaturestore
 POSTGRES_DB=signaturestore
+POSTGRES_TEST_DB=test
 POSTGRES_USER=signaturestore
 POSTGRES_PASSWORD=signaturestore
 TYPEORM_CONNECTION=postgres
-TYPEORM_HOST=localhost
-TYPEORM_USERNAME=signaturestore
-TYPEORM_PASSWORD=signaturestore
-TYPEORM_DATABASE=signaturestore
-TYPEORM_PORT=5432
+TYPEORM_URL=postgres://signaturestore:signaturestore@localhost:5432/signaturestore
+TYPEORM_TEST_URL=postgres://signaturestore:signaturestore@localhost:5432/signaturestore_test
 TYPEORM_SYNCHRONIZE=false
 TYPEORM_LOGGING=true
 TYPEORM_ENTITIES=dist/src/entities/*.js

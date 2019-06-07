@@ -3,4 +3,5 @@
 .vscode/
 api-docs/
 dist/
+docker/
 node_modules/

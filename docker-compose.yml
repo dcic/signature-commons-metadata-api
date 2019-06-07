@@ -5,10 +5,12 @@ services:
     image: maayanlab/signature-commons-metadata-api
     env_file: .env
   meta-db:
-    image: postgres
+    build: ./docker/postgres
+    image: meta-db
     env_file: .env
     environment:
       - POSTGRES_DB
+      - POSTGRES_TEST_DB
       - POSTGRES_USER
       - POSTGRES_PASSWORD
     ports:
