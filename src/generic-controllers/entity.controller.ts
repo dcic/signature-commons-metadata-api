@@ -14,14 +14,5 @@ const GenericEntityController = GenericControllerFactory<
   basePath: '/signature-commons-metadata-api/entities',
 })
 
-
-@api({
-  paths: {},
-  components: {
-    schemas: {
-      Entity: EntitySchema as any,
-    },
-  },
-})
 export class Entity extends GenericEntityController {
 }

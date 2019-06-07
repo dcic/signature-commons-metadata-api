@@ -7,6 +7,8 @@ export class EntityRepository extends TypeORMRepository<
   Entity,
   typeof Entity.prototype.id
   > {
+  dataSource: TypeORMDataSource
+
   constructor(
     @inject('datasources.typeorm') dataSource: TypeORMDataSource,
   ) {

@@ -7,6 +7,8 @@ export class SignatureRepository extends TypeORMRepository<
   Signature,
   typeof Signature.prototype.id
   >  {
+  dataSource: TypeORMDataSource
+
   constructor(
     @inject('datasources.typeorm') dataSource: TypeORMDataSource,
   ) {

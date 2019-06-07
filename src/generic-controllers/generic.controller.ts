@@ -7,11 +7,9 @@ import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param
 import * as uuidv4 from 'uuid/v4';
 import { applyFieldsFilter } from '../util/applyFieldsFilter';
 import debug from '../util/debug';
-import { flatten_keys } from '../util/flatten-keys';
-import { keyCounts, valueCounts } from '../util/key-counts';
-import { sortedDict } from '../util/sorted-dict';
-import { sum } from '../util/sum';
 import serializeError from 'serialize-error'
+import { flatten_keys } from '../util/flatten-keys'
+import { TypeORMDataSource } from '../datasources';
 
 export class IGenericEntity extends Entity {
   $validator?: string
@@ -20,6 +18,7 @@ export class IGenericEntity extends Entity {
 }
 
 export interface IGenericRepository<T extends IGenericEntity> extends EntityCrudRepository<T, string> {
+  dataSource: TypeORMDataSource
 }
 
 export interface GenericController<
@@ -49,13 +48,13 @@ export function GenericControllerFactory<
   props: {
     GenericRepository: Constructor<GenericRepository>
     GenericEntity: typeof IGenericEntity
-    GenericEntitySchema: any,
+    GenericEntitySchema: any
     modelName: string
     basePath: string
   }
 ): Constructor<GenericController<GenericEntity, GenericRepository>> {
 
-  const modelSchema = '/@dcic/signature-commons-schema/core/' + props.modelName.toLowerCase() + '.json'
+  const modelSchema = '/@dcic/signature-commons-schema/v3/core/' + props.modelName.toLowerCase() + '.json'
 
   @api({
     basePath: props.basePath,
@@ -220,24 +219,7 @@ export function GenericControllerFactory<
       if (filter_str !== '' && filter == null)
         filter = JSON.parse(filter_str)
 
-      if (depth < 0)
-        throw new Error("Depth must be greater than 0")
-
-      const results = await this.genericRepository.find({
-        ...filter, fields: undefined
-      })
-
-      await this.set_content_range({ filter, results, contentRange })
-
-      return sortedDict(
-        keyCounts(
-          results.map(
-            (obj) => applyFieldsFilter(obj.meta, ((filter || {}).fields || []))
-          ),
-          depth
-        ),
-        (a, b) => b - a
-      )
+      return this.genericRepository.dataSource.key_counts(props.GenericEntity, filter)
     }
 
     @authenticate('GET.' + props.modelName + '.value_count')
@@ -273,24 +255,44 @@ export function GenericControllerFactory<
       if (filter_str !== '' && filter == null)
         filter = JSON.parse(filter_str)
 
-      if (depth < 0)
-        throw new Error("Depth must be greater than 0")
+      return this.genericRepository.dataSource.value_counts(props.GenericEntity, filter)
 
-      const results = await this.genericRepository.find({
-        ...filter, fields: undefined
-      })
+    }
 
-      await this.set_content_range({ filter, results, contentRange })
+    @authenticate('GET.' + props.modelName + '.distinct_value_count')
+    @get('/distinct_value_count', {
+      tags: [props.modelName],
+      operationId: props.modelName + '.distinct_value_count',
+      responses: {
+        '200': {
+          description: props.modelName + ' model distinct_value_count (number of unique values which appear in the query results)',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  description: 'The key in the database paired with the number of disticting values for those keys'
+                }
+              }
+            }
+          },
+        },
+        '401': {
+          description: 'Access denied'
+        },
+      },
+    })
+    async distinct_value_count(
+      @param.query.object('filter', getFilterSchemaFor(props.GenericEntity)) filter?: Filter<GenericEntity>,
+      @param.query.string('filter_str') filter_str: string = '',
+      @param.query.number('depth') depth: number = 0,
+      @param.query.boolean('contentRange') contentRange: boolean = true,
+    ): Promise<{ [key: string]: number }> {
+      if (filter_str !== '' && filter == null)
+        filter = JSON.parse(filter_str)
 
-      return sortedDict(
-        valueCounts(
-          results.map(
-            (obj) => applyFieldsFilter(obj.meta, ((filter || {}).fields || []))
-          ),
-          depth
-        ),
-        (a, b) => sum(Object.values(b)) - sum(Object.values(a))
-      )
+      return this.genericRepository.dataSource.distinct_value_counts(props.GenericEntity, filter)
     }
 
     @authenticate('GET.' + props.modelName + '.dbck')
@@ -335,9 +337,10 @@ export function GenericControllerFactory<
       await this.set_content_range({ filter, results, contentRange })
 
       let objs: Array<object> = []
+      let n = 0
 
       for await (let obj of results) {
-        if (results.length >= limit)
+        if (n >= limit)
           break
         try {
           obj = await validate<GenericEntity>(
@@ -349,6 +352,7 @@ export function GenericControllerFactory<
           )
         } catch (e) {
           objs = objs.concat(serializeError(e))
+          n += 1;
         }
       }
 

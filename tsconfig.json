@@ -13,6 +13,7 @@
   ],
   "compilerOptions": {
     "resolveJsonModule": true,
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "experimentalDecorators": true
   }
 }

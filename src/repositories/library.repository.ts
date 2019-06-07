@@ -7,6 +7,8 @@ export class LibraryRepository extends TypeORMRepository<
   Library,
   typeof Library.prototype.id
   > {
+  dataSource: TypeORMDataSource
+
   constructor(
     @inject('datasources.typeorm') dataSource: TypeORMDataSource,
   ) {

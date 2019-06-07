@@ -3,7 +3,6 @@ import {
   createRestAppClient,
   givenHttpServerConfig,
   Client,
-  createClientForHandler,
 } from '@loopback/testlab';
 import { memory_db, typeorm_db } from '../helpers/database.helpers';
 import { LibraryRepository, SignatureRepository, EntityRepository, UserProfileRepository } from '../../src/repositories';
@@ -24,12 +23,11 @@ export async function setupApplication(): Promise<AppWithClient> {
   await (await app.getRepository(LibraryRepository)).init()
   await (await app.getRepository(SignatureRepository)).init()
   await (await app.getRepository(EntityRepository)).init()
-  await typeorm_ds.connection.synchronize()
 
   app.dataSource(memory_db, 'memory')
   const memory_ds = await app.get<DataSource>('datasources.memory')
   await app.getRepository(UserProfileRepository)
-  await memory_ds.automigrate([
+  await memory_ds.autoupdate([
     'UserProfile',
   ])
 
