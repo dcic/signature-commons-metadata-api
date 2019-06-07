@@ -12,19 +12,20 @@ import {
   Where,
   AnyObject,
   Count,
-  AndClause,
-  OrClause,
 } from '@loopback/repository';
 import {
-  getRepository,
   Repository,
-  SelectQueryBuilder,
-  QueryBuilder,
-  UpdateQueryBuilder,
-  DeleteQueryBuilder,
   FindConditions,
   DeepPartial,
-  OrderByCondition,
+  Equal,
+  Not,
+  LessThan,
+  LessThanOrEqual,
+  MoreThan,
+  MoreThanOrEqual,
+  Between,
+  In,
+  Any,
 } from 'typeorm';
 
 import { TypeORMDataSource } from '../datasources'
@@ -36,7 +37,7 @@ const debug = debugModule('loopback:repository:typeorm');
 /**
  * An implementation of EntityCrudRepository using TypeORM
  */
-export class TypeORMRepository<T extends Entity, ID>
+export class TypeORMRepository<T extends Entity, ID extends string>
   implements EntityCrudRepository<T, ID> {
   typeOrmRepo: Repository<T>;
 
@@ -48,7 +49,7 @@ export class TypeORMRepository<T extends Entity, ID>
   async init() {
     if (this.typeOrmRepo != null) return;
     this.typeOrmRepo = <Repository<T>>await this.dataSource.getRepository(
-      this.entityClass,
+      this.entityClass as any,
     );
   }
 
@@ -76,7 +77,7 @@ export class TypeORMRepository<T extends Entity, ID>
 
   async findById(id: ID, filter?: Filter, options?: Options): Promise<T> {
     await this.init();
-    const result = await this.typeOrmRepo.findOne(id);
+    const result = await this.typeOrmRepo.findOne({ id } as FindConditions<T>);
     if (result == null) {
       throw new Error('Not found');
     }
@@ -130,11 +131,21 @@ export class TypeORMRepository<T extends Entity, ID>
     return <T[]>result;
   }
 
-  async find(filter?: Filter, options?: Options): Promise<T[]> {
+  async find(filter?: Filter<T>, options?: Options): Promise<T[]> {
     await this.init();
-    const queryBuilder = await this.buildQuery(filter);
-    if (debug.enabled) debug('find: %s', queryBuilder.getSql());
-    const result = queryBuilder.getMany();
+
+    if (filter === undefined) filter = {}
+
+    const typeorm_filter = {
+      select: filter.fields,
+      relations: filter.include,
+      where: this._typeormWhere(filter.where),
+      order: filter.order,
+      skip: filter.skip,
+      take: filter.limit,
+    }
+
+    const result = await this.typeOrmRepo.find(typeorm_filter as FindConditions<T>)
     return result;
   }
 
@@ -144,26 +155,19 @@ export class TypeORMRepository<T extends Entity, ID>
     options?: Options,
   ): Promise<Count> {
     await this.init();
-    const queryBuilder = await this.buildUpdate(dataObject, where);
-    if (debug.enabled) debug('updateAll: %s', queryBuilder.getSql());
-    // FIXME [rfeng]: The result is raw data from the DB driver and it varies
-    // between different DBs
-    const result = await queryBuilder.execute();
+    const result = await this.typeOrmRepo.update(
+      this._typeormWhere(where as any) as FindConditions<T>,
+      dataObject as QueryDeepPartialEntity<T>
+    )
     return { count: result.generatedMaps.length };
   }
 
-  async deleteAll(where?: Where, options?: Options): Promise<Count> {
+  async deleteAll(where?: Where<T>, options?: Options): Promise<Count> {
     await this.init();
-    const queryBuilder = await this.buildDelete(where);
-    if (debug.enabled) debug('deleteAll: %s', queryBuilder.getSql());
-    // FIXME [rfeng]: The result is raw data from the DB driver and it varies
-    // between different DBs
-    const result = await queryBuilder.execute();
-    if (result.affected === undefined) {
-      if (debug.enabled) debug('Database doesn\'t support `affected`.')
-      result.affected = -1
-    }
-    return { count: result.affected };
+    const result = await this.typeOrmRepo.delete(
+      this._typeormWhere(where as Where<T>) as FindConditions<T>
+    )
+    return { count: result.affected || -1 };
   }
 
   async count(where?: Where, options?: Options): Promise<Count> {
@@ -186,116 +190,40 @@ export class TypeORMRepository<T extends Entity, ID>
     return result;
   }
 
-  /**
-   * Convert order clauses to OrderByCondition
-   * @param order An array of orders
-   */
-  buildOrder(order: string[]) {
-    let orderBy: OrderByCondition = {};
-    for (const o of order) {
-      const match = /^([^\s]+)( (ASC|DESC))?$/.exec(o);
-      if (!match) continue;
-      const field = match[1];
-      const dir = (match[3] || 'ASC') as 'ASC' | 'DESC';
-      orderBy[match[1]] = dir;
-    }
-    return orderBy;
-  }
+  _typeormWhere(where?: Where<T>) {
+    if (where === undefined) return {}
 
-  /**
-   * Build a TypeORM query from LoopBack Filter
-   * @param filter Filter object
-   */
-  async buildQuery(filter?: Filter): Promise<SelectQueryBuilder<T>> {
-    await this.init();
-    const queryBuilder = this.typeOrmRepo.createQueryBuilder();
-    if (!filter) return queryBuilder;
-    queryBuilder.limit(filter.limit).offset(filter.offset);
-    if (filter.fields) {
-      queryBuilder.select(Object.keys(filter.fields));
-    }
-    if (filter.order) {
-      queryBuilder.orderBy(this.buildOrder(filter.order));
-    }
-    if (filter.where) {
-      queryBuilder.where(this.buildWhere(filter.where));
-    }
-    return queryBuilder;
-  }
+    const typeormWhere: { [key: string]: any } = {}
 
-  /**
-   * Convert where object into where clause
-   * @param where Where object
-   */
-  buildWhere(where: Where): string {
-    const clauses: string[] = [];
-    if ((where as AndClause<any>).and) {
-      const and = (where as AndClause<any>).and.map(w => `(${this.buildWhere(w)})`).join(' AND ');
-      clauses.push(and);
-    }
-    if ((where as OrClause<any>).or) {
-      const or = (where as OrClause<any>).or.map(w => `(${this.buildWhere(w)})`).join(' OR ');
-      clauses.push(or);
-    }
-    // FIXME [rfeng]: Build parameterized clauses
     for (const key in where) {
-      let clause;
-      if (key === 'and' || key === 'or') continue;
-      const condition = (where as any)[key];
-      if (condition.eq) {
-        clause = `${key} = ${condition.eq}`;
+      const condition = (where as any)[key]
+      if (condition.and) {
+        for (const obj of condition.and) {
+          Object.assign(typeormWhere, obj)
+        }
+      } else if (condition.or) {
+        typeormWhere[key] = Any(condition.or)
+      } else if (condition.eq) {
+        typeormWhere[key] = Equal(condition.eq)
       } else if (condition.neq) {
-        clause = `${key} != ${condition.neq}`;
+        typeormWhere[key] = Not(condition.neq)
       } else if (condition.lt) {
-        clause = `${key} < ${condition.lt}`;
+        typeormWhere[key] = LessThan(condition.lt)
       } else if (condition.lte) {
-        clause = `${key} <= ${condition.lte}`;
+        typeormWhere[key] = LessThanOrEqual(condition.lte)
       } else if (condition.gt) {
-        clause = `${key} > ${condition.gt}`;
+        typeormWhere[key] = MoreThan(condition.gt)
       } else if (condition.gte) {
-        clause = `${key} >= ${condition.gte}`;
+        typeormWhere[key] = MoreThanOrEqual(condition.gte)
       } else if (condition.inq) {
-        const vals = condition.inq.join(', ');
-        clause = `${key} IN (${vals})`;
+        typeormWhere[key] = In(condition.inq)
       } else if (condition.between) {
-        const v1 = condition.between[0];
-        const v2 = condition.between[1];
-        clause = `${key} BETWEEN ${v1} AND ${v2}`;
+        typeormWhere[key] = Between(condition.between[0], condition.between[1])
       } else {
-        // Shorthand form: {x:1} => X = 1
-        clause = `${key} = ${condition}`;
+        typeormWhere[key] = condition
       }
-      clauses.push(clause);
     }
-    return clauses.join(' AND ');
-  }
 
-  /**
-   * Build an `update` statement from LoopBack-style parameters
-   * @param dataObject Data object to be updated
-   * @param where Where object
-   */
-  async buildUpdate(dataObject: DataObject<T>, where?: Where) {
-    await this.init();
-    let queryBuilder = this.typeOrmRepo
-      .createQueryBuilder()
-      .update(this.entityClass)
-      .set(dataObject);
-    if (where) queryBuilder.where(this.buildWhere(where));
-    return queryBuilder;
-  }
-
-  /**
-   * Build a `delete` statement from LoopBack-style parameters
-   * @param where Where object
-   */
-  async buildDelete(where?: Where) {
-    await this.init();
-    let queryBuilder = this.typeOrmRepo
-      .createQueryBuilder()
-      .delete()
-      .from(this.entityClass);
-    if (where) queryBuilder.where(this.buildWhere(where));
-    return queryBuilder;
+    return typeormWhere
   }
 }
