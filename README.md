@@ -8,19 +8,32 @@ Signature Commons Metadata API
 ### Environment
 Some environment variables should be set to get things running--this can be done with a .env file.
 
-```bash
-export TYPEORM_CONNECTION=postgres
-export TYPEORM_URL=posgresql://${user}:${pass}@${host}:${port}/${db}
-export ADMIN_USERNAME="${api_admin_user}"
-export ADMIN_PASSWORD="${api_admin_pass}"
+```env
+ADMIN_USERNAME=signaturestore
+ADMIN_PASSWORD=signaturestore
+POSTGRES_DB=signaturestore
+POSTGRES_USER=signaturestore
+POSTGRES_PASSWORD=signaturestore
+TYPEORM_CONNECTION=postgres
+TYPEORM_HOST=localhost
+TYPEORM_USERNAME=signaturestore
+TYPEORM_PASSWORD=signaturestore
+TYPEORM_DATABASE=signaturestore
+TYPEORM_PORT=5432
+TYPEORM_SYNCHRONIZE=false
+TYPEORM_LOGGING=true
+TYPEORM_ENTITIES=dist/src/entities/*.js
+TYPEORM_ENTITIES_DIR=src/entities
+TYPEORM_MIGRATIONS=dist/src/migration/*.js
+TYPEORM_MIGRATIONS_DIR=src/migration
+TYPEORM_SUBSCRIBERS=dist/src/subscriber/*.js
+TYPEORM_SUBSCRIBERS_DIR=src/subscriber
 ```
-
-Where the ${} variables should be substituted with your own values.
 
 ### Deployment
 ```bash
-docker build -t maayanlab/signature-commons-metadata-api:1.0.0 .
-docker push maayanlab/signature-commons-metadata-api:1.0.0
+docker-compose build meta-api
+docker-compose push meta-api
 ```
 
 ## Development
@@ -40,7 +53,7 @@ npm start
 Docker is required for testing with a true postgresql database. The following
  command will setup a postgresql database for testing.
 ```bash
-source setup-postgresql.sh
+docker-compose up -d meta-db
 ```
 
 This command will perform the tests, it will use `POSTGRESQL_TEST_URL` if defined
