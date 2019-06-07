@@ -2,18 +2,22 @@ import { TypeORMDataSource, MemoryDataSource } from "../../../src/datasources";
 
 let n = 0
 
-export const typeorm_factory = () => {
-  if (process.env['POSTGRESQL_TEST_URL'] === undefined) {
-    throw new Error('POSTGRESQL_TEST_URL required to perform tests')
+export const typeorm_factory = async () => {
+  require('dotenv').config()
+  if (process.env['TYPEORM_TEST_URL'] === undefined) {
+    throw new Error('TYPEORM_TEST_URL required to perform tests')
   }
   const typeorm_ds = new TypeORMDataSource({
     name: `default-${n}`,
-    url: process.env['POSTGRESQL_TEST_URL'],
+    url: process.env['TYPEORM_TEST_URL'],
+    synchronize: true,
   });
+  await typeorm_ds.connect()
+  await typeorm_ds.connection.synchronize(true)
   n += 1
   return typeorm_ds
 }
 
-export const memory_factory = () => {
+export const memory_factory = async () => {
   return new MemoryDataSource()
 }
