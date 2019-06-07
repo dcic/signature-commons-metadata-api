@@ -13,7 +13,8 @@ export class Entity extends LBEntity {
   @Column({
     name: 'id',
     primary: true,
-    select: false
+    select: false,
+    unique: true,
   })
   @Generated()
   _id: number
@@ -26,6 +27,7 @@ export class Entity extends LBEntity {
   @Column({
     name: 'uuid',
     type: 'uuid',
+    unique: true,
   })
   id: string;
 

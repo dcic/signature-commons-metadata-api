@@ -14,7 +14,8 @@ export class Library extends LBEntity {
   @Column({
     name: 'id',
     primary: true,
-    select: false
+    select: false,
+    unique: true,
   })
   @Generated()
   _id: number
@@ -27,6 +28,7 @@ export class Library extends LBEntity {
   @Column({
     name: 'uuid',
     type: 'uuid',
+    unique: true,
   })
   id: string;
 
@@ -46,7 +48,7 @@ export class Library extends LBEntity {
   })
   @Index()
   @Column({
-    name: 'meta',
+    name: 'dataset_type',
   })
   dataset_type: string;
 
@@ -70,6 +72,7 @@ export class Library extends LBEntity {
   @Column({
     name: 'signature_keys',
     type: 'simple-array',
+    default: [],
   })
   signature_keys: JSON;
 
