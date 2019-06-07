@@ -3,184 +3,156 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 export class materializedView1559853659119 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<any> {
     await queryRunner.query(`
-      create materialized view libraries_key_value_counts
-      as
-      with recursive r as (
-          select
-            v.key::text as key,
-            v.value as value
-          from
-            libraries,
-            jsonb_each(libraries.meta::jsonb) as v
-        union all
-          select _r.*
-          from
-            r cross join lateral (
-              select
-                concat(r.key::text, '.', r_obj.key::text) as key,
-                r_obj.value as value
-              from jsonb_each(r.value) as r_obj
-              where jsonb_typeof(r.value) = 'object'
-                union
-              select
-                r.key::text as key,
-                r_arr.value as value
-              from jsonb_array_elements(r.value) as r_arr
-              where jsonb_typeof(r.value) = 'array'
-            ) as _r
-          where jsonb_typeof(_r.value) not in ('object', 'array')
-      )
-      select
-        r.key as "key",
-        r.value as "value",
-        count(*) as "count"
-      from
-        r
-      group by
-        r.key,
-        r.value
-      order by
-        "count" desc;
+      CREATE MATERIALIZED VIEW libraries_key_value_counts
+      AS
+      WITH RECURSIVE r AS (
+              SELECT v.key,
+                v.value
+                FROM libraries,
+                LATERAL jsonb_each(libraries.meta) v(key, value)
+            UNION ALL
+              SELECT _r.key,
+                _r.value
+                FROM r r_1
+                  CROSS JOIN LATERAL ( SELECT concat(r_1.key, '.', r_obj.key) AS key,
+                        r_obj.value
+                        FROM jsonb_each(r_1.value) r_obj(key, value)
+                      WHERE jsonb_typeof(r_1.value) = 'object'::text
+                    UNION
+                      SELECT r_1.key,
+                        r_arr.value
+                        FROM jsonb_array_elements(r_1.value) r_arr(value)
+                      WHERE jsonb_typeof(r_1.value) = 'array'::text) _r
+            )
+      SELECT r.key,
+            CASE
+                WHEN jsonb_typeof(r.value) = 'object'::text THEN to_json('[object]'::text)::jsonb
+                WHEN jsonb_typeof(r.value) = 'array'::text THEN to_json('[array]'::text)::jsonb
+                ELSE r.value
+            END AS value,
+        count(*) AS count
+        FROM r
+      GROUP BY r.key, r.value
+      ORDER BY (count(*)) DESC;
     `)
     await queryRunner.query(`
-      create materialized view signatures_key_value_counts
-      as
-      with recursive r as (
-          select
-            v.key::text as key,
-            v.value as value
-          from
-            signatures,
-            jsonb_each(signatures.meta::jsonb) as v
-        union all
-          select _r.*
-          from
-            r cross join lateral (
-              select
-                concat(r.key::text, '.', r_obj.key::text) as key,
-                r_obj.value as value
-              from jsonb_each(r.value) as r_obj
-              where jsonb_typeof(r.value) = 'object'
-                union
-              select
-                r.key::text as key,
-                r_arr.value as value
-              from jsonb_array_elements(r.value) as r_arr
-              where jsonb_typeof(r.value) = 'array'
-            ) as _r
-          where jsonb_typeof(_r.value) not in ('object', 'array')
-      )
-      select
-        r.key as "key",
-        r.value as "value",
-        count(*) as "count"
-      from
-        r
-      group by
-        r.key,
-        r.value
-      order by
-        "count" desc;
+      CREATE MATERIALIZED VIEW signatures_key_value_counts
+      AS
+      WITH RECURSIVE r AS (
+              SELECT v.key,
+                v.value
+                FROM signatures,
+                LATERAL jsonb_each(signatures.meta) v(key, value)
+            UNION ALL
+              SELECT _r.key,
+                _r.value
+                FROM r r_1
+                  CROSS JOIN LATERAL ( SELECT concat(r_1.key, '.', r_obj.key) AS key,
+                        r_obj.value
+                        FROM jsonb_each(r_1.value) r_obj(key, value)
+                      WHERE jsonb_typeof(r_1.value) = 'object'::text
+                    UNION
+                      SELECT r_1.key,
+                        r_arr.value
+                        FROM jsonb_array_elements(r_1.value) r_arr(value)
+                      WHERE jsonb_typeof(r_1.value) = 'array'::text) _r
+            )
+      SELECT r.key,
+            CASE
+                WHEN jsonb_typeof(r.value) = 'object'::text THEN to_json('[object]'::text)::jsonb
+                WHEN jsonb_typeof(r.value) = 'array'::text THEN to_json('[array]'::text)::jsonb
+                ELSE r.value
+            END AS value,
+        count(*) AS count
+        FROM r
+      GROUP BY r.key, r.value
+      ORDER BY (count(*)) DESC;
     `)
     await queryRunner.query(`
-      create materialized view entity_key_value_counts
-      as
-      with recursive r as (
-          select
-            v.key::text as key,
-            v.value as value
-          from
-            entities,
-            jsonb_each(entities.meta::jsonb) as v
-        union all
-          select _r.*
-          from
-            r cross join lateral (
-              select
-                concat(r.key::text, '.', r_obj.key::text) as key,
-                r_obj.value as value
-              from jsonb_each(r.value) as r_obj
-              where jsonb_typeof(r.value) = 'object'
-                union
-              select
-                r.key::text as key,
-                r_arr.value as value
-              from jsonb_array_elements(r.value) as r_arr
-              where jsonb_typeof(r.value) = 'array'
-            ) as _r
-          where jsonb_typeof(_r.value) not in ('object', 'array')
-      )
-      select
-        r.key as "key",
-        r.value as "value",
-        count(*) as "count"
-      from
-        r
-      group by
-        r.key,
-        r.value
-      order by
-        "count" desc;
+      CREATE MATERIALIZED VIEW entities_key_value_counts
+      AS
+      WITH RECURSIVE r AS (
+              SELECT v.key,
+                v.value
+                FROM entities,
+                LATERAL jsonb_each(entities.meta) v(key, value)
+            UNION ALL
+              SELECT _r.key,
+                _r.value
+                FROM r r_1
+                  CROSS JOIN LATERAL ( SELECT concat(r_1.key, '.', r_obj.key) AS key,
+                        r_obj.value
+                        FROM jsonb_each(r_1.value) r_obj(key, value)
+                      WHERE jsonb_typeof(r_1.value) = 'object'::text
+                    UNION
+                      SELECT r_1.key,
+                        r_arr.value
+                        FROM jsonb_array_elements(r_1.value) r_arr(value)
+                      WHERE jsonb_typeof(r_1.value) = 'array'::text) _r
+            )
+      SELECT r.key,
+            CASE
+                WHEN jsonb_typeof(r.value) = 'object'::text THEN to_json('[object]'::text)::jsonb
+                WHEN jsonb_typeof(r.value) = 'array'::text THEN to_json('[array]'::text)::jsonb
+                ELSE r.value
+            END AS value,
+        count(*) AS count
+        FROM r
+      GROUP BY r.key, r.value
+      ORDER BY (count(*)) DESC;
     `)
     await queryRunner.query(`
-      create materialized view library_signature_key_value_counts
-      as
-      with recursive r as (
-          select
-            s.libid as library,
-            v.key::text as key,
-            v.value as value
-          from
-            signatures as s,
-            jsonb_each(s.meta::jsonb) as v
-        union all
-          select _r.*
-          from
-            r cross join lateral (
-              select
-                r.library as library,
-                concat(r.key::text, '.', r_obj.key::text) as key,
-                r_obj.value as value
-              from jsonb_each(r.value) as r_obj
-              where jsonb_typeof(r.value) = 'object'
-                union
-              select
-                r.library as library,
-                r.key::text as key,
-                r_arr.value as value
-              from jsonb_array_elements(r.value) as r_arr
-              where jsonb_typeof(r.value) = 'array'
-            ) as _r
-          where jsonb_typeof(_r.value) not in ('object', 'array')
-      )
-      select
-        r.library as "library",
-        r.key as "key",
-        r.value as "value",
-        count(*) as "count"
-      from
-        r
-      group by
-        r.library,
+      CREATE MATERIALIZED VIEW libraries_signatures_key_value_counts
+      AS
+      WITH RECURSIVE r AS (
+              SELECT s.libid AS library,
+                v.key,
+                v.value
+                FROM signatures s,
+                LATERAL jsonb_each(s.meta) v(key, value)
+            UNION ALL
+              SELECT _r.library,
+                _r.key,
+                _r.value
+                FROM r r_1
+                  CROSS JOIN LATERAL ( SELECT r_1.library,
+                        concat(r_1.key, '.', r_obj.key) AS key,
+                        r_obj.value
+                        FROM jsonb_each(r_1.value) r_obj(key, value)
+                      WHERE jsonb_typeof(r_1.value) = 'object'::text
+                    UNION
+                      SELECT r_1.library,
+                        r_1.key,
+                        r_arr.value
+                        FROM jsonb_array_elements(r_1.value) r_arr(value)
+                      WHERE jsonb_typeof(r_1.value) = 'array'::text) _r
+            )
+      SELECT r.library,
         r.key,
-        r.value
-      order by
-        "count" desc;
+            CASE
+                WHEN jsonb_typeof(r.value) = 'object'::text THEN to_json('[object]'::text)::jsonb
+                WHEN jsonb_typeof(r.value) = 'array'::text THEN to_json('[array]'::text)::jsonb
+                ELSE r.value
+            END AS value,
+        count(*) AS count
+        FROM r
+      GROUP BY r.library, r.key, r.value
+      ORDER BY (count(*)) DESC;
     `)
   }
 
   public async down(queryRunner: QueryRunner): Promise<any> {
     await queryRunner.query(`
-      drop materialized view library_key_value_counts;
+      drop materialized view libraries_key_value_counts;
     `)
     await queryRunner.query(`
-      drop materialized view signature_key_value_counts;
+      drop materialized view signatures_key_value_counts;
     `)
     await queryRunner.query(`
-      drop materialized view entity_key_value_counts;
+      drop materialized view entities_key_value_counts;
     `)
     await queryRunner.query(`
-      drop materialized view library_signature_key_value_counts;
+      drop materialized view libraries_signatures_key_value_counts;
     `)
   }
 }
