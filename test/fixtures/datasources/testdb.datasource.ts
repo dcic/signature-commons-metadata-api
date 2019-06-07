@@ -12,8 +12,6 @@ export const typeorm_factory = async () => {
     url: process.env['TYPEORM_TEST_URL'],
     synchronize: true,
   });
-  await typeorm_ds.connect()
-  await typeorm_ds.connection.synchronize(true)
   n += 1
   return typeorm_ds
 }

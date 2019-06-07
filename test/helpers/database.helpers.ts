@@ -13,16 +13,22 @@ export { memory_db }
 const typeorm_db = typeorm_factory()
 export { typeorm_db }
 
-const library_id = uuidv4()
-const signature_id = uuidv4()
-const entity_id = uuidv4()
+const library_id_created = uuidv4()
+const signature_id_created = uuidv4()
+const entity_id_created = uuidv4()
+
+export {
+  library_id_created,
+  signature_id_created,
+  entity_id_created,
+}
 
 export async function givenValidLibraryData(data?: Partial<Library>) {
   const d = libraryTest.tests.filter((test) => test.valid)[0].data
   return Object.assign(
     {
       // $validator: d.$validator,
-      id: library_id,
+      id: uuidv4(),
       meta: d.meta,
       dataset: d.dataset,
       dataset_type: d.dataset_type,
@@ -37,7 +43,7 @@ export async function givenInvalidLibraryData(data?: Partial<Library>) {
   return Object.assign(
     {
       // $validator: d.$validator,
-      id: library_id,
+      id: uuidv4(),
       meta: d.meta,
       dataset: d.dataset,
       dataset_type: d.dataset_type,
@@ -60,9 +66,9 @@ export async function givenValidSignatureData(data?: Partial<Signature>) {
   return Object.assign(
     {
       // $validator: d.$validator,
-      id: signature_id,
+      id: uuidv4(),
       meta: d.meta,
-      library: library_id,
+      library: library_id_created,
     },
     data,
   )
@@ -73,9 +79,9 @@ export async function givenInvalidSignatureData(data?: Partial<Signature>) {
   return Object.assign(
     {
       // $validator: d.$validator,
-      id: signature_id,
+      id: uuidv4(),
       meta: d.meta,
-      library: library_id,
+      library: library_id_created,
     },
     data,
   )
@@ -94,7 +100,7 @@ export async function givenValidEntityData(data?: Partial<Entity>) {
   return Object.assign(
     {
       // $validator: d.$validator,
-      id: entity_id,
+      id: uuidv4(),
       meta: d.meta,
     },
     data,
@@ -106,7 +112,7 @@ export async function givenInvalidEntityData(data?: Partial<Entity>) {
   return Object.assign(
     {
       // $validator: d.$validator,
-      id: entity_id,
+      id: uuidv4(),
       meta: d.meta,
     },
     data,
@@ -141,8 +147,8 @@ export async function givenAdminUserProfile(data?: Partial<UserProfile>) {
 }
 
 export async function givenEmptyDatabase() {
-  await new LibraryRepository(await typeorm_db).deleteAll();
-  await new SignatureRepository(await typeorm_db).deleteAll();
-  await new EntityRepository(await typeorm_db).deleteAll();
+  await new LibraryRepository(await typeorm_db).deleteAll({ id: { neq: library_id_created } })
+  await new SignatureRepository(await typeorm_db).deleteAll({ id: { neq: signature_id_created } });
+  await new EntityRepository(await typeorm_db).deleteAll({ id: { neq: entity_id_created } });
   await new UserProfileRepository(await memory_db).deleteAll();
 }
