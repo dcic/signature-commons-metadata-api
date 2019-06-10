@@ -661,15 +661,15 @@ export function GenericControllerFactory<
       }) obj: GenericEntity,
     ): Promise<void> {
       try {
-        return await this.genericRepository.updateById(id,
-          await validate<GenericEntity>(
-            {
-              $validator: modelSchema,
-              ...(<any>obj)
-            },
-            modelSchema
-          )
+        const validated = await validate<GenericEntity>(
+          {
+            $validator: modelSchema,
+            ...(<any>obj)
+          },
+          modelSchema
         )
+        delete validated['$validator']
+        await this.genericRepository.updateById(id, validated)
       } catch (e) {
         debug(e)
         throw new HttpErrors.NotAcceptable(serializeError(e))
