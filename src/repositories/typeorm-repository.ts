@@ -29,10 +29,7 @@ import {
 } from 'typeorm';
 
 import { TypeORMDataSource } from '../datasources'
-
-import * as debugModule from 'debug';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-const debug = debugModule('loopback:repository:typeorm');
 
 /**
  * An implementation of EntityCrudRepository using TypeORM
@@ -55,8 +52,8 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
   async save(entity: DataObject<T>, options?: Options): Promise<T> {
     await this.init();
-    const result = await this.typeOrmRepo.save(<DeepPartial<T>>entity);
-    return <T>result;
+    const result = await this.typeOrmRepo.save(entity as DeepPartial<T>);
+    return this._removePrivate(result as T);
   }
 
   async update(entity: DataObject<T>, options?: Options): Promise<void> {
@@ -64,7 +61,10 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     const id = (entity as any).getId()
     if (id === undefined)
       throw new Error("Entity not found")
-    await this.typeOrmRepo.update(id, <QueryDeepPartialEntity<T>>entity);
+    await this.typeOrmRepo.update(
+      { id } as FindConditions<T>,
+      entity as QueryDeepPartialEntity<T>
+    );
   }
 
   async delete(entity: DataObject<T>, options?: Options): Promise<void> {
@@ -72,12 +72,14 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     const id = (entity as any).getId()
     if (id === undefined)
       throw new Error("Entity not found")
-    await this.typeOrmRepo.delete(id);
+    await this.typeOrmRepo.delete({ id } as FindConditions<T>);
   }
 
   async findById(id: ID, filter?: Filter, options?: Options): Promise<T> {
     await this.init();
-    const result = await this.typeOrmRepo.findOne({ id } as FindConditions<T>);
+    const result = await this.typeOrmRepo.findOne(
+      { id, select: this._columns() } as FindConditions<T>
+    );
     if (result == null) {
       throw new Error('Not found');
     }
@@ -90,7 +92,10 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     options?: Options,
   ): Promise<void> {
     await this.init();
-    await this.typeOrmRepo.update(id, <QueryDeepPartialEntity<T>>data);
+    await this.typeOrmRepo.update(
+      { id } as FindConditions<T>,
+      data as QueryDeepPartialEntity<T>
+    );
   }
 
   async replaceById(
@@ -100,17 +105,22 @@ export class TypeORMRepository<T extends Entity, ID extends string>
   ): Promise<void> {
     await this.init();
     // FIXME [rfeng]: TypeORM doesn't have a method for `replace`
-    await this.typeOrmRepo.update(id, <QueryDeepPartialEntity<T>>data);
+    await this.typeOrmRepo.update(
+      { id } as FindConditions<T>,
+      data as QueryDeepPartialEntity<T>
+    );
   }
 
   async deleteById(id: ID, options?: Options): Promise<void> {
     await this.init();
-    await this.typeOrmRepo.delete(id);
+    await this.typeOrmRepo.delete({ id } as FindConditions<T>);
   }
 
   async exists(id: ID, options?: Options): Promise<boolean> {
     await this.init();
-    const result = await this.typeOrmRepo.findOne(id);
+    const result = await this.typeOrmRepo.findOne(
+      { id } as FindConditions<T>
+    );
     return result != null;
   }
 
@@ -118,8 +128,8 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     await this.init();
     // Please note typeOrmRepo.create() only instantiates model instances.
     // It does not persist to the database.
-    const result = await this.typeOrmRepo.save(<DeepPartial<T>>dataObject);
-    return <T>result;
+    const result = await this.typeOrmRepo.save(dataObject as DeepPartial<T>);
+    return this._removePrivate(<T>result);
   }
 
   async createAll(
@@ -127,8 +137,8 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     options?: Options,
   ): Promise<T[]> {
     await this.init();
-    const result = await this.typeOrmRepo.save(<DeepPartial<T>[]>dataObjects);
-    return <T[]>result;
+    const result = await this.typeOrmRepo.save(dataObjects as DeepPartial<T>[]);
+    return this._removePrivate(<T[]>result);
   }
 
   async find(filter?: Filter<T>, options?: Options): Promise<T[]> {
@@ -137,7 +147,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     if (filter === undefined) filter = {}
 
     const typeorm_filter = {
-      select: filter.fields,
+      select: filter.fields === undefined ? this._columns() : filter.fields,
       relations: filter.include,
       where: this._typeormWhere(filter.where),
       order: filter.order,
@@ -145,7 +155,9 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       take: filter.limit,
     }
 
-    const result = await this.typeOrmRepo.find(typeorm_filter as FindConditions<T>)
+    const result = await this.typeOrmRepo.find(
+      typeorm_filter as FindConditions<T>
+    )
     return result;
   }
 
@@ -156,7 +168,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
   ): Promise<Count> {
     await this.init();
     const result = await this.typeOrmRepo.update(
-      this._typeormWhere(where as any) as FindConditions<T>,
+      this._typeormWhere(where as Where<T>) as FindConditions<T>,
       dataObject as QueryDeepPartialEntity<T>
     )
     return { count: result.generatedMaps.length };
@@ -172,7 +184,9 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
   async count(where?: Where, options?: Options): Promise<Count> {
     await this.init();
-    const result = await this.typeOrmRepo.count(<FindConditions<T>>where);
+    const result = await this.typeOrmRepo.count(
+      this._typeormWhere(where as Where<T>) as FindConditions<T>
+    );
     return { count: result.valueOf() };
   }
 
@@ -184,10 +198,40 @@ export class TypeORMRepository<T extends Entity, ID extends string>
   ): Promise<AnyObject> {
     await this.init();
     const result = await this.typeOrmRepo.query(
-      <string>query,
-      <any[]>parameters,
+      query as string,
+      parameters as any[],
     );
     return result;
+  }
+
+  _removePrivate<K extends T[] | T>(obj: K): K {
+    if (Array.isArray(obj)) {
+      return obj.map(
+        (o) => {
+          for (var col in o) {
+            if (col.startsWith('_')) {
+              delete o[col]
+            }
+          }
+          return o
+        }
+      ) as K
+    } else {
+      for (var col in obj) {
+        if (col.startsWith('_')) {
+          delete obj[col]
+        }
+      }
+      return obj
+    }
+  }
+
+  _columns() {
+    return this.typeOrmRepo.metadata.columns.map(
+      (col) => col.propertyName
+    ).filter(
+      (col) => !col.startsWith('_')
+    )
   }
 
   _typeormWhere(where?: Where<T>) {
