@@ -267,11 +267,11 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       } else if (condition.fullTextSearch) {
         // Safer but not yet implemented upstream
         // typeormWhere[key] = Raw(
-        //   alias => `to_tsvector(${alias}) @@ plainto_tsquery('english', ?)`,
+        //   alias => `to_tsvector('english', ${alias}) @@ plainto_tsquery('english', ?)`,
         //   condition.fullTextSearch
         // )
         typeormWhere[key] = Raw(alias =>
-          `to_tsvector(${alias}) @@ plainto_tsquery('english', '${this._sanitize(condition.fullTextSearch)}')`,
+          `to_tsvector('english', ${alias}) @@ plainto_tsquery('english', '${this._sanitize(condition.fullTextSearch)}')`,
         )
       } else {
         typeormWhere[key] = condition
