@@ -32,7 +32,7 @@ export async function givenValidLibraryData(data?: Partial<Library>) {
       meta: d.meta,
       dataset: d.dataset,
       dataset_type: d.dataset_type,
-      Signature_keys: [],
+      signature_keys: [],
     },
     data,
   )
@@ -47,7 +47,7 @@ export async function givenInvalidLibraryData(data?: Partial<Library>) {
       meta: d.meta,
       dataset: d.dataset,
       dataset_type: d.dataset_type,
-      Signature_keys: [],
+      signature_keys: [],
     },
     data,
   )
