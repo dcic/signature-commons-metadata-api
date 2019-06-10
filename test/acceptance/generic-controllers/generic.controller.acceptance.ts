@@ -283,7 +283,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
       await client
         .patch(
           props.basePath
-          + '?where={}'
+          + `?where={"id": "${obj.id}"}`
         )
         .send(validObj)
         .expect(expect_response({ status: 401 }))
@@ -299,7 +299,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
       await client
         .patch(
           props.basePath
-          + '?where={}'
+          + `?where={"id": "${obj.id}"}`
         )
         .send(validObj)
         .set('Authorization', 'Basic ' + auth)
@@ -317,7 +317,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
       await client
         .patch(
           props.basePath
-          + '?where={}'
+          + `?where={"id": "${obj.id}"}`
         )
         .send(invalidObj)
         .set('Authorization', 'Basic ' + auth)
@@ -381,7 +381,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
       const validObj = await props.givenValidObject()
       const resolvedObj = {
-        $validator: `/@dcic/signature-commons-schema/core/${props.modelName}.json`,
+        $validator: `/@dcic/signature-commons-schema/v3/core/${props.modelName}.json`,
         ...validObj,
       }
       // If we can do this 3 times without error, then we
