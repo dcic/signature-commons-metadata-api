@@ -19,7 +19,7 @@ TYPEORM_CONNECTION=postgres
 TYPEORM_URL=postgres://signaturestore:signaturestore@localhost:5432/signaturestore
 TYPEORM_TEST_URL=postgres://signaturestore:signaturestore@localhost:5432/signaturestore_test
 TYPEORM_SYNCHRONIZE=false
-TYPEORM_LOGGING=true
+TYPEORM_LOGGING=false
 TYPEORM_ENTITIES=dist/src/entities/*.js
 TYPEORM_ENTITIES_DIR=src/entities
 TYPEORM_MIGRATIONS=dist/src/migration/*.js
@@ -45,6 +45,34 @@ npm install
 ### Running
 ```
 npm start
+```
+
+### ORM Management
+We use `typeorm` to manage the database, see `npx typeorm` for available options. It is recommended that synchronization be managed manually.
+
+Determine whether or not the schema needs to be updated
+```bash
+# show queries that would be run if we are to sync
+npx typeorm schema:log
+
+# verify they make sense before executing them with
+npx typeorm schema:sync
+
+# show migrations and status
+npx typeorm migration:show
+
+# run any pending migrations
+npx typeorm migration:run
+
+# run a query on the database
+npx typeorm query 'select * from signatures limit 1;'
+```
+
+#### Migration development
+```bash
+# create a migration
+typeorm migration:create -n migration-name
+# implement it (up/down methods in the generated file)
 ```
 
 ### Testing
