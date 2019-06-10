@@ -10,7 +10,6 @@ export const typeorm_factory = async () => {
   const typeorm_ds = new TypeORMDataSource({
     name: `default-${n}`,
     url: process.env['TYPEORM_TEST_URL'],
-    synchronize: true,
   });
   n += 1
   return typeorm_ds

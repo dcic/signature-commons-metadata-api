@@ -23,6 +23,7 @@ export async function setupApplication(): Promise<AppWithClient> {
   const typeorm_ds = await app.get<TypeORMDataSource>('datasources.typeorm')
   await typeorm_ds.connect()
   await typeorm_ds.connection.synchronize(true)
+  await typeorm_ds.connection.runMigrations()
   await (await app.getRepository(LibraryRepository)).init()
   await (await app.getRepository(SignatureRepository)).init()
   await (await app.getRepository(EntityRepository)).init()
