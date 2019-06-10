@@ -26,6 +26,7 @@ import {
   Between,
   In,
   Any,
+  Raw,
 } from 'typeorm';
 
 import { TypeORMDataSource } from '../datasources'
@@ -263,11 +264,24 @@ export class TypeORMRepository<T extends Entity, ID extends string>
         typeormWhere[key] = In(condition.inq)
       } else if (condition.between) {
         typeormWhere[key] = Between(condition.between[0], condition.between[1])
+      } else if (condition.fullTextSearch) {
+        // Safer but not yet implemented upstream
+        // typeormWhere[key] = Raw(
+        //   alias => `to_tsvector(${alias}) @@ plainto_tsquery('english', ?)`,
+        //   condition.fullTextSearch
+        // )
+        typeormWhere[key] = Raw(alias =>
+          `to_tsvector(${alias}) @@ plainto_tsquery('english', '${this._sanitize(condition.fullTextSearch)}')`,
+        )
       } else {
         typeormWhere[key] = condition
       }
     }
 
     return typeormWhere
+  }
+
+  _sanitize(str: string) {
+    return str.replace(/'/g, "''")
   }
 }
