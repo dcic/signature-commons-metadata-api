@@ -15,7 +15,7 @@ import {
 } from '@loopback/repository';
 import {
   Repository,
-  FindConditions,
+  FindOptionsWhereCondition,
   DeepPartial,
   Equal,
   Not,
@@ -63,7 +63,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     if (id === undefined)
       throw new Error("Entity not found")
     await this.typeOrmRepo.update(
-      { id } as FindConditions<T>,
+      { id } as unknown as FindOptionsWhereCondition<T>,
       entity as QueryDeepPartialEntity<T>
     );
   }
@@ -73,13 +73,13 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     const id = (entity as any).getId()
     if (id === undefined)
       throw new Error("Entity not found")
-    await this.typeOrmRepo.delete({ id } as FindConditions<T>);
+    await this.typeOrmRepo.delete({ id } as unknown as FindOptionsWhereCondition<T>);
   }
 
   async findById(id: ID, filter?: Filter, options?: Options): Promise<T> {
     await this.init();
     const result = await this.typeOrmRepo.findOne(
-      { id, select: this._columns() } as FindConditions<T>
+      { id, select: this._columns() } as unknown as FindOptionsWhereCondition<T>
     );
     if (result == null) {
       throw new Error('Not found');
@@ -94,7 +94,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
   ): Promise<void> {
     await this.init();
     await this.typeOrmRepo.update(
-      { id } as FindConditions<T>,
+      { id } as unknown as FindOptionsWhereCondition<T>,
       data as QueryDeepPartialEntity<T>
     );
   }
@@ -107,20 +107,20 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     await this.init();
     // FIXME [rfeng]: TypeORM doesn't have a method for `replace`
     await this.typeOrmRepo.update(
-      { id } as FindConditions<T>,
+      { id } as unknown as FindOptionsWhereCondition<T>,
       data as QueryDeepPartialEntity<T>
     );
   }
 
   async deleteById(id: ID, options?: Options): Promise<void> {
     await this.init();
-    await this.typeOrmRepo.delete({ id } as FindConditions<T>);
+    await this.typeOrmRepo.delete({ id } as unknown as FindOptionsWhereCondition<T>);
   }
 
   async exists(id: ID, options?: Options): Promise<boolean> {
     await this.init();
     const result = await this.typeOrmRepo.findOne(
-      { id } as FindConditions<T>
+      { id } as unknown as FindOptionsWhereCondition<T>
     );
     return result != null;
   }
@@ -157,7 +157,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     }
 
     const result = await this.typeOrmRepo.find(
-      typeorm_filter as FindConditions<T>
+      typeorm_filter as unknown as FindOptionsWhereCondition<T>
     )
     return result;
   }
@@ -169,7 +169,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
   ): Promise<Count> {
     await this.init();
     const result = await this.typeOrmRepo.update(
-      this._typeormWhere(where as Where<T>) as FindConditions<T>,
+      this._typeormWhere(where as Where<T>) as unknown as FindOptionsWhereCondition<T>,
       dataObject as QueryDeepPartialEntity<T>
     )
     return { count: result.generatedMaps.length };
@@ -178,7 +178,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
   async deleteAll(where?: Where<T>, options?: Options): Promise<Count> {
     await this.init();
     const result = await this.typeOrmRepo.delete(
-      this._typeormWhere(where as Where<T>) as FindConditions<T>
+      this._typeormWhere(where as Where<T>) as unknown as FindOptionsWhereCondition<T>
     )
     return { count: result.affected || -1 };
   }
@@ -186,7 +186,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
   async count(where?: Where, options?: Options): Promise<Count> {
     await this.init();
     const result = await this.typeOrmRepo.count(
-      this._typeormWhere(where as Where<T>) as FindConditions<T>
+      this._typeormWhere(where as Where<T>) as unknown as FindOptionsWhereCondition<T>
     );
     return { count: result.valueOf() };
   }
