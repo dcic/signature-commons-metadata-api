@@ -152,7 +152,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       select: filter.fields === undefined ? this._columns() : filter.fields,
       relations: filter.include,
       where: this._typeormWhere(filter.where),
-      order: filter.order,
+      order: this._typeormOrder(filter.order),
       skip: filter.skip,
       take: filter.limit,
     }
@@ -303,6 +303,34 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     }
 
     return typeormWhere
+  }
+
+  _typeormOrder(order?: string | string[] | { [key: string]: string }) {
+    let _order
+    if (order === undefined) return {}
+    if (typeof order === 'string') {
+      _order = [order]
+    } else if (Array.isArray(order)) {
+      _order = order
+    } else if (typeof order === 'object') {
+      _order = Object.keys(order).map((o) => `${o} ${(order as any)[o]}`)
+    } else {
+      throw 'Unrecognized order type'
+    }
+
+    const typeormOrder: { [key: string]: string } = {}
+    for (const o of _order) {
+      const m = /^(([^ ]+?)(\.[^ ]+)?)( (ASC|DESC))?$/.exec(o)
+      if (!m) throw 'Unrecognized order type'
+      if (m[3]) {
+        console.warn('OrderBy deep fields not yet supported')
+        typeormOrder[m[2]] = m[5] || 'ASC'
+      } else {
+        typeormOrder[m[2]] = m[5] || 'ASC'
+      }
+    }
+
+    return typeormOrder
   }
 
   _dotExpand(key: string, deepObj: any) {
