@@ -28,6 +28,7 @@ import {
   Any,
   Raw,
 } from 'typeorm';
+import * as deepmerge from 'deepmerge'
 
 import { TypeORMDataSource } from '../datasources'
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
@@ -239,6 +240,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     if (where === undefined) return {}
 
     const typeormWhere: { [key: string]: any } = {}
+    const jsonQueries: { [key: string]: JSON } = {}
 
     for (const key in where) {
       const condition = (where as any)[key]
@@ -267,18 +269,49 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       } else if (condition.fullTextSearch) {
         // Safer but not yet implemented upstream
         // typeormWhere[key] = Raw(
-        //   alias => `to_tsvector('english', ${alias}) @@ plainto_tsquery('english', ?)`,
+        //   (alias, param) => `to_tsvector('english', ${alias}) @@ plainto_tsquery('english', ${param[0]})`,
         //   condition.fullTextSearch
         // )
         typeormWhere[key] = Raw(alias =>
           `to_tsvector('english', ${alias}) @@ plainto_tsquery('english', '${this._sanitize(condition.fullTextSearch)}')`,
         )
+      } else if (typeof condition === 'object') {
+        // add as-is to pooled jsonQueries
+        jsonQueries[key] = deepmerge(jsonQueries[key] || {}, condition)
       } else {
-        typeormWhere[key] = condition
+        const m = /^(.+?)(\.(.+))?$/.exec(key)
+        if (!m) throw 'Unhandled error'
+        if (m[2]) {
+          // add to expanded to pooled jsonQueries
+          jsonQueries[m[1]] = deepmerge(jsonQueries[m[1]] || {}, this._dotExpand(m[3], condition))
+        } else {
+          typeormWhere[m[1]] = condition
+        }
       }
     }
 
+    // handle any pooled JSONB queries
+    for (const q in jsonQueries) {
+      // Safer but not yet implemented upstream
+      // typeormWhere[q] = Raw(
+      //   (alias, param) => `${alias} @> ${param[0]}`,
+      //   jsonQueries[q]
+      // )
+      typeormWhere[q] = Raw(alias =>
+        `${alias} @> '${JSON.stringify(jsonQueries[q])}'::jsonb`,
+      )
+    }
+
     return typeormWhere
+  }
+
+  _dotExpand(key: string, deepObj: any) {
+    let obj = deepObj
+    const expanded = key.split('.')
+    for (const k of expanded.reverse()) {
+      obj = { [k]: obj }
+    }
+    return obj
   }
 
   _sanitize(str: string) {
