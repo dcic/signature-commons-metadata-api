@@ -12,6 +12,7 @@ import {
   Where,
   AnyObject,
   Count,
+  Fields,
 } from '@loopback/repository';
 import {
   Repository,
@@ -148,19 +149,15 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
     if (filter === undefined) filter = {}
 
-    const typeorm_filter = {
-      select: filter.fields === undefined ? this._columns() : filter.fields,
-      relations: filter.include,
-      where: this._typeormWhere(filter.where),
-      order: this._typeormOrder(filter.order),
-      skip: filter.skip,
-      take: filter.limit,
-    }
+    const result = await this.typeOrmRepo.createQueryBuilder('entity')
+      .select(this._typeormSelect(filter.fields) as any)
+      .where(this._typeormWhere(filter.where) as unknown as FindOptionsWhereCondition<T>)
+      .orderBy(this._typeormOrder(filter.order) as any)
+      .skip(filter.skip)
+      .take(filter.limit)
+      .getRawMany()
 
-    const result = await this.typeOrmRepo.find(
-      typeorm_filter as unknown as FindOptionsWhereCondition<T>
-    )
-    return result;
+    return result as T[];
   }
 
   async updateAll(
@@ -234,6 +231,59 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     ).filter(
       (col) => !col.startsWith('_')
     )
+  }
+
+  _typeormSelect(fields?: Fields<T>) {
+    if (fields === undefined) return undefined
+    const columns = this._columns()
+    const typeormSelect = []
+    const jsonQueries: { [key: string]: JSON[] } = {}
+
+    for (const field of fields as any) {
+      const m = /^(.+?)(\..+)?$/.exec(field)
+      if (!m) throw 'Unhandled error'
+      if (columns.indexOf(m[1]) === -1) throw 'Column does not exist'
+      if (m[2]) {
+        const s = m[0].split('.').map(this._sanitize)
+        if (jsonQueries[this._sanitize(m[1])] === undefined)
+          jsonQueries[this._sanitize(m[1])] = []
+        jsonQueries[this._sanitize(m[1])].push(
+          this._dotExpand(s.join('.'), this._dotToCol(m[0]))
+        )
+      } else {
+        typeormSelect.push(
+          `"entity"."${this._sanitize(m[1])}"`
+        )
+      }
+    }
+
+    for (const q in jsonQueries) {
+      typeormSelect.push(
+        `${jsonQueries[q].map((qq) => `${this._jsonToBuildObject(qq)}`).join('||')}::json as ${q}`
+      )
+    }
+
+    if (typeormSelect === []) {
+      return columns.map((c) => `"entity"."${c}"`)
+    } else {
+      return typeormSelect
+    }
+  }
+
+  _jsonToBuildObject(obj: any): any {
+    if (typeof obj === 'object') {
+      if (Array.isArray(obj)) {
+        return `jsonb_build_array(${
+          obj.map((k) => this._jsonToBuildObject(obj[k])).join(',')
+          })`
+      } else {
+        return `jsonb_build_object(${
+          Object.keys(obj).map((k) => `'${k}', ${this._jsonToBuildObject(obj[k])}`).join(',')
+          })`
+      }
+    } else {
+      return obj
+    }
   }
 
   _typeormWhere(where?: Where<T>) {
@@ -340,6 +390,12 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       obj = { [k]: obj }
     }
     return obj
+  }
+
+  _dotToCol(col: string) {
+    const ks = col.split('.')
+    if (this._columns().indexOf(ks[0]) === -1) throw 'Unrecognized column'
+    return `"${ks[0]}"->${ks.slice(1).map((k) => `'${this._sanitize(k)}'`).join('->')}`
   }
 
   _sanitize(str: string) {

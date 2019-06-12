@@ -5,7 +5,6 @@ import { Constructor } from '@loopback/core';
 import { Count, CountSchema, DataObject, EntityCrudRepository, Entity, Filter, repository, Where } from '@loopback/repository';
 import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param, patch, post, requestBody, Response, RestBindings, getFilterJsonSchemaFor, SchemaObject } from '@loopback/rest';
 import * as uuidv4 from 'uuid/v4';
-import { applyFieldsFilter } from '../util/applyFieldsFilter';
 import debug from '../util/debug';
 import serializeError from 'serialize-error'
 import { flatten_keys } from '../util/flatten-keys'
@@ -521,20 +520,11 @@ export function GenericControllerFactory<
         filter = {}
 
       const results = await this.genericRepository.find({
-        ...filter, fields: undefined
+        ...filter
       })
 
       await this.set_content_range({ filter, results, contentRange })
-
-      return results.map(
-        (obj) => applyFieldsFilter(
-          {
-            $validator: modelSchema,
-            ...(<any>obj),
-          },
-          ((filter || {}).fields || [])
-        )
-      );
+      return results
     }
 
     @authenticate('PATCH.' + props.modelName + '.updateAll')
