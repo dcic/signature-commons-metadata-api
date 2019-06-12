@@ -373,8 +373,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       const m = /^(([^ ]+?)(\.[^ ]+)?)( (ASC|DESC))?$/.exec(o)
       if (!m) throw 'Unrecognized order type'
       if (m[3]) {
-        console.warn('OrderBy deep fields not yet supported')
-        typeormOrder[m[2]] = m[5] || 'ASC'
+        typeormOrder[this._dotToCol(m[1])] = m[5] || 'ASC'
       } else {
         typeormOrder[m[2]] = m[5] || 'ASC'
       }
