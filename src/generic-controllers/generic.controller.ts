@@ -9,6 +9,7 @@ import debug from '../util/debug';
 import serializeError from 'serialize-error'
 import { flatten_keys } from '../util/flatten-keys'
 import { TypeORMDataSource } from '../datasources';
+import { applyFieldsFilter } from '../util/applyFieldsFilter';
 
 export class IGenericEntity extends Entity {
   $validator?: string
@@ -524,7 +525,15 @@ export function GenericControllerFactory<
       })
 
       await this.set_content_range({ filter, results, contentRange })
-      return results
+      return results.map(
+        (obj) => applyFieldsFilter(
+          {
+            $validator: modelSchema,
+            ...(<any>obj),
+          },
+          ((filter || {}).fields || [])
+        )
+      );
     }
 
     @authenticate('PATCH.' + props.modelName + '.updateAll')

@@ -71,7 +71,7 @@ export class Library extends LBEntity {
   })
   @Column({
     name: 'signature_keys',
-    type: 'simple-array',
+    type: 'jsonb',
     default: [],
   })
   signature_keys: JSON;
