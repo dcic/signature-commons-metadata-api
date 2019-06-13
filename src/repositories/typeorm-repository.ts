@@ -353,9 +353,9 @@ export class TypeORMRepository<T extends Entity, ID extends string>
           else if (parent === 'and') qb.andWhere(`${col} between :${slug}0 and :${slug}1`, { [`${slug}0`]: isJson ? JSON.stringify(condition.between[0]) : condition.between[0], [`${slug}1`]: isJson ? JSON.stringify(condition.between[1]) : condition.between[1] })
           else if (parent === 'or') qb.orWhere(`${col} between :${slug}0 and :${slug}1`, { [`${slug}0`]: isJson ? JSON.stringify(condition.between[0]) : condition.between[0], [`${slug}1`]: isJson ? JSON.stringify(condition.between[1]) : condition.between[1] })
         } else if (condition.fullTextSearch !== undefined) {
-          if (first) { qb.where(`to_tsvector('english', ${col}) @@ plainto_tsquery('english', :${slug}`, { [slug]: condition.fullTextSearch }); first = false }
-          else if (parent === 'and') qb.andWhere(`to_tsvector('english', ${col}) @@ plainto_tsquery('english', :${slug}`, { [slug]: condition.fullTextSearch })
-          else if (parent === 'or') qb.orWhere(`to_tsvector('english', ${col}) @@ plainto_tsquery('english', :${slug}`, { [slug]: condition.fullTextSearch })
+          if (first) { qb.where(`to_tsvector('english', ${col}) @@ plainto_tsquery('english', :${slug})`, { [slug]: condition.fullTextSearch }); first = false }
+          else if (parent === 'and') qb.andWhere(`to_tsvector('english', ${col}) @@ plainto_tsquery('english', :${slug})`, { [slug]: condition.fullTextSearch })
+          else if (parent === 'or') qb.orWhere(`to_tsvector('english', ${col}) @@ plainto_tsquery('english', :${slug})`, { [slug]: condition.fullTextSearch })
         } else if (typeof condition === 'object') {
           if (first) { qb.where(`${col} @> :${slug}`, { [slug]: JSON.stringify(condition) }); first = false }
           else if (parent === 'and') qb.andWhere(`${col} @> :${slug}`, { [slug]: JSON.stringify(condition) })
