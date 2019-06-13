@@ -291,6 +291,16 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     }
   }
 
+  _where(qb: any, cond: any, params: any, parent: string, first: boolean) {
+    if (first) {
+      return qb.where(cond, params)
+    } else if (parent === 'and') {
+      return qb.andWhere(cond, params)
+    } else if (parent === 'or') {
+      return qb.orWhere(cond, params)
+    }
+  }
+
   _typeormWhere(where?: Where<T>, parent: string = 'and') {
     return new Brackets(qb => {
       if (where === undefined) return
@@ -301,74 +311,65 @@ export class TypeORMRepository<T extends Entity, ID extends string>
         const isJson = col.indexOf('->') !== -1
         const condition = (where as any)[key]
         if (condition.and !== undefined) {
-          if (first) { qb.where(this._typeormWhere(condition.and, 'and')); first = false }
-          else if (parent === 'and') qb.andWhere(this._typeormWhere(condition.and, 'and'))
-          else if (parent === 'or') qb.orWhere(this._typeormWhere(condition.and, 'and'))
+          this._where(qb, this._typeormWhere(condition.and, 'and'), {}, parent, first); first = false
         } else if (condition.or !== undefined) {
-          if (first) { qb.where(this._typeormWhere(condition.or, 'or')); first = false }
-          else if (parent === 'and') qb.andWhere(this._typeormWhere(condition.or, 'or'))
-          else if (parent === 'or') qb.orWhere(this._typeormWhere(condition.or, 'or'))
+          this._where(qb, this._typeormWhere(condition.or, 'or'), {}, parent, first); first = false
         } else if (condition.eq !== undefined) {
           if (condition.eq === null) {
-            if (first) { qb.where(`${col} is null`); first = false }
-            else if (parent === 'and') qb.andWhere(`${col} is null`)
-            else if (parent === 'or') qb.orWhere(`${col} is null`)
+            this._where(qb, `${col} is null`, {}, parent, first); first = false
           } else {
-            if (first) { qb.where(`${col} = :${slug}`, { [slug]: isJson ? JSON.stringify(condition.eq) : condition.eq }); first = false }
-            else if (parent === 'and') qb.andWhere(`${col} = :${slug}`, { [slug]: isJson ? JSON.stringify(condition.eq) : condition.eq })
-            else if (parent === 'or') qb.orWhere(`${col} = :${slug}`, { [slug]: isJson ? JSON.stringify(condition.eq) : condition.eq })
+            this._where(qb, `${col} = :${slug}`, {
+              [slug]: isJson ? JSON.stringify(condition.eq) : condition.eq
+            }, parent, first); first = false
           }
         } else if (condition.neq !== undefined) {
           if (condition.neq === null) {
-            if (first) { qb.where(`${col} is not null`); first = false }
-            else if (parent === 'and') qb.andWhere(`${col} is not null`)
-            else if (parent === 'or') qb.orWhere(`${col} is not null`)
+            this._where(qb, `${col} is not null`, {}, parent, first); first = false
           } else {
-            if (first) { qb.where(`${col} != :${slug}`, { [slug]: isJson ? JSON.stringify(condition.neq) : condition.neq }); first = false }
-            else if (parent === 'and') qb.andWhere(`${col} != :${slug}`, { [slug]: isJson ? JSON.stringify(condition.neq) : condition.neq })
-            else if (parent === 'or') qb.orWhere(`${col} != :${slug}`, { [slug]: isJson ? JSON.stringify(condition.neq) : condition.neq })
+            this._where(qb, `${col} != :${slug}`, {
+              [slug]: isJson ? JSON.stringify(condition.neq) : condition.neq
+            }, parent, first); first = false
           }
         } else if (condition.lt !== undefined) {
-          if (first) { qb.where(`${col} < :${slug}`, { [slug]: isJson ? JSON.stringify(condition.lt) : condition.lt }); first = false }
-          else if (parent === 'and') qb.andWhere(`${col} < :${slug}`, { [slug]: isJson ? JSON.stringify(condition.lt) : condition.lt })
-          else if (parent === 'or') qb.orWhere(`${col} < :${slug}`, { [slug]: isJson ? JSON.stringify(condition.lt) : condition.lt })
+          this._where(qb, `${col} < :${slug}`, {
+            [slug]: isJson ? JSON.stringify(condition.lt) : condition.lt
+          }, parent, first); first = false
         } else if (condition.lte !== undefined) {
-          if (first) { qb.where(`${col} <= :${slug}`, { [slug]: isJson ? JSON.stringify(condition.lte) : condition.lte }); first = false }
-          else if (parent === 'and') qb.andWhere(`${col} <= :${slug}`, { [slug]: isJson ? JSON.stringify(condition.lte) : condition.lte })
-          else if (parent === 'or') qb.orWhere(`${col} <= :${slug}`, { [slug]: isJson ? JSON.stringify(condition.lte) : condition.lte })
+          this._where(qb, `${col} <= :${slug}`, {
+            [slug]: isJson ? JSON.stringify(condition.lte) : condition.lte
+          }, parent, first); first = false
         } else if (condition.gt !== undefined) {
-          if (first) { qb.where(`${col} > :${slug}`, { [slug]: isJson ? JSON.stringify(condition.gt) : condition.gt }); first = false }
-          else if (parent === 'and') qb.andWhere(`${col} > :${slug}`, { [slug]: isJson ? JSON.stringify(condition.gt) : condition.gt })
-          else if (parent === 'or') qb.orWhere(`${col} > :${slug}`, { [slug]: isJson ? JSON.stringify(condition.gt) : condition.gt })
+          this._where(qb, `${col} > :${slug}`, {
+            [slug]: isJson ? JSON.stringify(condition.gt) : condition.gt
+          }, parent, first); first = false
         } else if (condition.gte !== undefined) {
-          if (first) { qb.where(`${col} >= :${slug}`, { [slug]: isJson ? JSON.stringify(condition.gte) : condition.gte }); first = false }
-          else if (parent === 'and') qb.andWhere(`${col} >= :${slug}`, { [slug]: isJson ? JSON.stringify(condition.gte) : condition.gte })
-          else if (parent === 'or') qb.orWhere(`${col} >= :${slug}`, { [slug]: isJson ? JSON.stringify(condition.gte) : condition.gte })
+          this._where(qb, `${col} >= :${slug}`, {
+            [slug]: isJson ? JSON.stringify(condition.gte) : condition.gte
+          }, parent, first); first = false
         } else if (condition.inq !== undefined) {
-          if (first) { qb.where(`${col} in (:...${slug})`, { [slug]: condition.inq.length === 0 ? [null] : condition.inq }); first = false }
-          else if (parent === 'and') qb.andWhere(`${col} in (:...${slug})`, { [slug]: condition.inq.length === 0 ? [null] : condition.inq })
-          else if (parent === 'or') qb.orWhere(`${col} in (:...${slug})`, { [slug]: condition.inq.length === 0 ? [null] : condition.inq })
+          this._where(qb, `${col} in (:...${slug})`, {
+            [slug]: condition.inq.length === 0 ? [null] : condition.inq
+          }, parent, first); first = false
         } else if (condition.between !== undefined) {
-          if (first) { qb.where(`${col} between :${slug}0 and :${slug}1`, { [`${slug}0`]: isJson ? JSON.stringify(condition.between[0]) : condition.between[0], [`${slug}1`]: isJson ? JSON.stringify(condition.between[1]) : condition.between[1] }); first = false }
-          else if (parent === 'and') qb.andWhere(`${col} between :${slug}0 and :${slug}1`, { [`${slug}0`]: isJson ? JSON.stringify(condition.between[0]) : condition.between[0], [`${slug}1`]: isJson ? JSON.stringify(condition.between[1]) : condition.between[1] })
-          else if (parent === 'or') qb.orWhere(`${col} between :${slug}0 and :${slug}1`, { [`${slug}0`]: isJson ? JSON.stringify(condition.between[0]) : condition.between[0], [`${slug}1`]: isJson ? JSON.stringify(condition.between[1]) : condition.between[1] })
+          this._where(qb, `${col} between :${slug}0 and :${slug}1`, {
+            [`${slug}0`]: isJson ? JSON.stringify(condition.between[0]) : condition.between[0],
+            [`${slug}1`]: isJson ? JSON.stringify(condition.between[1]) : condition.between[1]
+          }, parent, first); first = false
         } else if (condition.fullTextSearch !== undefined) {
-          if (first) { qb.where(`to_tsvector('english', ${col}) @@ plainto_tsquery('english', :${slug})`, { [slug]: condition.fullTextSearch }); first = false }
-          else if (parent === 'and') qb.andWhere(`to_tsvector('english', ${col}) @@ plainto_tsquery('english', :${slug})`, { [slug]: condition.fullTextSearch })
-          else if (parent === 'or') qb.orWhere(`to_tsvector('english', ${col}) @@ plainto_tsquery('english', :${slug})`, { [slug]: condition.fullTextSearch })
+          this._where(qb, `to_tsvector('english', ${col}) @@ plainto_tsquery('english', :${slug})`, {
+            [slug]: condition.fullTextSearch
+          }, parent, first); first = false
         } else if (typeof condition === 'object') {
-          if (first) { qb.where(`${col} @> :${slug}`, { [slug]: JSON.stringify(condition) }); first = false }
-          else if (parent === 'and') qb.andWhere(`${col} @> :${slug}`, { [slug]: JSON.stringify(condition) })
-          else if (parent === 'or') qb.orWhere(`${col} @> :${slug}`, { [slug]: JSON.stringify(condition) })
+          this._where(qb, `${col} @> :${slug}`, {
+            [slug]: JSON.stringify(condition)
+          }, parent, first); first = false
         } else {
           if (condition === null) {
-            if (first) { qb.where(`${col} is null`); first = false }
-            else if (parent === 'and') qb.andWhere(`${col} is null`)
-            else if (parent === 'or') qb.orWhere(`${col} is null`)
+            this._where(qb, `${col} is null`, {}, parent, first); first = false
           } else {
-            if (first) { qb.where(`${col} = :${slug}`, { [slug]: isJson ? JSON.stringify(condition) : condition }); first = false }
-            else if (parent === 'and') qb.andWhere(`${col} = :${slug}`, { [slug]: isJson ? JSON.stringify(condition) : condition })
-            else if (parent === 'or') qb.orWhere(`${col} = :${slug}`, { [slug]: isJson ? JSON.stringify(condition) : condition })
+            this._where(qb, `${col} = :${slug}`, {
+              [slug]: isJson ? JSON.stringify(condition) : condition
+            }, parent, first); first = false
           }
         }
       }
