@@ -18,18 +18,8 @@ import {
   Repository,
   FindOptionsWhereCondition,
   DeepPartial,
-  Equal,
-  Not,
-  LessThan,
-  LessThanOrEqual,
-  MoreThan,
-  MoreThanOrEqual,
-  Between,
-  In,
-  Any,
-  Raw,
+  Brackets,
 } from 'typeorm';
-import * as deepmerge from 'deepmerge'
 
 import { TypeORMDataSource } from '../datasources'
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
@@ -40,6 +30,8 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 export class TypeORMRepository<T extends Entity, ID extends string>
   implements EntityCrudRepository<T, ID> {
   typeOrmRepo: Repository<T>;
+  tableName: string
+  columns: { [colName: string]: string }
 
   constructor(
     public entityClass: typeof Entity & { prototype: T },
@@ -51,6 +43,15 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     this.typeOrmRepo = <Repository<T>>await this.dataSource.getRepository(
       this.entityClass as any,
     );
+    this.tableName = this.typeOrmRepo.metadata.tableName
+    this.columns = this.typeOrmRepo.metadata.columns.reduce(
+      (columns, col) => (
+        col.propertyName.startsWith('_') ? columns : {
+          ...columns,
+          [col.propertyName]: col.databaseName
+        }
+      ), {}
+    )
   }
 
   async save(entity: DataObject<T>, options?: Options): Promise<T> {
@@ -80,9 +81,12 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
   async findById(id: ID, filter?: Filter, options?: Options): Promise<T> {
     await this.init();
-    const result = await this.typeOrmRepo.findOne(
-      { id, select: this._columns() } as unknown as FindOptionsWhereCondition<T>
-    );
+
+    const result = await this.typeOrmRepo.createQueryBuilder(this.tableName)
+      .select(this._typeormSelect() as any)
+      .where(`("${this.tableName}"."${this.columns['id']}" = :id)`, { id })
+      .getRawOne()
+
     if (result == null) {
       throw new Error('Not found');
     }
@@ -149,9 +153,9 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
     if (filter === undefined) filter = {}
 
-    const result = await this.typeOrmRepo.createQueryBuilder('entity')
+    const result = await this.typeOrmRepo.createQueryBuilder(this.tableName)
       .select(this._typeormSelect(filter.fields) as any)
-      .where(this._typeormWhere(filter.where) as unknown as FindOptionsWhereCondition<T>)
+      .where(this._typeormWhere(filter.where))
       .orderBy(this._typeormOrder(filter.order) as any)
       .skip(filter.skip)
       .take(filter.limit)
@@ -166,26 +170,34 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     options?: Options,
   ): Promise<Count> {
     await this.init();
-    const result = await this.typeOrmRepo.update(
-      this._typeormWhere(where as Where<T>) as unknown as FindOptionsWhereCondition<T>,
-      dataObject as QueryDeepPartialEntity<T>
-    )
+
+    const result = await this.typeOrmRepo.createQueryBuilder(this.tableName)
+      .update()
+      .set(dataObject as QueryDeepPartialEntity<T>)
+      .where(this._typeormWhere(where as any))
+      .execute()
+
     return { count: result.generatedMaps.length };
   }
 
   async deleteAll(where?: Where<T>, options?: Options): Promise<Count> {
     await this.init();
-    const result = await this.typeOrmRepo.delete(
-      this._typeormWhere(where as Where<T>) as unknown as FindOptionsWhereCondition<T>
-    )
+
+    const result = await this.typeOrmRepo.createQueryBuilder(this.tableName)
+      .delete()
+      .where(this._typeormWhere(where as any))
+      .execute()
+
     return { count: result.affected || -1 };
   }
 
   async count(where?: Where, options?: Options): Promise<Count> {
     await this.init();
-    const result = await this.typeOrmRepo.count(
-      this._typeormWhere(where as Where<T>) as unknown as FindOptionsWhereCondition<T>
-    );
+
+    const result = await this.typeOrmRepo.createQueryBuilder(this.tableName)
+      .where(this._typeormWhere(where as any))
+      .getCount()
+
     return { count: result.valueOf() };
   }
 
@@ -225,46 +237,39 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     }
   }
 
-  _columns() {
-    return this.typeOrmRepo.metadata.columns.map(
-      (col) => col.propertyName
-    ).filter(
-      (col) => !col.startsWith('_')
-    )
-  }
 
   _typeormSelect(fields?: Fields<T>) {
-    if (fields === undefined) return undefined
-    const columns = this._columns()
+    if (fields === undefined) fields = [] as any
+
     const typeormSelect = []
     const jsonQueries: { [key: string]: JSON[] } = {}
 
     for (const field of fields as any) {
       const m = /^(.+?)(\..+)?$/.exec(field)
       if (!m) throw 'Unhandled error'
-      if (columns.indexOf(m[1]) === -1) throw 'Column does not exist'
+      if (this.columns[m[1]] === undefined) throw 'Column does not exist'
       if (m[2]) {
         const s = m[0].split('.').map(this._sanitize)
         if (jsonQueries[this._sanitize(m[1])] === undefined)
           jsonQueries[this._sanitize(m[1])] = []
         jsonQueries[this._sanitize(m[1])].push(
-          this._dotExpand(s.join('.'), this._dotToCol(m[0]))
+          this._dotExpand(s.slice(1).join('.'), this._dotToCol(m[0]))
         )
       } else {
         typeormSelect.push(
-          `"entity"."${this._sanitize(m[1])}"`
+          `"${this.tableName}"."${this.columns[m[1]]}" as "${m[1]}"`
         )
       }
     }
 
     for (const q in jsonQueries) {
       typeormSelect.push(
-        `${jsonQueries[q].map((qq) => `${this._jsonToBuildObject(qq)}`).join('||')}::json as ${q}`
+        `${jsonQueries[q].map((qq) => `${this._jsonToBuildObject(qq)}`).join('||')} as ${q}`
       )
     }
 
-    if (typeormSelect === []) {
-      return columns.map((c) => `"entity"."${c}"`)
+    if (typeormSelect.length === 0) {
+      return Object.keys(this.columns).map((c) => `"${this.tableName}"."${this.columns[c]}" as "${c}"`)
     } else {
       return typeormSelect
     }
@@ -286,73 +291,88 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     }
   }
 
-  _typeormWhere(where?: Where<T>) {
-    if (where === undefined) return {}
-
-    const typeormWhere: { [key: string]: any } = {}
-    const jsonQueries: { [key: string]: JSON } = {}
-
-    for (const key in where) {
-      const condition = (where as any)[key]
-      if (condition.and) {
-        for (const obj of condition.and) {
-          Object.assign(typeormWhere, obj)
-        }
-      } else if (condition.or) {
-        typeormWhere[key] = Any(condition.or)
-      } else if (condition.eq) {
-        typeormWhere[key] = Equal(condition.eq)
-      } else if (condition.neq) {
-        typeormWhere[key] = Not(condition.neq)
-      } else if (condition.lt) {
-        typeormWhere[key] = LessThan(condition.lt)
-      } else if (condition.lte) {
-        typeormWhere[key] = LessThanOrEqual(condition.lte)
-      } else if (condition.gt) {
-        typeormWhere[key] = MoreThan(condition.gt)
-      } else if (condition.gte) {
-        typeormWhere[key] = MoreThanOrEqual(condition.gte)
-      } else if (condition.inq) {
-        typeormWhere[key] = In(condition.inq)
-      } else if (condition.between) {
-        typeormWhere[key] = Between(condition.between[0], condition.between[1])
-      } else if (condition.fullTextSearch) {
-        // Safer but not yet implemented upstream
-        // typeormWhere[key] = Raw(
-        //   (alias, param) => `to_tsvector('english', ${alias}) @@ plainto_tsquery('english', ${param[0]})`,
-        //   condition.fullTextSearch
-        // )
-        typeormWhere[key] = Raw(alias =>
-          `to_tsvector('english', ${alias}) @@ plainto_tsquery('english', '${this._sanitize(condition.fullTextSearch)}')`,
-        )
-      } else if (typeof condition === 'object') {
-        // add as-is to pooled jsonQueries
-        jsonQueries[key] = deepmerge(jsonQueries[key] || {}, condition)
-      } else {
-        const m = /^(.+?)(\.(.+))?$/.exec(key)
-        if (!m) throw 'Unhandled error'
-        if (m[2]) {
-          // add to expanded to pooled jsonQueries
-          jsonQueries[m[1]] = deepmerge(jsonQueries[m[1]] || {}, this._dotExpand(m[3], condition))
+  _typeormWhere(where?: Where<T>, parent: string = 'and') {
+    return new Brackets(qb => {
+      if (where === undefined) return
+      let first = true
+      for (const key in where) {
+        const col = this._dotToCol(key)
+        const slug = this._slugify(key)
+        const isJson = col.indexOf('->') !== -1
+        const condition = (where as any)[key]
+        if (condition.and !== undefined) {
+          if (first) { qb.where(this._typeormWhere(condition.and, 'and')); first = false }
+          else if (parent === 'and') qb.andWhere(this._typeormWhere(condition.and, 'and'))
+          else if (parent === 'or') qb.orWhere(this._typeormWhere(condition.and, 'and'))
+        } else if (condition.or !== undefined) {
+          if (first) { qb.where(this._typeormWhere(condition.or, 'or')); first = false }
+          else if (parent === 'and') qb.andWhere(this._typeormWhere(condition.or, 'or'))
+          else if (parent === 'or') qb.orWhere(this._typeormWhere(condition.or, 'or'))
+        } else if (condition.eq !== undefined) {
+          if (condition.eq === null) {
+            if (first) { qb.where(`${col} is null`); first = false }
+            else if (parent === 'and') qb.andWhere(`${col} is null`)
+            else if (parent === 'or') qb.orWhere(`${col} is null`)
+          } else {
+            if (first) { qb.where(`${col} = :${slug}`, { [slug]: isJson ? JSON.stringify(condition.eq) : condition.eq }); first = false }
+            else if (parent === 'and') qb.andWhere(`${col} = :${slug}`, { [slug]: isJson ? JSON.stringify(condition.eq) : condition.eq })
+            else if (parent === 'or') qb.orWhere(`${col} = :${slug}`, { [slug]: isJson ? JSON.stringify(condition.eq) : condition.eq })
+          }
+        } else if (condition.neq !== undefined) {
+          if (condition.neq === null) {
+            if (first) { qb.where(`${col} is not null`); first = false }
+            else if (parent === 'and') qb.andWhere(`${col} is not null`)
+            else if (parent === 'or') qb.orWhere(`${col} is not null`)
+          } else {
+            if (first) { qb.where(`${col} != :${slug}`, { [slug]: isJson ? JSON.stringify(condition.neq) : condition.neq }); first = false }
+            else if (parent === 'and') qb.andWhere(`${col} != :${slug}`, { [slug]: isJson ? JSON.stringify(condition.neq) : condition.neq })
+            else if (parent === 'or') qb.orWhere(`${col} != :${slug}`, { [slug]: isJson ? JSON.stringify(condition.neq) : condition.neq })
+          }
+        } else if (condition.lt !== undefined) {
+          if (first) { qb.where(`${col} < :${slug}`, { [slug]: isJson ? JSON.stringify(condition.lt) : condition.lt }); first = false }
+          else if (parent === 'and') qb.andWhere(`${col} < :${slug}`, { [slug]: isJson ? JSON.stringify(condition.lt) : condition.lt })
+          else if (parent === 'or') qb.orWhere(`${col} < :${slug}`, { [slug]: isJson ? JSON.stringify(condition.lt) : condition.lt })
+        } else if (condition.lte !== undefined) {
+          if (first) { qb.where(`${col} <= :${slug}`, { [slug]: isJson ? JSON.stringify(condition.lte) : condition.lte }); first = false }
+          else if (parent === 'and') qb.andWhere(`${col} <= :${slug}`, { [slug]: isJson ? JSON.stringify(condition.lte) : condition.lte })
+          else if (parent === 'or') qb.orWhere(`${col} <= :${slug}`, { [slug]: isJson ? JSON.stringify(condition.lte) : condition.lte })
+        } else if (condition.gt !== undefined) {
+          if (first) { qb.where(`${col} > :${slug}`, { [slug]: isJson ? JSON.stringify(condition.gt) : condition.gt }); first = false }
+          else if (parent === 'and') qb.andWhere(`${col} > :${slug}`, { [slug]: isJson ? JSON.stringify(condition.gt) : condition.gt })
+          else if (parent === 'or') qb.orWhere(`${col} > :${slug}`, { [slug]: isJson ? JSON.stringify(condition.gt) : condition.gt })
+        } else if (condition.gte !== undefined) {
+          if (first) { qb.where(`${col} >= :${slug}`, { [slug]: isJson ? JSON.stringify(condition.gte) : condition.gte }); first = false }
+          else if (parent === 'and') qb.andWhere(`${col} >= :${slug}`, { [slug]: isJson ? JSON.stringify(condition.gte) : condition.gte })
+          else if (parent === 'or') qb.orWhere(`${col} >= :${slug}`, { [slug]: isJson ? JSON.stringify(condition.gte) : condition.gte })
+        } else if (condition.inq !== undefined) {
+          if (first) { qb.where(`${col} in (:...${slug})`, { [slug]: condition.inq }); first = false }
+          else if (parent === 'and') qb.andWhere(`${col} in (:...${slug})`, { [slug]: condition.inq })
+          else if (parent === 'or') qb.orWhere(`${col} in (:...${slug})`, { [slug]: condition.inq })
+        } else if (condition.between !== undefined) {
+          if (first) { qb.where(`${col} between :${slug}0 and :${slug}1`, { [`${slug}0`]: isJson ? JSON.stringify(condition.between[0]) : condition.between[0], [`${slug}1`]: isJson ? JSON.stringify(condition.between[1]) : condition.between[1] }); first = false }
+          else if (parent === 'and') qb.andWhere(`${col} between :${slug}0 and :${slug}1`, { [`${slug}0`]: isJson ? JSON.stringify(condition.between[0]) : condition.between[0], [`${slug}1`]: isJson ? JSON.stringify(condition.between[1]) : condition.between[1] })
+          else if (parent === 'or') qb.orWhere(`${col} between :${slug}0 and :${slug}1`, { [`${slug}0`]: isJson ? JSON.stringify(condition.between[0]) : condition.between[0], [`${slug}1`]: isJson ? JSON.stringify(condition.between[1]) : condition.between[1] })
+        } else if (condition.fullTextSearch !== undefined) {
+          if (first) { qb.where(`to_tsvector('english', ${col}) @@ plainto_tsquery('english', :${slug}`, { [slug]: condition.fullTextSearch }); first = false }
+          else if (parent === 'and') qb.andWhere(`to_tsvector('english', ${col}) @@ plainto_tsquery('english', :${slug}`, { [slug]: condition.fullTextSearch })
+          else if (parent === 'or') qb.orWhere(`to_tsvector('english', ${col}) @@ plainto_tsquery('english', :${slug}`, { [slug]: condition.fullTextSearch })
+        } else if (typeof condition === 'object') {
+          if (first) { qb.where(`${col} @> :${slug}`, { [slug]: JSON.stringify(condition) }); first = false }
+          else if (parent === 'and') qb.andWhere(`${col} @> :${slug}`, { [slug]: JSON.stringify(condition) })
+          else if (parent === 'or') qb.orWhere(`${col} @> :${slug}`, { [slug]: JSON.stringify(condition) })
         } else {
-          typeormWhere[m[1]] = condition
+          if (condition === null) {
+            if (first) { qb.where(`${col} is null`); first = false }
+            else if (parent === 'and') qb.andWhere(`${col} is null`)
+            else if (parent === 'or') qb.orWhere(`${col} is null`)
+          } else {
+            if (first) { qb.where(`${col} = :${slug}`, { [slug]: isJson ? JSON.stringify(condition) : condition }); first = false }
+            else if (parent === 'and') qb.andWhere(`${col} = :${slug}`, { [slug]: isJson ? JSON.stringify(condition) : condition })
+            else if (parent === 'or') qb.orWhere(`${col} = :${slug}`, { [slug]: isJson ? JSON.stringify(condition) : condition })
+          }
         }
       }
-    }
-
-    // handle any pooled JSONB queries
-    for (const q in jsonQueries) {
-      // Safer but not yet implemented upstream
-      // typeormWhere[q] = Raw(
-      //   (alias, param) => `${alias} @> ${param[0]}`,
-      //   jsonQueries[q]
-      // )
-      typeormWhere[q] = Raw(alias =>
-        `${alias} @> '${JSON.stringify(jsonQueries[q])}'::jsonb`,
-      )
-    }
-
-    return typeormWhere
+    })
   }
 
   _typeormOrder(order?: string | string[] | { [key: string]: string }) {
@@ -393,8 +413,12 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
   _dotToCol(col: string) {
     const ks = col.split('.')
-    if (this._columns().indexOf(ks[0]) === -1) throw 'Unrecognized column'
-    return `"${ks[0]}"->${ks.slice(1).map((k) => `'${this._sanitize(k)}'`).join('->')}`
+    if (this.columns[ks[0]] === undefined) throw 'Unrecognized column'
+    return `"${this.tableName}"."${this.columns[ks[0]]}"${ks.length > 1 ? `->${ks.slice(1).map((k) => `'${this._sanitize(k)}'`).join('->')}` : ''}`
+  }
+
+  _slugify(str: string) {
+    return str.replace(/[^a-zA-Z0-9]/g, '')
   }
 
   _sanitize(str: string) {
