@@ -345,9 +345,9 @@ export class TypeORMRepository<T extends Entity, ID extends string>
           else if (parent === 'and') qb.andWhere(`${col} >= :${slug}`, { [slug]: isJson ? JSON.stringify(condition.gte) : condition.gte })
           else if (parent === 'or') qb.orWhere(`${col} >= :${slug}`, { [slug]: isJson ? JSON.stringify(condition.gte) : condition.gte })
         } else if (condition.inq !== undefined) {
-          if (first) { qb.where(`${col} in (:...${slug})`, { [slug]: condition.inq }); first = false }
-          else if (parent === 'and') qb.andWhere(`${col} in (:...${slug})`, { [slug]: condition.inq })
-          else if (parent === 'or') qb.orWhere(`${col} in (:...${slug})`, { [slug]: condition.inq })
+          if (first) { qb.where(`${col} in (:...${slug})`, { [slug]: condition.inq.length === 0 ? [null] : condition.inq }); first = false }
+          else if (parent === 'and') qb.andWhere(`${col} in (:...${slug})`, { [slug]: condition.inq.length === 0 ? [null] : condition.inq })
+          else if (parent === 'or') qb.orWhere(`${col} in (:...${slug})`, { [slug]: condition.inq.length === 0 ? [null] : condition.inq })
         } else if (condition.between !== undefined) {
           if (first) { qb.where(`${col} between :${slug}0 and :${slug}1`, { [`${slug}0`]: isJson ? JSON.stringify(condition.between[0]) : condition.between[0], [`${slug}1`]: isJson ? JSON.stringify(condition.between[1]) : condition.between[1] }); first = false }
           else if (parent === 'and') qb.andWhere(`${col} between :${slug}0 and :${slug}1`, { [`${slug}0`]: isJson ? JSON.stringify(condition.between[0]) : condition.between[0], [`${slug}1`]: isJson ? JSON.stringify(condition.between[1]) : condition.between[1] })
