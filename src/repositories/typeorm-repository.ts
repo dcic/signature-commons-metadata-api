@@ -348,7 +348,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
           }, parent, first); first = false
         } else if (condition.inq !== undefined) {
           this._where(qb, `${col} in (:...${slug})`, {
-            [slug]: condition.inq.length === 0 ? [null] : condition.inq
+            [slug]: condition.inq.length === 0 ? [null] : (isJson ? condition.inq.map(JSON.stringify) : condition.inq)
           }, parent, first); first = false
         } else if (condition.between !== undefined) {
           this._where(qb, `${col} between :${slug}0 and :${slug}1`, {
