@@ -54,6 +54,7 @@
     "@loopback/repository": "^1.7.0",
     "@loopback/rest": "^1.16.0",
     "@loopback/service-proxy": "^1.2.2",
+    "@types/debug": "^4.1.4",
     "@types/uuid": "^3.4.4",
     "cross-env": "^5.2.0",
     "debug": "^4.1.1",
