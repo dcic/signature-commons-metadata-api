@@ -2,6 +2,7 @@ import * as libraryTest from "@dcic/signature-commons-schema/core/library.test.j
 import * as signatureTest from "@dcic/signature-commons-schema/core/signature.test.json";
 import * as entityTest from "@dcic/signature-commons-schema/core/entity.test.json";
 import * as resourceTest from "@dcic/signature-commons-schema/core/resource.test.json";
+import * as schemaTest from "@dcic/signature-commons-schema/core/schema.test.json";
 import { Resource, Library, Signature, Entity, Schema } from "../../src/entities";
 import { UserProfile } from "../../src/models";
 import {
@@ -72,6 +73,7 @@ export async function givenValidLibraryData(data?: Partial<Library>) {
     {
       // $validator: d.$validator,
       id: uuidv4(),
+      resource: resource_id_created,
       meta: d.meta,
       dataset: d.dataset,
       dataset_type: d.dataset_type,

@@ -41,6 +41,15 @@ export interface GenericController<
   deleteById(id: string): Promise<void>
 }
 
+function prune(obj: { [key: string]: any | undefined }): { [key: string]: any } {
+  for (const key in obj) {
+    if (obj[key] === null || obj[key] === undefined) {
+      delete obj[key]
+    }
+  }
+  return obj
+}
+
 export function GenericControllerFactory<
   GenericEntity extends IGenericEntity,
   GenericRepository extends IGenericRepository<GenericEntity>
@@ -54,7 +63,7 @@ export function GenericControllerFactory<
   }
 ): Constructor<GenericController<GenericEntity, GenericRepository>> {
 
-  const modelSchema = '/@dcic/signature-commons-schema/v3/core/' + props.modelName.toLowerCase() + '.json'
+  const modelSchema = '/dcic/signature-commons-schema/v4/core/' + props.modelName.toLowerCase() + '.json'
 
   @api({
     basePath: props.basePath,
@@ -145,7 +154,7 @@ export function GenericControllerFactory<
         const entity = await validate<GenericEntity>(
           {
             $validator: modelSchema,
-            ...(<any>obj)
+            ...(<any>prune(obj))
           },
           modelSchema
         )
@@ -346,7 +355,7 @@ export function GenericControllerFactory<
           obj = await validate<GenericEntity>(
             {
               $validator: modelSchema,
-              ...(<any>obj)
+              ...(<any>prune(obj))
             },
             modelSchema
           )
@@ -441,7 +450,7 @@ export function GenericControllerFactory<
             resolved_obj = await this.create(obj as GenericEntity)
           }
 
-          results.push(resolved_obj)
+          results.push(prune(resolved_obj))
         } catch (err) {
           debug(err)
           results.push(serializeError(err))
@@ -529,7 +538,7 @@ export function GenericControllerFactory<
         (obj) => applyFieldsFilter(
           {
             $validator: modelSchema,
-            ...(<any>obj),
+            ...(<any>prune(obj)),
           },
           ((filter || {}).fields || [])
         )
@@ -587,7 +596,7 @@ export function GenericControllerFactory<
           obj = await validate<GenericEntity>(
             <GenericEntity>{
               $validator: modelSchema,
-              ...<object>obj,
+              ...<object>prune(obj),
               ...<object>body,
             },
             modelSchema
@@ -663,7 +672,7 @@ export function GenericControllerFactory<
         const validated = await validate<GenericEntity>(
           {
             $validator: modelSchema,
-            ...(<any>obj)
+            ...(<any>prune(obj))
           },
           modelSchema
         )

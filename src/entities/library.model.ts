@@ -40,8 +40,9 @@ export class Library extends LBEntity {
   @Index()
   @Column({
     name: 'resource',
+    nullable: true,
   })
-  resource: string;
+  resource?: string;
 
   @property({
     type: 'string',
