@@ -9,6 +9,7 @@ import {
   Library as LibraryController,
   Signature as SignatureController,
   Entity as EntityController,
+  Schema as SchemaController,
 } from './generic-controllers';
 import { AuthStrategyProvider } from './providers/auth-strategy.provider';
 import { SmartTrieRouter } from './router';
@@ -27,10 +28,11 @@ export class App extends BootMixin(
     );
 
     // Manually setup named custom generic controllers
+    this.controller(ResourceController, 'Resource');
     this.controller(LibraryController, 'Library');
     this.controller(SignatureController, 'Signature');
     this.controller(EntityController, 'Entity');
-    this.controller(ResourceController, 'Resource');
+    this.controller(SchemaController, 'Schema');
 
     // Set up custom router
     this.bind(RestBindings.ROUTER).toClass(SmartTrieRouter);

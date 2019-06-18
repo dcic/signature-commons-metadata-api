@@ -2,14 +2,15 @@ import * as libraryTest from "@dcic/signature-commons-schema/core/library.test.j
 import * as signatureTest from "@dcic/signature-commons-schema/core/signature.test.json";
 import * as entityTest from "@dcic/signature-commons-schema/core/entity.test.json";
 import * as resourceTest from "@dcic/signature-commons-schema/core/resource.test.json";
-import { Entity, Library, Signature, Resource } from "../../src/entities";
+import { Resource, Library, Signature, Entity, Schema } from "../../src/entities";
 import { UserProfile } from "../../src/models";
 import {
   ResourceRepository,
   LibraryRepository,
   SignatureRepository,
   EntityRepository,
-  UserProfileRepository
+  SchemaRepository,
+  UserProfileRepository,
 } from "../../src/repositories";
 import { memory_factory, typeorm_factory } from "../fixtures/datasources/testdb.datasource";
 import * as uuidv4 from 'uuid/v4'
@@ -24,12 +25,14 @@ const resource_id_created = uuidv4()
 const library_id_created = uuidv4()
 const signature_id_created = uuidv4()
 const entity_id_created = uuidv4()
+const schema_id_created = uuidv4()
 
 export {
   resource_id_created,
   library_id_created,
   signature_id_created,
   entity_id_created,
+  schema_id_created,
 }
 
 export async function givenValidResourceData(data?: Partial<Resource>) {
@@ -167,6 +170,38 @@ export async function givenEntity(data?: Partial<Entity>) {
   )
 }
 
+export async function givenValidSchemaData(data?: Partial<Schema>) {
+  const d = schemaTest.tests.filter((test) => test.valid)[0].data
+  return Object.assign(
+    {
+      // $validator: d.$validator,
+      id: uuidv4(),
+      meta: d.meta,
+    },
+    data,
+  )
+}
+
+export async function givenInvalidSchemaData(data?: Partial<Schema>) {
+  const d = schemaTest.tests.filter((test) => !test.valid)[0].data
+  return Object.assign(
+    {
+      // $validator: d.$validator,
+      id: uuidv4(),
+      meta: d.meta,
+    },
+    data,
+  )
+}
+
+export async function givenSchema(data?: Partial<Schema>) {
+  return await new SchemaRepository(
+    await typeorm_db
+  ).create(
+    <Partial<Schema>>await givenValidSchemaData(data)
+  )
+}
+
 export async function givenAdminUserProfileData(data?: Partial<UserProfile>) {
   return Object.assign({
     id: 'admin',
@@ -191,5 +226,6 @@ export async function givenEmptyDatabase() {
   await new LibraryRepository(await typeorm_db).deleteAll({ id: { neq: library_id_created } })
   await new SignatureRepository(await typeorm_db).deleteAll({ id: { neq: signature_id_created } });
   await new EntityRepository(await typeorm_db).deleteAll({ id: { neq: entity_id_created } });
+  await new SchemaRepository(await typeorm_db).deleteAll({ id: { neq: schema_id_created } });
   await new UserProfileRepository(await memory_db).deleteAll();
 }
