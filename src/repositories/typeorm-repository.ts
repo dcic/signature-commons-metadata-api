@@ -219,7 +219,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     if (Array.isArray(obj)) {
       return obj.map(
         (o) => {
-          for (var col in o) {
+          for (const col in o) {
             if (col.startsWith('_')) {
               delete o[col]
             }
@@ -228,7 +228,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
         }
       ) as K
     } else {
-      for (var col in obj) {
+      for (const col in obj) {
         if (col.startsWith('_')) {
           delete obj[col]
         }
@@ -246,8 +246,8 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
     for (const field of fields as any) {
       const m = /^(.+?)(\..+)?$/.exec(field)
-      if (!m) throw 'Unhandled error'
-      if (this.columns[m[1]] === undefined) throw 'Column does not exist'
+      if (!m) throw new Error('Unhandled error')
+      if (this.columns[m[1]] === undefined) throw new Error('Column does not exist')
       if (m[2]) {
         const s = m[0].split('.').map(this._sanitize)
         if (jsonQueries[this._sanitize(m[1])] === undefined)
@@ -386,13 +386,13 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     } else if (typeof order === 'object') {
       _order = Object.keys(order).map((o) => `${o} ${(order as any)[o]}`)
     } else {
-      throw 'Unrecognized order type'
+      throw new Error('Unrecognized order type')
     }
 
     const typeormOrder: { [key: string]: string } = {}
     for (const o of _order) {
       const m = /^(([^ ]+?)(\.[^ ]+)?)( (ASC|DESC))?$/.exec(o)
-      if (!m) throw 'Unrecognized order type'
+      if (!m) throw new Error('Unrecognized order type')
       if (m[3]) {
         typeormOrder[this._dotToCol(m[1])] = m[5] || 'ASC'
       } else {
@@ -414,7 +414,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
   _dotToCol(col: string) {
     const ks = col.split('.')
-    if (this.columns[ks[0]] === undefined) throw 'Unrecognized column'
+    if (this.columns[ks[0]] === undefined) throw new Error('Unrecognized column')
     return `"${this.tableName}"."${this.columns[ks[0]]}"${ks.length > 1 ? `->${ks.slice(1).map((k) => `'${this._sanitize(k)}'`).join('->')}` : ''}`
   }
 

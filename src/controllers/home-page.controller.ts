@@ -29,7 +29,7 @@ export class HomePageController {
     },
   })
   explorer() {
-    return this.response.redirect('http://explorer.loopback.io/?url=http://amp.pharm.mssm.edu/signature-commons-metadata-api/openapi.json');
+    this.response.redirect('http://explorer.loopback.io/?url=http://amp.pharm.mssm.edu/signature-commons-metadata-api/openapi.json');
   }
 
   @authenticate('GET.index')

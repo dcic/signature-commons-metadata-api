@@ -3,7 +3,7 @@ import { authenticate, AuthenticationBindings, UserProfile } from '@loopback/aut
 import { inject } from '@loopback/context';
 import { Constructor } from '@loopback/core';
 import { Count, CountSchema, DataObject, EntityCrudRepository, Entity, Filter, repository, Where } from '@loopback/repository';
-import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param, patch, post, requestBody, Response, RestBindings, getFilterJsonSchemaFor, SchemaObject } from '@loopback/rest';
+import { api, del, get, getFilterSchemaFor, getWhereSchemaFor, HttpErrors, param, patch, post, requestBody, Response, RestBindings } from '@loopback/rest';
 import * as uuidv4 from 'uuid/v4';
 import debug from '../util/debug';
 import serializeError from 'serialize-error'
@@ -348,7 +348,7 @@ export function GenericControllerFactory<
       let objs: Array<object> = []
       let n = 0
 
-      for await (let obj of results) {
+      for (let obj of results) {
         if (n >= limit)
           break
         try {
@@ -591,7 +591,7 @@ export function GenericControllerFactory<
       const objs: GenericEntity[] = await this.genericRepository.find({ where })
       let results: Array<object> = []
 
-      for await (let obj of objs) {
+      for (let obj of objs) {
         try {
           obj = await validate<GenericEntity>(
             <GenericEntity>{

@@ -29,7 +29,7 @@ export function keyCounts(objs: any[], depth: number = 0) {
                 ([kk, vv]) =>
                   [
                     [k, kk].filter(
-                      (k) => k !== ''
+                      (kkk) => kkk !== ''
                     ).join('.'),
                     vv
                   ] as [string, any]
@@ -83,7 +83,7 @@ export function valueCounts(objs: any[], depth: number = 0) {
                 ([kk, vv]) =>
                   [
                     [k, kk].filter(
-                      (k) => k !== ''
+                      (kkk) => kkk !== ''
                     ).join('.'),
                     vv
                   ] as [string, any]

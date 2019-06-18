@@ -1,7 +1,7 @@
 import { authenticate } from '@loopback/authentication';
 import { inject } from '@loopback/core';
 import { Filter, Where, repository } from '@loopback/repository';
-import { get, getFilterSchemaFor, param, api, getWhereSchemaFor } from '@loopback/rest';
+import { get, getFilterSchemaFor, param, getWhereSchemaFor } from '@loopback/rest';
 import { Library as LibraryEntity, LibrarySchema, Signature, Resource } from '../entities';
 import { LibraryRepository, ResourceRepository } from '../repositories';
 import { GenericControllerFactory, IGenericRepository } from './generic.controller';

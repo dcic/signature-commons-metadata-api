@@ -1,8 +1,7 @@
 export function escapeLiteral(str: string, escape_val: string = '\'') {
-  var hasBackslash = false;
-  var escaped = escape_val;
-  for (var i = 0; i < str.length; i++) {
-    var c = str[i];
+  let hasBackslash = false;
+  let escaped = escape_val;
+  for (const c of str) {
     if (c === escape_val) {
       escaped += c + c;
     } else if (c === '\\') {
@@ -20,7 +19,7 @@ export function escapeLiteral(str: string, escape_val: string = '\'') {
 }
 
 export function buildLimit(limit?: number, offset?: number) {
-  var clause = [];
+  let clause = [];
   if (limit === undefined || isNaN(limit)) {
     limit = 0;
   }

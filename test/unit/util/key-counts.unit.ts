@@ -184,7 +184,7 @@ describe('util', () => {
   })
 
   describe('lists', () => {
-    const testObj = [
+    const testObj2 = [
       {
         'a': [
           {
@@ -213,7 +213,7 @@ describe('util', () => {
     describe('depth 1', () => {
       it('key-counts', () => {
         assert.deepEqual(
-          keyCounts(testObj, 1),
+          keyCounts(testObj2, 1),
           {
             'a': 6,
             'a.b': 2,
@@ -223,7 +223,7 @@ describe('util', () => {
       })
       it('value-counts', () => {
         assert.deepEqual(
-          valueCounts(testObj, 1),
+          valueCounts(testObj2, 1),
           {
             'a': {
               '[array]': 2,
@@ -243,7 +243,7 @@ describe('util', () => {
     describe('depth 2', () => {
       it('key-counts', () => {
         assert.deepEqual(
-          keyCounts(testObj, 2),
+          keyCounts(testObj2, 2),
           {
             'a': 6,
             'a.b': 2,
@@ -254,7 +254,7 @@ describe('util', () => {
       })
       it('value-counts', () => {
         assert.deepEqual(
-          valueCounts(testObj, 2),
+          valueCounts(testObj2, 2),
           {
             'a': {
               '[array]': 2,
