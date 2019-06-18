@@ -1,7 +1,8 @@
-import { Entity as TypeORMEntity, Column, OneToMany, Index, Generated, } from "typeorm";
+import { Entity as TypeORMEntity, Column, OneToMany, Index, Generated, ManyToOne, JoinColumn, } from "typeorm";
 import { Entity as LBEntity, model, property } from '@loopback/repository';
 import { getJsonSchema } from '@loopback/rest';
 import { Signature } from "./signature.model";
+import { Resource } from "./resource.model";
 
 @model({
   name: 'Library',
@@ -31,6 +32,16 @@ export class Library extends LBEntity {
     unique: true,
   })
   id: string;
+
+  @property({
+    type: 'string',
+    required: false,
+  })
+  @Index()
+  @Column({
+    name: 'resource',
+  })
+  resource: string;
 
   @property({
     type: 'string',
@@ -75,6 +86,13 @@ export class Library extends LBEntity {
     default: [],
   })
   signature_keys: JSON;
+
+  @ManyToOne(type => Resource, resource => resource._libraries)
+  @JoinColumn({
+    name: 'resource',
+    referencedColumnName: 'id'
+  })
+  _resource: Promise<Resource>;
 
   @OneToMany(type => Signature, signature => signature._library)
   _signatures: Promise<Signature[]>;

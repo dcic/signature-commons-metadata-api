@@ -1,10 +1,10 @@
 import { authenticate } from '@loopback/authentication';
 import { inject } from '@loopback/core';
-import { Filter, Where } from '@loopback/repository';
+import { Filter, Where, repository } from '@loopback/repository';
 import { get, getFilterSchemaFor, param, api, getWhereSchemaFor } from '@loopback/rest';
-import { Library as LibraryEntity, LibrarySchema, Signature } from '../entities';
-import { LibraryRepository } from '../repositories';
-import { GenericControllerFactory } from './generic.controller';
+import { Library as LibraryEntity, LibrarySchema, Signature, Resource } from '../entities';
+import { LibraryRepository, ResourceRepository } from '../repositories';
+import { GenericControllerFactory, IGenericRepository } from './generic.controller';
 import { Signature as SignatureController } from './signature.controller';
 import { AnyObject, Count } from 'loopback-datasource-juggler';
 import { escapeLiteral, buildLimit } from '../util/sql_building';
@@ -22,6 +22,16 @@ const GenericLibraryController = GenericControllerFactory<
 })
 
 export class Library extends GenericLibraryController {
+  @authenticate('GET.libraries.resource')
+  @get('/{id}/resource')
+  async getLibrary(
+    @repository(ResourceRepository) resourceRepository: IGenericRepository<Resource>,
+    @param.path.string('id') id: string
+  ): Promise<Resource> {
+    const library = await this.genericRepository.findById(id, { fields: ['resource'] } as Filter<LibraryEntity>)
+    return await library._resource
+  }
+
   @authenticate('GET.libraries.signatures')
   @get('/{id}/signatures')
   async signatures(
