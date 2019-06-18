@@ -12,7 +12,7 @@
   },
   "scripts": {
     "build:apidocs": "lb-apidocs",
-    "build": "lb-tsc es2017 --outDir dist",
+    "build": "lb-tsc --outDir dist",
     "build:watch": "lb-tsc --watch",
     "clean": "lb-clean dist",
     "lint": "npm run prettier:check && npm run tslint",
@@ -70,7 +70,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@loopback/build": "^1.7.1",
+    "@loopback/build": "^2.0.0",
     "@loopback/testlab": "^1.6.0",
     "@types/assert": "^1.4.2",
     "@types/node": "^10.14.9",
