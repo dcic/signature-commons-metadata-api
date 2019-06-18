@@ -1,4 +1,4 @@
-import { Entity as TypeORMEntity, Column, Generated } from "typeorm";
+import { Entity as TypeORMEntity, Column, Generated, Index } from 'typeorm';
 import { Entity as LBEntity, model, property } from '@loopback/repository';
 import { getJsonSchema } from '@loopback/rest';
 
@@ -24,6 +24,7 @@ export class Schema extends LBEntity {
     id: true,
     required: true,
   })
+  @Index()
   @Column({
     name: 'uuid',
     type: 'uuid',
@@ -36,6 +37,8 @@ export class Schema extends LBEntity {
     required: true,
     default: {},
   })
+  @Index('schemas_meta_gin_index', { synchronize: false })
+  @Index('schemas_meta_gist_fts_index', { synchronize: false })
   @Column({
     type: 'jsonb',
   })

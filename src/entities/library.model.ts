@@ -1,8 +1,8 @@
-import { Entity as TypeORMEntity, Column, OneToMany, Index, Generated, ManyToOne, JoinColumn, } from "typeorm";
+import { Entity as TypeORMEntity, Column, OneToMany, Index, Generated, ManyToOne, JoinColumn, } from 'typeorm';
 import { Entity as LBEntity, model, property } from '@loopback/repository';
 import { getJsonSchema } from '@loopback/rest';
-import { Signature } from "./signature.model";
-import { Resource } from "./resource.model";
+import { Signature } from './signature.model';
+import { Resource } from './resource.model';
 
 @model({
   name: 'Library',
@@ -26,6 +26,7 @@ export class Library extends LBEntity {
     id: true,
     required: true,
   })
+  @Index()
   @Column({
     name: 'uuid',
     type: 'uuid',
@@ -68,6 +69,8 @@ export class Library extends LBEntity {
     type: 'object',
     required: true,
   })
+  @Index('libraries_meta_gin_index', { synchronize: false })
+  @Index('libraries_meta_gist_fts_index', { synchronize: false })
   @Column({
     name: 'meta',
     type: 'jsonb',

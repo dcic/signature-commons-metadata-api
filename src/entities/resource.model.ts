@@ -1,7 +1,7 @@
-import { Entity as TypeORMEntity, Column, Generated, OneToMany } from "typeorm";
+import { Entity as TypeORMEntity, Column, Generated, OneToMany, Index } from 'typeorm';
 import { Entity as LBEntity, model, property } from '@loopback/repository';
 import { getJsonSchema } from '@loopback/rest';
-import { Library } from "./library.model";
+import { Library } from './library.model';
 
 @model({
   name: 'Resource',
@@ -25,6 +25,7 @@ export class Resource extends LBEntity {
     id: true,
     required: true,
   })
+  @Index()
   @Column({
     name: 'uuid',
     type: 'uuid',
@@ -37,6 +38,8 @@ export class Resource extends LBEntity {
     required: true,
     default: {},
   })
+  @Index('resources_meta_gin_index', { synchronize: false })
+  @Index('resources_meta_gist_fts_index', { synchronize: false })
   @Column({
     type: 'jsonb',
   })
