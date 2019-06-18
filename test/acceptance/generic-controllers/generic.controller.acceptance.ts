@@ -17,7 +17,7 @@ export function expect_response(obj: { status?: number | number[], body?: object
             break
           }
         }
-        assert.equal(found, true, `${resp.status} not in ${obj.status}`)
+        assert.equal(found, true, `${resp.status} not in ${obj.status}: ${JSON.stringify(resp.body)}`)
       }
       if (obj.body !== undefined)
         assert.equal(resp.body, obj.body)
@@ -381,7 +381,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
       const validObj = await props.givenValidObject()
       const resolvedObj = {
-        $validator: `/@dcic/signature-commons-schema/v3/core/${props.modelName}.json`,
+        $validator: `/dcic/signature-commons-schema/v4/core/${props.modelName}.json`,
         ...validObj,
       }
       // If we can do this 3 times without error, then we
