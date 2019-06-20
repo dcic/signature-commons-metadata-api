@@ -12,8 +12,8 @@
   },
   "scripts": {
     "build:apidocs": "lb-apidocs",
-    "build": "lb-tsc --outDir dist",
-    "build:watch": "lb-tsc --watch",
+    "build": "dotenv-load lb-tsc --outDir dist",
+    "build:watch": "dotenv-load lb-tsc --watch",
     "clean": "lb-clean dist",
     "lint": "npm run prettier:check && npm run tslint",
     "lint:fix": "npm run tslint:fix && npm run prettier:fix",
@@ -23,11 +23,11 @@
     "tslint": "lb-tslint",
     "tslint:fix": "npm run tslint -- --fix",
     "pretest": "npm run clean && npm run build",
-    "test": "lb-mocha --allow-console-logs \"dist/test\"",
+    "test": "dotenv-load lb-mocha --allow-console-logs \"dist/test\"",
     "posttest": "npm run lint",
     "test:dev": "lb-mocha --allow-console-logs dist/test/**/*.js && npm run posttest",
     "prestart": "npm run build",
-    "start": "node .",
+    "start": "dotenv-load node .",
     "prepublishOnly": "npm run test",
     "deploy": "docker build -t maayanlab/signature-commons-metadata-api:${npm_package_version} . && docker push maayanlab/signature-commons-metadata-api:${npm_package_version} && docker tag maayanlab/signature-commons-metadata-api:${npm_package_version} maayanlab/signature-commons-metadata-api:latest && docker push maayanlab/signature-commons-metadata-api:latest"
   },
@@ -77,6 +77,7 @@
     "@types/passport": "^0.4.7",
     "@types/passport-http": "^0.3.8",
     "assert": "^1.5.0",
+    "dotenv-load": "^2.0.0",
     "tslint": "^5.17.0",
     "typescript": "^3.5.2"
   }

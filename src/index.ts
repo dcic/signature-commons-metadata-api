@@ -5,8 +5,6 @@ import { UserProfileRepository } from './repositories';
 export { App };
 
 export async function main(options: ApplicationConfig = {}) {
-  require('dotenv').config()
-
   const app = new App({
     rest: {
       openApiSpec: {

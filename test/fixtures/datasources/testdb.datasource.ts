@@ -3,7 +3,6 @@ import { TypeORMDataSource, MemoryDataSource } from "../../../src/datasources";
 let n = 0
 
 export const typeorm_factory = async () => {
-  require('dotenv').config()
   if (process.env['TYPEORM_TEST_URL'] === undefined) {
     throw new Error('TYPEORM_TEST_URL required to perform tests')
   }

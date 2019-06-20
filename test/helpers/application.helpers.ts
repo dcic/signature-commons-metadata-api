@@ -10,8 +10,6 @@ import { DataSource } from 'loopback-datasource-juggler';
 import { TypeORMDataSource } from '../../src/datasources';
 
 export async function setupApplication(): Promise<AppWithClient> {
-  require('dotenv').config()
-
   const app = new App({
     rest: givenHttpServerConfig(),
   });
