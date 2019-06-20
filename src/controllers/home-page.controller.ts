@@ -7,16 +7,16 @@ import { RestBindings, Response } from '@loopback/rest';
 import { authenticate } from '@loopback/authentication';
 
 @api({
-  basePath: '/signature-commons-metadata-api',
+  basePath: process.env.PREFIX,
   paths: {},
 })
 export class HomePageController {
   private html: string;
   constructor(@inject(RestBindings.Http.RESPONSE) private response: Response) {
-    this.html = fs.readFileSync(
+    this.html = new Function('PREFIX', `return \`${fs.readFileSync(
       path.join(__dirname, '../../../public/index.html'),
       'utf-8',
-    );
+    )}\`;`)(process.env.PREFIX)
   }
 
   @authenticate('GET.explorer')
@@ -29,7 +29,7 @@ export class HomePageController {
     },
   })
   explorer() {
-    this.response.redirect('http://explorer.loopback.io/?url=http://amp.pharm.mssm.edu/signature-commons-metadata-api/openapi.json');
+    this.response.redirect(`http://explorer.loopback.io/?url=http://${process.env.SERVERNAME}${process.env.PREFIX}/openapi.json`);
   }
 
   @authenticate('GET.index')

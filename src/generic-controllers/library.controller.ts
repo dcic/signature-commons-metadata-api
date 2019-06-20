@@ -18,7 +18,7 @@ const GenericLibraryController = GenericControllerFactory<
   GenericEntity: LibraryEntity,
   GenericEntitySchema: LibrarySchema,
   modelName: 'Library',
-  basePath: '/signature-commons-metadata-api/libraries',
+  basePath: `${process.env.PREFIX}/libraries`,
 })
 
 export class Library extends GenericLibraryController {

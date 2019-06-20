@@ -10,7 +10,7 @@ const GenericEntityController = GenericControllerFactory<
   GenericEntity: EntityEntity,
   GenericEntitySchema: EntitySchema,
   modelName: 'Entity',
-  basePath: '/signature-commons-metadata-api/entities',
+  basePath: `${process.env.PREFIX}/entities`,
 })
 
 export class Entity extends GenericEntityController {

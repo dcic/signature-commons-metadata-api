@@ -15,7 +15,7 @@ const GenericResourceController = GenericControllerFactory<
   GenericEntity: ResourceEntity,
   GenericEntitySchema: ResourceSchema,
   modelName: 'Resource',
-  basePath: '/signature-commons-metadata-api/resources',
+  basePath: `${process.env.PREFIX}/resources`,
 })
 
 export class Resource extends GenericResourceController {

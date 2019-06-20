@@ -13,7 +13,7 @@ const GenericSignatureController = GenericControllerFactory<
   GenericEntity: SignatureEntity,
   GenericEntitySchema: SignatureSchema,
   modelName: 'Signature',
-  basePath: '/signature-commons-metadata-api/signatures',
+  basePath: `${process.env.PREFIX}/signatures`,
 })
 
 export class Signature extends GenericSignatureController {

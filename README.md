@@ -9,6 +9,8 @@ Signature Commons Metadata API
 Some environment variables should be set to get things running--this can be done with a .env file.
 
 ```env
+PREFIX=/signature-commons-metadata-api
+SERVERNAME=amp.pharm.mssm.edu
 DOCKER_TAG=maayanlab/signature-commons-metadata-api
 ADMIN_USERNAME=signaturestore
 ADMIN_PASSWORD=signaturestore

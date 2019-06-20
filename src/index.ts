@@ -9,8 +9,8 @@ export async function main(options: ApplicationConfig = {}) {
     rest: {
       openApiSpec: {
         endpointMapping: {
-          '/signature-commons-metadata-api/openapi.json': { version: '3.0.0', format: 'json' },
-          '/signature-commons-metadata-api/openapi.yml': { version: '3.0.0', format: 'yaml' },
+          [`${process.env.PREFIX}/openapi.json`]: { version: '3.0.0', format: 'json' },
+          [`${process.env.PREFIX}/openapi.yml`]: { version: '3.0.0', format: 'yaml' },
         },
       },
     },

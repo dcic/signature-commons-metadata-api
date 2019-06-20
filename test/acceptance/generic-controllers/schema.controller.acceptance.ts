@@ -4,7 +4,7 @@ import { test_generic } from './generic.controller.acceptance';
 
 test_generic<Schema>({
   modelName: 'schema',
-  basePath: '/signature-commons-metadata-api/schemas',
+  basePath: `${process.env.PREFIX}/schemas`,
   givenObject: givenSchema,
   givenValidObject: givenValidSchemaData,
   givenInvalidObject: givenInvalidSchemaData,

@@ -21,7 +21,7 @@ describe('HomePageController', () => {
 
   it('exposes a default home page', async () => {
     await client
-      .get('/signature-commons-metadata-api')
+      .get(`${process.env.PREFIX}`)
       .expect(200)
       .expect('Content-Type', /text\/html/);
   });

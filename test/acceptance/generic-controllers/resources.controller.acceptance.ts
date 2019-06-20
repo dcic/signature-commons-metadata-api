@@ -4,7 +4,7 @@ import { test_generic } from './generic.controller.acceptance';
 
 test_generic<Resource>({
   modelName: 'resource',
-  basePath: '/signature-commons-metadata-api/resources',
+  basePath: `${process.env.PREFIX}/resources`,
   givenObject: givenResource,
   givenValidObject: givenValidResourceData,
   givenInvalidObject: givenInvalidResourceData,

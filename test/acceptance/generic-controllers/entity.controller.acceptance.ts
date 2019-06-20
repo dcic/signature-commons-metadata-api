@@ -4,7 +4,7 @@ import { test_generic } from './generic.controller.acceptance';
 
 test_generic<Entity>({
   modelName: 'entity',
-  basePath: '/signature-commons-metadata-api/entities',
+  basePath: `${process.env.PREFIX}/entities`,
   givenObject: givenEntity,
   givenValidObject: givenValidEntityData,
   givenInvalidObject: givenInvalidEntityData,
