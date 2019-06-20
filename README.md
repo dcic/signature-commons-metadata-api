@@ -9,6 +9,7 @@ Signature Commons Metadata API
 Some environment variables should be set to get things running--this can be done with a .env file.
 
 ```env
+DOCKER_TAG=maayanlab/signature-commons-metadata-api
 ADMIN_USERNAME=signaturestore
 ADMIN_PASSWORD=signaturestore
 POSTGRES_DB=signaturestore
