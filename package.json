@@ -31,7 +31,10 @@
     "start": "dotenv-load node .",
     "prepublishOnly": "npm run test",
     "deploy": "dotenv-load npm run build && npm run deploy:docker",
-    "deploy:docker": "npm run build:docker && dotenv-load node ./bin/docker-deploy.js"
+    "deploy:docker": "npm run build:docker && dotenv-load node ./bin/docker-deploy.js",
+    "version:major": "npm version --no-git-tag-version major",
+    "version:minor": "npm version --no-git-tag-version minor",
+    "version:patch": "npm version --no-git-tag-version patch"
   },
   "repository": {
     "type": "git"
