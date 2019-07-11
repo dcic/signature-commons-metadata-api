@@ -1,5 +1,5 @@
 {
-  "name": "signature-commons-metadata-api",
+  "name": "@dcic/signature-commons-metadata-api",
   "version": "1.2.6",
   "description": "Signature Commons Metadata API Micro Service",
   "keywords": [
