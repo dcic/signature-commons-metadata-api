@@ -10,7 +10,7 @@ node_js:
 env:
   - DOCKER_COMPOSE_VERSION=1.4.2
 
-scripts:
+script:
   - cp .env.example .env
   - docker-compose up -d meta-db
   - npm install
