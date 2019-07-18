@@ -6,33 +6,7 @@ Signature Commons Metadata API
 ## Production
 
 ### Environment
-Some environment variables should be set to get things running--this can be done with a .env file.
-
-```env
-# deployment
-PREFIX=/signature-commons-metadata-api
-SERVERNAME=amp.pharm.mssm.edu
-ADMIN_USERNAME=signaturestore
-ADMIN_PASSWORD=signaturestore
-TYPEORM_CONNECTION=postgres
-TYPEORM_URL=postgres://signaturestore:signaturestore@localhost:5432/signaturestore
-TYPEORM_SYNCHRONIZE=false
-TYPEORM_LOGGING=false
-TYPEORM_ENTITIES=dist/src/entities/*.js
-TYPEORM_ENTITIES_DIR=src/entities
-TYPEORM_MIGRATIONS=dist/src/migration/*.js
-TYPEORM_MIGRATIONS_DIR=src/migration
-TYPEORM_SUBSCRIBERS=dist/src/subscriber/*.js
-TYPEORM_SUBSCRIBERS_DIR=src/subscriber
-# development
-DOCKER_TAG=maayanlab/signature-commons-metadata-api
-TYPEORM_TEST_URL=postgres://signaturestore:signaturestore@localhost:5432/test
-# meta-db
-POSTGRES_DB=signaturestore
-POSTGRES_TEST_DB=test
-POSTGRES_USER=signaturestore
-POSTGRES_PASSWORD=signaturestore
-```
+Some environment variables should be set to get things running--this can be done with a .env file. See `.env.example`.
 
 ### Deployment
 ```bash
