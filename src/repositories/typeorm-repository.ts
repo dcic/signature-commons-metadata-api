@@ -305,6 +305,51 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     }
   }
 
+  _fullTextSearchQuery(fullTextSearch: any): { query: string, params: { [key: string]: string } } {
+    if (typeof fullTextSearch === 'object') {
+      if (fullTextSearch.and !== undefined) {
+        const all_queries = []
+        const all_params = {}
+        for (const el of fullTextSearch.and) {
+          const { query, params } = this._fullTextSearchQuery(el)
+          all_queries.push(query)
+          Object.assign(all_params, params)
+        }
+        return {
+          query: `'('||${all_queries.join(`||'&'||`)}||')'`,
+          params: all_params,
+        }
+      } else if (fullTextSearch.or !== undefined) {
+        const all_queries = []
+        const all_params = {}
+        for (const el of fullTextSearch.or) {
+          const { query, params } = this._fullTextSearchQuery(el)
+          all_queries.push(query)
+          Object.assign(all_params, params)
+        }
+        return {
+          query: `'('||${all_queries.join(`||'|'||`)}||')'`,
+          params: all_params,
+        }
+      } else if (fullTextSearch.eq !== undefined) {
+        const id = this.id_generator.id()
+        return {
+          query: `:s_${id}`,
+          params: { [`s_${id}`]: fullTextSearch.eq },
+        }
+      } else if (fullTextSearch.ne !== undefined) {
+        const id = this.id_generator.id()
+        return {
+          query: `'!'||:s_${id}`,
+          params: { [`s_${id}`]: fullTextSearch.ne },
+        }
+      }
+    } else if (typeof fullTextSearch === 'string') {
+      return this._fullTextSearchQuery({ 'and': fullTextSearch.split(/ +/g).map(term => ({ eq: term })) })
+    }
+    throw new Error('Type not recognized for fullTextSearch query')
+  }
+
   _typeormWhere(where?: Where<T>, parent: string = 'and') {
     return new Brackets(qb => {
       if (where === undefined) return
@@ -376,9 +421,9 @@ export class TypeORMRepository<T extends Entity, ID extends string>
               [`${slug}1_${id}`]: isJson ? JSON.stringify(condition.between[1]) : condition.between[1]
             }, parent, first); first = false
           } else if (condition.fullTextSearch !== undefined) {
-            const id = this.id_generator.id()
-            this._where(qb, `to_tsvector('english', ${col}) @@ plainto_tsquery('english', :${slug}_${id})`, {
-              [`${slug}_${id}`]: condition.fullTextSearch
+            const { query, params } = this._fullTextSearchQuery(condition.fullTextSearch)
+            this._where(qb, `to_tsvector('english', ${col}) @@ to_tsquery('english', ${query})`, {
+              ...params,
             }, parent, first); first = false
           } else if (typeof condition === 'object') {
             const id = this.id_generator.id()
