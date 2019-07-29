@@ -23,6 +23,7 @@ import {
 
 import { TypeORMDataSource } from '../datasources'
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { UniqueIDGenerator } from '../util/unique_id_generator'
 
 /**
  * An implementation of EntityCrudRepository using TypeORM
@@ -32,11 +33,14 @@ export class TypeORMRepository<T extends Entity, ID extends string>
   typeOrmRepo: Repository<T>;
   tableName: string
   columns: { [colName: string]: string }
+  id_generator: UniqueIDGenerator
 
   constructor(
     public entityClass: typeof Entity & { prototype: T },
     public dataSource: TypeORMDataSource,
-  ) { }
+  ) {
+    this.id_generator = new UniqueIDGenerator()
+  }
 
   async init() {
     if (this.typeOrmRepo != null) return;
@@ -306,70 +310,90 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       if (where === undefined) return
       let first = true
       for (const key in where) {
-        const col = this._dotToCol(key)
-        const slug = this._slugify(key)
-        const isJson = col.indexOf('->') !== -1
         const condition = (where as any)[key]
-        if (condition.and !== undefined) {
-          this._where(qb, this._typeormWhere(condition.and, 'and'), {}, parent, first); first = false
-        } else if (condition.or !== undefined) {
-          this._where(qb, this._typeormWhere(condition.or, 'or'), {}, parent, first); first = false
-        } else if (condition.eq !== undefined) {
-          if (condition.eq === null) {
-            this._where(qb, `${col} is null`, {}, parent, first); first = false
-          } else {
-            this._where(qb, `${col} = :${slug}`, {
-              [slug]: isJson ? JSON.stringify(condition.eq) : condition.eq
-            }, parent, first); first = false
+        if (key === 'and') {
+          let first_and = false
+          for (const cond of condition) {
+            this._where(qb, this._typeormWhere(cond, 'and'), {}, first_and ? parent : 'and', first); first = false; first_and = false
           }
-        } else if (condition.neq !== undefined) {
-          if (condition.neq === null) {
-            this._where(qb, `${col} is not null`, {}, parent, first); first = false
-          } else {
-            this._where(qb, `${col} != :${slug}`, {
-              [slug]: isJson ? JSON.stringify(condition.neq) : condition.neq
-            }, parent, first); first = false
+        } else if (key === 'or') {
+          let first_or = false
+          for (const cond of condition) {
+            this._where(qb, this._typeormWhere(cond, 'or'), {}, first_or ? parent : 'or', first); first = false; first_or = false
           }
-        } else if (condition.lt !== undefined) {
-          this._where(qb, `${col} < :${slug}`, {
-            [slug]: isJson ? JSON.stringify(condition.lt) : condition.lt
-          }, parent, first); first = false
-        } else if (condition.lte !== undefined) {
-          this._where(qb, `${col} <= :${slug}`, {
-            [slug]: isJson ? JSON.stringify(condition.lte) : condition.lte
-          }, parent, first); first = false
-        } else if (condition.gt !== undefined) {
-          this._where(qb, `${col} > :${slug}`, {
-            [slug]: isJson ? JSON.stringify(condition.gt) : condition.gt
-          }, parent, first); first = false
-        } else if (condition.gte !== undefined) {
-          this._where(qb, `${col} >= :${slug}`, {
-            [slug]: isJson ? JSON.stringify(condition.gte) : condition.gte
-          }, parent, first); first = false
-        } else if (condition.inq !== undefined) {
-          this._where(qb, `${col} in (:...${slug})`, {
-            [slug]: condition.inq.length === 0 ? [null] : (isJson ? condition.inq.map(JSON.stringify) : condition.inq)
-          }, parent, first); first = false
-        } else if (condition.between !== undefined) {
-          this._where(qb, `${col} between :${slug}0 and :${slug}1`, {
-            [`${slug}0`]: isJson ? JSON.stringify(condition.between[0]) : condition.between[0],
-            [`${slug}1`]: isJson ? JSON.stringify(condition.between[1]) : condition.between[1]
-          }, parent, first); first = false
-        } else if (condition.fullTextSearch !== undefined) {
-          this._where(qb, `to_tsvector('english', ${col}) @@ plainto_tsquery('english', :${slug})`, {
-            [slug]: condition.fullTextSearch
-          }, parent, first); first = false
-        } else if (typeof condition === 'object') {
-          this._where(qb, `${col} @> :${slug}`, {
-            [slug]: JSON.stringify(condition)
-          }, parent, first); first = false
         } else {
-          if (condition === null) {
-            this._where(qb, `${col} is null`, {}, parent, first); first = false
-          } else {
-            this._where(qb, `${col} = :${slug}`, {
-              [slug]: isJson ? JSON.stringify(condition) : condition
+          const col = this._dotToCol(key)
+          const slug = this._slugify(key)
+          const isJson = col.indexOf('->') !== -1
+
+          if (condition.eq !== undefined) {
+            if (condition.eq === null) {
+              this._where(qb, `${col} is null`, {}, parent, first); first = false
+            } else {
+              const id = this.id_generator.id()
+              this._where(qb, `${col} = :${slug}_${id}`, {
+                [`${slug}_${id}`]: isJson ? JSON.stringify(condition.eq) : condition.eq
+              }, parent, first); first = false
+            }
+          } else if (condition.neq !== undefined) {
+            if (condition.neq === null) {
+              this._where(qb, `${col} is not null`, {}, parent, first); first = false
+            } else {
+              const id = this.id_generator.id()
+              this._where(qb, `${col} != :${slug}_${id}`, {
+                [`${slug}_${id}`]: isJson ? JSON.stringify(condition.neq) : condition.neq
+              }, parent, first); first = false
+            }
+          } else if (condition.lt !== undefined) {
+            const id = this.id_generator.id()
+            this._where(qb, `${col} < :${slug}_${id}`, {
+              [`${slug}_${id}`]: isJson ? JSON.stringify(condition.lt) : condition.lt
             }, parent, first); first = false
+          } else if (condition.lte !== undefined) {
+            const id = this.id_generator.id()
+            this._where(qb, `${col} <= :${slug}_${id}`, {
+              [`${slug}_${id}`]: isJson ? JSON.stringify(condition.lte) : condition.lte
+            }, parent, first); first = false
+          } else if (condition.gt !== undefined) {
+            const id = this.id_generator.id()
+            this._where(qb, `${col} > :${slug}_${id}`, {
+              [`${slug}_${id}`]: isJson ? JSON.stringify(condition.gt) : condition.gt
+            }, parent, first); first = false
+          } else if (condition.gte !== undefined) {
+            const id = this.id_generator.id()
+            this._where(qb, `${col} >= :${slug}_${id}`, {
+              [`${slug}_${id}`]: isJson ? JSON.stringify(condition.gte) : condition.gte
+            }, parent, first); first = false
+          } else if (condition.inq !== undefined) {
+            const id = this.id_generator.id()
+            this._where(qb, `${col} in (:...${slug}_${id})`, {
+              [`${slug}_${id}`]: condition.inq.length === 0 ? [null] : (isJson ? condition.inq.map(JSON.stringify) : condition.inq)
+            }, parent, first); first = false
+          } else if (condition.between !== undefined) {
+            const id = this.id_generator.id()
+            this._where(qb, `${col} between :${slug}0_${id} and :${slug}1_${id}`, {
+              [`${slug}0_${id}`]: isJson ? JSON.stringify(condition.between[0]) : condition.between[0],
+              [`${slug}1_${id}`]: isJson ? JSON.stringify(condition.between[1]) : condition.between[1]
+            }, parent, first); first = false
+          } else if (condition.fullTextSearch !== undefined) {
+            const id = this.id_generator.id()
+            this._where(qb, `to_tsvector('english', ${col}) @@ plainto_tsquery('english', :${slug}_${id})`, {
+              [`${slug}_${id}`]: condition.fullTextSearch
+            }, parent, first); first = false
+          } else if (typeof condition === 'object') {
+            const id = this.id_generator.id()
+            this._where(qb, `${col} @> :${slug}_${id}`, {
+              [`${slug}_${id}`]: JSON.stringify(condition)
+            }, parent, first); first = false
+          } else {
+            if (condition === null) {
+              this._where(qb, `${col} is null`, {}, parent, first); first = false
+            } else {
+              const id = this.id_generator.id()
+              this._where(qb, `${col} = :${slug}_${id}`, {
+                [`${slug}_${id}`]: isJson ? JSON.stringify(condition) : condition
+              }, parent, first); first = false
+            }
           }
         }
       }
