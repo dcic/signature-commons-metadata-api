@@ -427,6 +427,13 @@ export class TypeORMRepository<T extends Entity, ID extends string>
             this._where(qb, `${col} in (:...${slug}_${id})`, {
               [`${slug}_${id}`]: condition.inq.length === 0 ? [null] : (isJson ? condition.inq.map(JSON.stringify) : condition.inq)
             }, parent, first); first = false
+          } else if (condition.nin !== undefined) {
+            const col = this._dotToCol(key)
+            const isJson = col.indexOf('->') !== -1
+            const id = this.id_generator.id()
+            this._where(qb, `${col} not in (:...${slug}_${id})`, {
+              [`${slug}_${id}`]: condition.nin.length === 0 ? [null] : (isJson ? condition.nin.map(JSON.stringify) : condition.nin)
+            }, parent, first); first = false
           } else if (condition.between !== undefined) {
             const col = this._dotToCol(key)
             const isJson = col.indexOf('->') !== -1
@@ -441,11 +448,23 @@ export class TypeORMRepository<T extends Entity, ID extends string>
             this._where(qb, `${col} like :${slug}_${id}`, {
               [`${slug}_${id}`]: condition.like + ''
             }, parent, first); first = false
+          } else if (condition.nlike !== undefined) {
+            const col = this._dotToCol(key, true)
+            const id = this.id_generator.id()
+            this._where(qb, `${col} not like :${slug}_${id}`, {
+              [`${slug}_${id}`]: condition.nlike + ''
+            }, parent, first); first = false
           } else if (condition.ilike !== undefined) {
             const col = this._dotToCol(key, true)
             const id = this.id_generator.id()
             this._where(qb, `${col} ilike :${slug}_${id}`, {
               [`${slug}_${id}`]: condition.ilike + ''
+            }, parent, first); first = false
+          } else if (condition.nilike !== undefined) {
+            const col = this._dotToCol(key, true)
+            const id = this.id_generator.id()
+            this._where(qb, `${col} not ilike :${slug}_${id}`, {
+              [`${slug}_${id}`]: condition.nilike + ''
             }, parent, first); first = false
           } else if (condition.fullTextSearch !== undefined) {
             const col = this._dotToCol(key)
