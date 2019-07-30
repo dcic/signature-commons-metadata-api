@@ -24,6 +24,7 @@ import {
 import { TypeORMDataSource } from '../datasources'
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { UniqueIDGenerator } from '../util/unique_id_generator'
+import { parse } from 'path-to-regexp';
 
 /**
  * An implementation of EntityCrudRepository using TypeORM
@@ -367,11 +368,11 @@ export class TypeORMRepository<T extends Entity, ID extends string>
             this._where(qb, this._typeormWhere(cond, 'or'), {}, first_or ? parent : 'or', first); first = false; first_or = false
           }
         } else {
-          const col = this._dotToCol(key)
           const slug = this._slugify(key)
-          const isJson = col.indexOf('->') !== -1
 
           if (condition.eq !== undefined) {
+            const col = this._dotToCol(key)
+            const isJson = col.indexOf('->') !== -1
             if (condition.eq === null) {
               this._where(qb, `${col} is null`, {}, parent, first); first = false
             } else {
@@ -381,6 +382,8 @@ export class TypeORMRepository<T extends Entity, ID extends string>
               }, parent, first); first = false
             }
           } else if (condition.neq !== undefined) {
+            const col = this._dotToCol(key)
+            const isJson = col.indexOf('->') !== -1
             if (condition.neq === null) {
               this._where(qb, `${col} is not null`, {}, parent, first); first = false
             } else {
@@ -390,47 +393,75 @@ export class TypeORMRepository<T extends Entity, ID extends string>
               }, parent, first); first = false
             }
           } else if (condition.lt !== undefined) {
+            const col = this._dotToCol(key)
+            const isJson = col.indexOf('->') !== -1
             const id = this.id_generator.id()
             this._where(qb, `${col} < :${slug}_${id}`, {
               [`${slug}_${id}`]: isJson ? JSON.stringify(condition.lt) : condition.lt
             }, parent, first); first = false
           } else if (condition.lte !== undefined) {
+            const col = this._dotToCol(key)
+            const isJson = col.indexOf('->') !== -1
             const id = this.id_generator.id()
             this._where(qb, `${col} <= :${slug}_${id}`, {
               [`${slug}_${id}`]: isJson ? JSON.stringify(condition.lte) : condition.lte
             }, parent, first); first = false
           } else if (condition.gt !== undefined) {
+            const col = this._dotToCol(key)
+            const isJson = col.indexOf('->') !== -1
             const id = this.id_generator.id()
             this._where(qb, `${col} > :${slug}_${id}`, {
               [`${slug}_${id}`]: isJson ? JSON.stringify(condition.gt) : condition.gt
             }, parent, first); first = false
           } else if (condition.gte !== undefined) {
+            const col = this._dotToCol(key)
+            const isJson = col.indexOf('->') !== -1
             const id = this.id_generator.id()
             this._where(qb, `${col} >= :${slug}_${id}`, {
               [`${slug}_${id}`]: isJson ? JSON.stringify(condition.gte) : condition.gte
             }, parent, first); first = false
           } else if (condition.inq !== undefined) {
+            const col = this._dotToCol(key)
+            const isJson = col.indexOf('->') !== -1
             const id = this.id_generator.id()
             this._where(qb, `${col} in (:...${slug}_${id})`, {
               [`${slug}_${id}`]: condition.inq.length === 0 ? [null] : (isJson ? condition.inq.map(JSON.stringify) : condition.inq)
             }, parent, first); first = false
           } else if (condition.between !== undefined) {
+            const col = this._dotToCol(key)
+            const isJson = col.indexOf('->') !== -1
             const id = this.id_generator.id()
             this._where(qb, `${col} between :${slug}0_${id} and :${slug}1_${id}`, {
               [`${slug}0_${id}`]: isJson ? JSON.stringify(condition.between[0]) : condition.between[0],
               [`${slug}1_${id}`]: isJson ? JSON.stringify(condition.between[1]) : condition.between[1]
             }, parent, first); first = false
+          } else if (condition.like !== undefined) {
+            const col = this._dotToCol(key, true)
+            const id = this.id_generator.id()
+            this._where(qb, `${col} like :${slug}_${id}`, {
+              [`${slug}_${id}`]: condition.like + ''
+            }, parent, first); first = false
+          } else if (condition.ilike !== undefined) {
+            const col = this._dotToCol(key, true)
+            const id = this.id_generator.id()
+            this._where(qb, `${col} ilike :${slug}_${id}`, {
+              [`${slug}_${id}`]: condition.ilike + ''
+            }, parent, first); first = false
           } else if (condition.fullTextSearch !== undefined) {
+            const col = this._dotToCol(key)
             const { query, params } = this._fullTextSearchQuery(condition.fullTextSearch)
             this._where(qb, `to_tsvector('english', ${col}) @@ to_tsquery('english', ${query})`, {
               ...params,
             }, parent, first); first = false
           } else if (typeof condition === 'object') {
+            const col = this._dotToCol(key)
             const id = this.id_generator.id()
             this._where(qb, `${col} @> :${slug}_${id}`, {
               [`${slug}_${id}`]: JSON.stringify(condition)
             }, parent, first); first = false
           } else {
+            const col = this._dotToCol(key)
+            const isJson = col.indexOf('->') !== -1
             if (condition === null) {
               this._where(qb, `${col} is null`, {}, parent, first); first = false
             } else {
@@ -481,10 +512,20 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     return obj
   }
 
-  _dotToCol(col: string) {
+  _dotToCol(col: string, forceText?: boolean) {
     const ks = col.split('.')
     if (this.columns[ks[0]] === undefined) throw new Error('Unrecognized column')
-    return `"${this.tableName}"."${this.columns[ks[0]]}"${ks.length > 1 ? `->${ks.slice(1).map((k) => `'${this._sanitize(k)}'`).join('->')}` : ''}`
+    let col_id = `"${this.tableName}"."${this.columns[ks[0]]}"`
+    if (ks.length > 1) {
+      if (forceText === true) {
+        col_id += (ks.length > 2 ? '->' : '') + ks.slice(1, -1).map(k => `'${this._sanitize(k)}'`).join('->') + '->>' + ks.slice(-1).map(k => `'${this._sanitize(k)}'`)
+      } else {
+        col_id += '->' + ks.slice(1).map(k => `'${this._sanitize(k)}'`).join('->')
+      }
+    } else {
+      col_id += '::text'
+    }
+    return col_id
   }
 
   _slugify(str: string) {
