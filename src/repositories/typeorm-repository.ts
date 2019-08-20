@@ -483,9 +483,9 @@ export class TypeORMRepository<T extends Entity, ID extends string>
             const isJson = col.indexOf('->') !== -1
             if (condition === null) {
               this._where(qb, `${col} is null`, {}, parent, first); first = false
-            } else if (typeof condition === 'string') {
+            } else if (isJson && typeof condition === 'string') {
               const id = this.id_generator.id()
-              this._where(qb, `(${col})::jsonb ? :${slug}_${id}`, {
+              this._where(qb, `${col} ? :${slug}_${id}`, {
                 [`${slug}_${id}`]: condition
               }, parent, first); first = false
             } else {
