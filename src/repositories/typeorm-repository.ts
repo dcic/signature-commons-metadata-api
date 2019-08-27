@@ -6,6 +6,7 @@
 import {
   EntityCrudRepository,
   Entity,
+  InclusionResolver,
   DataObject,
   Options,
   Filter,
@@ -31,6 +32,11 @@ import { parse } from 'path-to-regexp';
  */
 export class TypeORMRepository<T extends Entity, ID extends string>
   implements EntityCrudRepository<T, ID> {
+  inclusionResolvers: Map<
+    string,
+    InclusionResolver<T, Entity>
+  > = new Map();
+
   typeOrmRepo: Repository<T>;
   tableName: string
   columns: { [colName: string]: string }
