@@ -1,6 +1,6 @@
 import { authenticate, AuthenticationBindings } from "@loopback/authentication";
 import { inject } from "@loopback/core";
-import { api, post, requestBody, RequestContext } from "@loopback/rest";
+import { api, post, requestBody, RequestContext, RestBindings, Response } from "@loopback/rest";
 import { Entity, Library, Resource, Schema, Signature } from "../generic-controllers";
 import { UserProfile } from "../models";
 
@@ -19,6 +19,7 @@ const controllers = {
 class BulkController {
   constructor(
     @inject(AuthenticationBindings.CURRENT_USER) private user: UserProfile,
+    @inject(RestBindings.Http.RESPONSE) private response: Response,
     @inject.context() private ctx: RequestContext,
   ) { }
 
@@ -98,29 +99,61 @@ class BulkController {
         }
         const Controller = await this.ctx.get<any>(`controllers.${controller}`)
         if (operationId === 'create') {
-          results.push(await Controller.create(op.requestBody))
+          const response = await Controller.create(op.requestBody)
+          results.push({ response })
         } else if (operationId === 'count') {
-          results.push(await Controller.count(op.parameters.where))
+          const response = await Controller.count(op.parameters.where)
+          results.push({ response })
         } else if (operationId === 'key_count') {
-          results.push(await Controller.key_count(op.parameters.filter, '', op.parameters.depth, op.parameters.contentRange))
+          const response = await Controller.key_count(op.parameters.filter, '', op.parameters.depth, op.parameters.contentRange)
+          if (op.parameters.contentRange === true) {
+            results.push({ response, contentRange: this.response.getHeader('Content-Range') })
+          } else {
+            results.push({ response })
+          }
         } else if (operationId === 'value_count') {
-          results.push(await Controller.value_count(op.parameters.filter, '', op.parameters.depth, op.parameters.contentRange))
+          const response = await Controller.value_count(op.parameters.filter, '', op.parameters.depth, op.parameters.contentRange)
+          if (op.parameters.contentRange === true) {
+            results.push({ response, contentRange: this.response.getHeader('Content-Range') })
+          } else {
+            results.push({ response })
+          }
         } else if (operationId === 'distinct_value_count') {
-          results.push(await Controller.distinct_value_count(op.parameters.filter, '', op.parameters.depth, op.parameters.contentRange))
+          const response = await Controller.distinct_value_count(op.parameters.filter, '', op.parameters.depth, op.parameters.contentRange)
+          if (op.parameters.contentRange === true) {
+            results.push({ response, contentRange: this.response.getHeader('Content-Range') })
+          } else {
+            results.push({ response })
+          }
         } else if (operationId === 'dbck') {
-          results.push(await Controller.dbck(op.parameters.filter))
+          const response = await Controller.dbck(op.parameters.filter)
+          if (op.parameters.contentRange === true) {
+            results.push({ response, contentRange: this.response.getHeader('Content-Range') })
+          } else {
+            results.push({ response })
+          }
         } else if (operationId === 'find_or_create') {
-          results.push(await Controller.find_or_create(op.requestBody))
+          const response = await Controller.find_or_create(op.requestBody)
+          results.push({ response })
         } else if (operationId === 'find') {
-          results.push(await Controller.find(op.parameters))
+          const response = await Controller.find(op.parameters)
+          if (op.parameters.contentRange === true) {
+            results.push({ response, contentRange: this.response.getHeader('Content-Range') })
+          } else {
+            results.push({ response })
+          }
         } else if (operationId === 'updateAll') {
-          results.push(await Controller.updateAll(op.requestBody, op.parameters.where))
+          const response = await Controller.updateAll(op.requestBody, op.parameters.where)
+          results.push({ response })
         } else if (operationId === 'findById') {
-          results.push(await Controller.findById(op.parameters.id))
+          const response = await Controller.findById(op.parameters.id)
+          results.push({ response })
         } else if (operationId === 'updateById') {
-          results.push(await Controller.updateById(op.parameters.id, op.requestBody))
+          const response = await Controller.updateById(op.parameters.id, op.requestBody)
+          results.push({ response })
         } else if (operationId === 'deleteById') {
-          results.push(await Controller.deleteById(op.parameters.id))
+          const response = await Controller.deleteById(op.parameters.id)
+          results.push({ response })
         } else {
           throw new Error(`'${controller}.${operationId}' not recognized`)
         }
