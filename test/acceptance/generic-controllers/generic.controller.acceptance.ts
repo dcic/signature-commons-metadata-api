@@ -381,7 +381,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
       const validObj = await props.givenValidObject()
       const resolvedObj = {
-        $validator: `/dcic/signature-commons-schema/v4/core/${props.modelName}.json`,
+        $validator: `/dcic/signature-commons-schema/v5/core/${props.modelName}.json`,
         ...validObj,
       }
       // If we can do this 3 times without error, then we

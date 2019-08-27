@@ -63,7 +63,7 @@ export function GenericControllerFactory<
   }
 ): Constructor<GenericController<GenericEntity, GenericRepository>> {
 
-  const modelSchema = '/dcic/signature-commons-schema/v4/core/' + props.modelName.toLowerCase() + '.json'
+  const modelSchema = '/dcic/signature-commons-schema/v5/core/' + props.modelName.toLowerCase() + '.json'
 
   @api({
     basePath: props.basePath,
