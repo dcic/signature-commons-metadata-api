@@ -19,6 +19,9 @@ export class IGenericEntity extends Entity {
 
 export interface IGenericRepository<T extends IGenericEntity> extends EntityCrudRepository<T, string> {
   dataSource: TypeORMDataSource
+  key_counts(filter?: Filter<T>): Promise<{ [key: string]: number }>
+  value_counts(filter?: Filter<T>): Promise<{ [key: string]: { [key: string]: number } }>
+  distinct_value_counts(filter?: Filter<T>): Promise<{ [key: string]: number }>
 }
 
 export interface GenericController<
@@ -32,6 +35,7 @@ export interface GenericController<
   count(where?: Where<GenericEntity>, where_str?: string): Promise<Count>
   key_count(filter?: Filter<GenericEntity>, filter_str?: string, depth?: number, contentRange?: boolean): Promise<{ [key: string]: number }>
   value_count(filter?: Filter<GenericEntity>, filter_str?: string, depth?: number, contentRange?: boolean, ): Promise<{ [key: string]: { [value: string]: number } }>
+  distinct_value_count(filter?: Filter<GenericEntity>, filter_str?: string, depth?: number, contentRange?: boolean): Promise<{ [key: string]: number }>
   dbck(filter: Filter<GenericEntity>, filter_str?: string, contentRange?: boolean, ): Promise<object>
   find_get(filter?: Filter<GenericEntity>, filter_str?: string, contentRange?: boolean, ): Promise<GenericEntity[]>
   find(props: { filter?: Filter<GenericEntity>, contentRange?: boolean }): Promise<GenericEntity[]>
@@ -227,8 +231,14 @@ export function GenericControllerFactory<
     ): Promise<{ [key: string]: number }> {
       if (filter_str !== '' && filter == null)
         filter = JSON.parse(filter_str)
+      if (filter === undefined)
+        filter = {}
 
-      return this.genericRepository.dataSource.key_counts(props.GenericEntity, filter)
+      if (!filter.where) {
+        return this.genericRepository.dataSource.key_counts(props.GenericEntity, filter)
+      } else {
+        return await this.genericRepository.key_counts(filter)
+      }
     }
 
     @authenticate('GET.' + props.modelName + '.value_count')
@@ -260,12 +270,18 @@ export function GenericControllerFactory<
       @param.query.string('filter_str') filter_str: string = '',
       @param.query.number('depth') depth: number = 0,
       @param.query.boolean('contentRange') contentRange: boolean = true,
-    ): Promise<{ [key: string]: { [value: string]: number } }> {
+    ): Promise<{ [key: string]: { [key: string]: number } }> {
       if (filter_str !== '' && filter == null)
         filter = JSON.parse(filter_str)
 
-      return this.genericRepository.dataSource.value_counts(props.GenericEntity, filter)
+      if (filter === undefined)
+        filter = {}
 
+      if (!filter.where) {
+        return this.genericRepository.dataSource.value_counts(props.GenericEntity, filter)
+      } else {
+        return await this.genericRepository.value_counts(filter)
+      }
     }
 
     @authenticate('GET.' + props.modelName + '.distinct_value_count')
@@ -301,7 +317,14 @@ export function GenericControllerFactory<
       if (filter_str !== '' && filter == null)
         filter = JSON.parse(filter_str)
 
-      return this.genericRepository.dataSource.distinct_value_counts(props.GenericEntity, filter)
+      if (filter === undefined)
+        filter = {}
+
+      if (!filter.where) {
+        return this.genericRepository.dataSource.distinct_value_counts(props.GenericEntity, filter)
+      } else {
+        return await this.genericRepository.distinct_value_counts(filter)
+      }
     }
 
     @authenticate('GET.' + props.modelName + '.dbck')
