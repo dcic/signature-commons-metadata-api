@@ -175,6 +175,122 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     return result as T[];
   }
 
+  async key_counts(filter?: Filter<T>): Promise<{ [key: string]: number }> {
+    await this.init();
+    
+    if (filter === undefined) filter = {};
+
+    const queryset = this.typeOrmRepo
+      .createQueryBuilder(this.tableName)
+      .select(this._typeormSelect(filter.fields) as any)
+      .where(this._typeormWhere(filter.where))
+      .orderBy(this._typeormOrder(filter.order) as any);
+    const [queryset_query, queryset_params] = queryset.getQueryAndParameters()
+    const params = [
+      ...queryset_params,
+      ...(filter.skip ? [filter.skip] : []),
+      ...(filter.limit ? [filter.limit] : []),
+    ]
+    const results = await this.typeOrmRepo.query(`
+      select
+        substring(key, 6) as key,
+        count(*) as count
+      from
+        (
+          ${queryset_query}
+        ) qs inner join lateral jsonb_deep_key_value(row_to_json(qs)::jsonb) on true
+      group by key
+      having key like 'meta.%'
+      order by count desc
+      ${filter.skip ? `offset ${queryset_params.length}` : ''}
+      ${filter.limit ? `limit ${queryset_query.length + (filter.skip ? 1 : 0)}` : ''}
+    `, params)
+    const counts: { [key: string]: number } = {}
+    for (const { key, count } of results) {
+      counts[key] = Number(count)
+    }
+    return counts
+  }
+
+  async value_counts(filter?: Filter<T>): Promise<{ [key: string]: { [value: string]: number } }> {
+    await this.init();
+    
+    if (filter === undefined) filter = {};
+
+    const queryset = this.typeOrmRepo
+      .createQueryBuilder(this.tableName)
+      .select(this._typeormSelect(filter.fields) as any)
+      .where(this._typeormWhere(filter.where))
+      .orderBy(this._typeormOrder(filter.order) as any);
+    const [queryset_query, queryset_params] = queryset.getQueryAndParameters()
+    const params = [
+      ...queryset_params,
+      ...(filter.skip ? [filter.skip] : []),
+      ...(filter.limit ? [filter.limit] : []),
+    ]
+    const results = await this.typeOrmRepo.query(`
+      select
+        substring(key, 6) as key,
+        value,
+        count(*) as count
+      from
+        (
+          ${queryset_query}
+        ) qs inner join lateral jsonb_deep_key_value(row_to_json(qs)::jsonb) on true
+      group by key, value
+      having key like 'meta.%'
+      order by count desc
+      ${filter.skip ? `offset ${queryset_params.length}` : ''}
+      ${filter.limit ? `limit ${queryset_query.length + (filter.skip ? 1 : 0)}` : ''}
+    `, params)
+    const counts: { [key: string]: { [value: string]: number } } = {}
+    for (const { key, value, count } of results) {
+      if (counts[key] === undefined)
+        counts[key] = {}
+      counts[key][value] = Number(count)
+    }
+    return counts
+  }
+
+  async distinct_value_counts(filter?: Filter<T>): Promise<{ [key: string]: number }> {
+    await this.init();
+    
+    if (filter === undefined) filter = {};
+
+    const queryset = this.typeOrmRepo
+      .createQueryBuilder(this.tableName)
+      .select(this._typeormSelect(filter.fields) as any)
+      .where(this._typeormWhere(filter.where))
+      .orderBy(this._typeormOrder(filter.order) as any);
+    const [queryset_query, queryset_params] = queryset.getQueryAndParameters()
+
+    const params = [
+      ...queryset_params,
+      ...(filter.skip ? [filter.skip] : []),
+      ...(filter.limit ? [filter.limit] : []),
+    ]
+    const results = await this.typeOrmRepo.query(`
+      select distinct
+        substring(key, 6) as key,
+        count(*) as count
+      from
+        (
+          ${queryset_query}
+        ) qs inner join lateral jsonb_deep_key_value(row_to_json(qs)::jsonb) on true
+      group by key, value
+      having key like 'meta.%'
+      order by count desc
+      ${filter.skip ? `offset ${queryset_params.length}` : ''}
+      ${filter.limit ? `limit ${queryset_query.length + (filter.skip ? 1 : 0)}` : ''}
+    `, params)
+
+    const counts: { [key: string]: number } = {}
+    for (const { key, count } of results) {
+      counts[key] = Number(count)
+    }
+    return counts
+  }
+
   async updateAll(
     dataObject: DataObject<T>,
     where?: Where,
