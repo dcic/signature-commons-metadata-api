@@ -202,8 +202,8 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       group by key
       having key like 'meta.%'
       order by count desc
-      ${filter.skip ? `offset ${queryset_params.length}` : ''}
-      ${filter.limit ? `limit ${queryset_query.length + (filter.skip ? 1 : 0)}` : ''}
+      ${filter.skip ? `offset $${1 + queryset_params.length}` : ''}
+      ${filter.limit ? `limit $${1 + queryset_params.length + (filter.skip ? 1 : 0)}` : ''}
     `, params)
     const counts: { [key: string]: number } = {}
     for (const { key, count } of results) {
@@ -240,8 +240,8 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       group by key, value
       having key like 'meta.%'
       order by count desc
-      ${filter.skip ? `offset ${queryset_params.length}` : ''}
-      ${filter.limit ? `limit ${queryset_query.length + (filter.skip ? 1 : 0)}` : ''}
+      ${filter.skip ? `offset $${1 + queryset_params.length}` : ''}
+      ${filter.limit ? `limit $${1 + queryset_params.length + (filter.skip ? 1 : 0)}` : ''}
     `, params)
     const counts: { [key: string]: { [value: string]: number } } = {}
     for (const { key, value, count } of results) {
@@ -280,8 +280,8 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       group by key, value
       having key like 'meta.%'
       order by count desc
-      ${filter.skip ? `offset ${queryset_params.length}` : ''}
-      ${filter.limit ? `limit ${queryset_query.length + (filter.skip ? 1 : 0)}` : ''}
+      ${filter.skip ? `offset $${1 + queryset_params.length}` : ''}
+      ${filter.limit ? `limit $${1 + queryset_params.length + (filter.skip ? 1 : 0)}` : ''}
     `, params)
 
     const counts: { [key: string]: number } = {}
