@@ -622,6 +622,29 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     })
   }
 
+  async ensureIndex(field: string, method?: string): Promise<void> {
+    const valid_methods = [
+      'btree',
+      'gist',
+      'gin',
+      'hash',
+    ]
+    if (method === undefined) {
+      method = 'btree'
+    } else if (valid_methods.indexOf(method) === -1) {
+      throw new Error('Invalid index method')
+    }
+    await this.typeOrmRepo.query(`
+      create index concurrently
+      if not exists
+      on "${this.tableName}"
+      using ${method}
+      (
+        ${this._dotToCol(field)}
+      )`
+    )
+  }
+
   _typeormOrder(order?: string | string[] | { [key: string]: string }) {
     let _order
     if (order === undefined) return {}
