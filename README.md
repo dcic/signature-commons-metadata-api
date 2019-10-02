@@ -58,6 +58,9 @@ We use `typeorm` to manage the database, see `npx typeorm` for available options
 
 Determine whether or not the schema needs to be updated
 ```bash
+# you need the project to be built before typeorm will detect things properly
+npm run build
+
 # show queries that would be run if we are to sync
 npx typeorm schema:log
 
