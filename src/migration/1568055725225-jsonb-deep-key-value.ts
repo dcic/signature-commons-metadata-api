@@ -51,7 +51,7 @@ export class jsonbDeepKeyValue1568055725225 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<any> {
     await queryRunner.query(`
-      delete function jsonb_deep_key_value;
+      drop function jsonb_deep_key_value;
     `)
   }
 
