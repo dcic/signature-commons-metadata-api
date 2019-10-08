@@ -75,8 +75,15 @@ class BulkController {
                   description: 'The parameters of the operation (as defined by the Swagger doc)',
                 },
                 requestBody: {
-                  type: 'object',
                   description: 'The request body for the operation (as defined by the Swagger doc)',
+                  oneOf: [
+                    {
+                      type: 'object',
+                    },
+                    {
+                      type: 'array',
+                    }
+                  ]
                 },
               }
             },
