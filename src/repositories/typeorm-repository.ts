@@ -193,14 +193,13 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     ]
     const results = await this.typeOrmRepo.query(`
       select
-        substring(key, 6) as key,
+        key,
         count(*) as count
       from
         (
           ${queryset_query}
         ) qs inner join lateral jsonb_deep_key_value(row_to_json(qs)::jsonb) on true
       group by key
-      having key like 'meta.%'
       order by count desc
       ${filter.skip ? `offset $${1 + queryset_params.length}` : ''}
       ${filter.limit ? `limit $${1 + queryset_params.length + (filter.skip ? 1 : 0)}` : ''}
@@ -230,7 +229,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     ]
     const results = await this.typeOrmRepo.query(`
       select
-        substring(key, 6) as key,
+        key,
         value,
         count(*) as count
       from
@@ -238,7 +237,6 @@ export class TypeORMRepository<T extends Entity, ID extends string>
           ${queryset_query}
         ) qs inner join lateral jsonb_deep_key_value(row_to_json(qs)::jsonb) on true
       group by key, value
-      having key like 'meta.%'
       order by count desc
       ${filter.skip ? `offset $${1 + queryset_params.length}` : ''}
       ${filter.limit ? `limit $${1 + queryset_params.length + (filter.skip ? 1 : 0)}` : ''}
@@ -271,14 +269,13 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     ]
     const results = await this.typeOrmRepo.query(`
       select distinct
-        substring(key, 6) as key,
+        key,
         count(*) as count
       from
         (
           ${queryset_query}
         ) qs inner join lateral jsonb_deep_key_value(row_to_json(qs)::jsonb) on true
       group by key, value
-      having key like 'meta.%'
       order by count desc
       ${filter.skip ? `offset $${1 + queryset_params.length}` : ''}
       ${filter.limit ? `limit $${1 + queryset_params.length + (filter.skip ? 1 : 0)}` : ''}
@@ -620,6 +617,29 @@ export class TypeORMRepository<T extends Entity, ID extends string>
         }
       }
     })
+  }
+
+  async ensureIndex(field: string, method?: string): Promise<void> {
+    const valid_methods = [
+      'btree',
+      'gist',
+      'gin',
+      'hash',
+    ]
+    if (method === undefined) {
+      method = 'btree'
+    } else if (valid_methods.indexOf(method) === -1) {
+      throw new Error('Invalid index method')
+    }
+    await this.typeOrmRepo.query(`
+      create index concurrently
+      if not exists
+      on "${this.tableName}"
+      using ${method}
+      (
+        ${this._dotToCol(field)}
+      )`
+    )
   }
 
   _typeormOrder(order?: string | string[] | { [key: string]: string }) {

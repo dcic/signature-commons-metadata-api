@@ -52,6 +52,21 @@ export class TypeORMDataSource extends DataSource {
     return this.connection.getRepository(entityClass);
   }
 
+  async refresh_materialized_views(view?: string) {
+    if (!this.connection) await this.connect();
+    const views = [
+      'entities_key_value_counts',
+      'libraries_key_value_counts',
+      'libraries_signatures_key_value_counts',
+      'signatures_key_value_counts',
+    ]
+    for (const v of views) {
+      if (view === undefined || v == view) {
+        await this.connection.query(`refresh materialized view concurrently "${v}";`)
+      }
+    }
+  }
+
   async key_counts<TE extends typeof Entity, E extends Entity>(model: TE, filter?: Filter<E>): Promise<AnyObject> {
     if (!this.connection) await this.connect();
     const table_escaped = this.connection.getMetadata(model.modelName).tableName

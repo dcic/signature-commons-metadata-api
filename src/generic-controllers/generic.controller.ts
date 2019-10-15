@@ -19,6 +19,7 @@ export class IGenericEntity extends Entity {
 
 export interface IGenericRepository<T extends IGenericEntity> extends EntityCrudRepository<T, string> {
   dataSource: TypeORMDataSource
+  ensureIndex(field: string, method?: string): Promise<void>
   key_counts(filter?: Filter<T>): Promise<{ [key: string]: number }>
   value_counts(filter?: Filter<T>): Promise<{ [key: string]: { [key: string]: number } }>
   distinct_value_counts(filter?: Filter<T>): Promise<{ [key: string]: number }>
