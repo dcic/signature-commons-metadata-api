@@ -106,7 +106,7 @@ class SummaryController {
     const counting_fields = await this.schemaRepo.find({
       where: {
         'meta.$validator': '/dcic/signature-commons-schema/v5/meta/schema/counting.json',
-        'meta.Table_Count': true,
+        'meta.Meta_Count': true,
       } as any,
     })
     if (counting_fields.length === 0) {
@@ -252,9 +252,13 @@ class SummaryController {
     const { ui_values } = await this.get_ui_values()
     // Check if it has library_name and resource_from_library
     const schemas = await this.get_schemas()
+    console.log("schemas")
     const resource_signature_count = await this.get_resource_signatures_count()
+    console.log(resource_signature_count)
     const { table_counts, ui_values: ui_val } = await this.get_counts(Object.keys(resource_signature_count).length, ui_values)
+    console.log(table_counts)
     const { meta_counts } = await this.get_metacounts()
+    console.log(meta_counts)
     const { pie_fields_and_stats } = await this.get_pie_stats(ui_val)
     let signature_keys: any = {}
     const { count } = await this.signatureRepo.count()
