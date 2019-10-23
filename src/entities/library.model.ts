@@ -79,18 +79,6 @@ export class Library extends LBEntity {
     [key: string]: any
   };
 
-  @property({
-    type: 'array',
-    itemType: 'string',
-    required: false,
-  })
-  @Column({
-    name: 'signature_keys',
-    type: 'jsonb',
-    default: [],
-  })
-  signature_keys: JSON;
-
   @ManyToOne(type => Resource, resource => resource._libraries)
   @JoinColumn({
     name: 'resource',
