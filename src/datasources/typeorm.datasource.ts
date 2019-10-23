@@ -62,7 +62,7 @@ export class TypeORMDataSource extends DataSource {
     ]
     for (const v of views) {
       if (view === undefined || v == view) {
-        await this.connection.query(`refresh materialized view concurrently "${v}";`)
+        await this.connection.query(`refresh materialized view "${v}";`)
       }
     }
   }

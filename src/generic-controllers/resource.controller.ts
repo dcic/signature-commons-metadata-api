@@ -81,10 +81,12 @@ export class Resource extends GenericResourceController {
       
     let count = 0
     for (const library of await libraryController.find({
-      where: {
-        resource: id
-      },
-      fields: [ 'id' ]
+      filter: {
+        where: {
+          resource: id
+        },
+        fields: [ 'id' ]
+      }
     } as any)) {
       count += (
         await libraryController.signatures_count(
