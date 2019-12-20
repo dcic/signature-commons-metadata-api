@@ -8,6 +8,7 @@ export async function main(options: ApplicationConfig = {}) {
   const app = new App({
     rest: {
       openApiSpec: {
+        setServersFromRequest: true,
         endpointMapping: {
           [`${process.env.PREFIX}/openapi.json`]: { version: '3.0.0', format: 'json' },
           [`${process.env.PREFIX}/openapi.yml`]: { version: '3.0.0', format: 'yaml' },
