@@ -10,7 +10,7 @@ import { Library as LibraryController, Resource as ResourceController, Signature
 function makeTemplate<T>(
     templateString: string,
     templateVariables: T,
-) {
+): string {
   const keys = [...Object.keys(templateVariables).map((key) => key.replace(/ /g, '_')), 'PREFIX']
   const values = [...Object.values(templateVariables), process.env.PREFIX]
   let templateFunction = new Function(...keys, `return \`${templateString}\`;`)
@@ -311,20 +311,21 @@ class SummaryController {
     })
     const barscores: any = {}
     for (const entry of counting_fields) {
+      const order = [entry.meta.Order_By + ' DESC']
       const meta_scores = await (this.tbl_to_repo(entry.meta.Table)).find({
         where: {
           [entry.meta.Order_By]: {
             neq: null,
           }
         },
-        order: [`${entry.meta.Order_By} DESC`],
+        order,
         limit: 25,
       })
       const stats:Array<any> = []
       for (const value of meta_scores){
-        const name = makeTemplate('${' + entry.meta.Field_Name + '}', value) as string
-        const counts = makeTemplate('${' + entry.meta.Order_By + '}', value) as string
-        stats.push({name, counts})
+        const name = makeTemplate('${' + entry.meta.Field_Name + '}', value)
+        const counts = makeTemplate('${' + entry.meta.Order_By + '}', value)
+        stats.push({name, counts: Number(counts) })
       }
       // await this.entityRepo.dataSource.connection.query('select blah from signatures where blah = :param', {param: ''})
       ;(barscores as any)[entry.meta.Preferred_Name || entry.meta.Field_Name] = {
