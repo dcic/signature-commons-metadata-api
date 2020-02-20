@@ -1,6 +1,6 @@
 import { authenticate, AuthenticationBindings } from "@loopback/authentication";
 import { inject } from "@loopback/core";
-import { api, post, requestBody, RequestContext, RestBindings, Response } from "@loopback/rest";
+import { api, post, requestBody, RequestContext, RestBindings, Response, HttpErrors } from "@loopback/rest";
 import { Entity, Library, Resource, Schema, Signature } from "../generic-controllers";
 import { UserProfile } from "../models";
 
@@ -102,7 +102,7 @@ class BulkController {
         const [controller, operationId] = op.operationId.split(/\./g)
         const controllerCls = controllers[controller as keyof (typeof controllers)]
         if (controllerCls === undefined) {
-          throw new Error(`Controller '${controller}' is not valid`)
+          throw new HttpErrors.UnprocessableEntity(`Controller '${controller}' is not valid`)
         }
         const Controller = await this.ctx.get<any>(`controllers.${controller}`)
         if (operationId === 'create') {
@@ -162,7 +162,7 @@ class BulkController {
           const response = await Controller.deleteById(op.parameters.id)
           results.push({ response })
         } else {
-          throw new Error(`'${controller}.${operationId}' not recognized`)
+          throw new HttpErrors.UnprocessableEntity(`'${controller}.${operationId}' not recognized`)
         }
       } catch (e) {
         results.push({'error': e+''})

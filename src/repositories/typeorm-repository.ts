@@ -21,11 +21,11 @@ import {
   DeepPartial,
   Brackets,
 } from 'typeorm';
+import { HttpErrors } from '@loopback/rest'
 
 import { TypeORMDataSource } from '../datasources'
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { UniqueIDGenerator } from '../util/unique_id_generator'
-import { parse } from 'path-to-regexp';
 
 /**
  * An implementation of EntityCrudRepository using TypeORM
@@ -75,7 +75,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     await this.init();
     const id = (entity as any).getId()
     if (id === undefined)
-      throw new Error("Entity not found")
+      throw new HttpErrors.NotFound("Entity not found")
     await this.typeOrmRepo.update(
       { id } as unknown as FindOptionsWhereCondition<T>,
       entity as QueryDeepPartialEntity<T>
@@ -86,7 +86,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     await this.init();
     const id = (entity as any).getId()
     if (id === undefined)
-      throw new Error("Entity not found")
+      throw new HttpErrors.NotFound("Entity not found")
     await this.typeOrmRepo.delete({ id } as unknown as FindOptionsWhereCondition<T>);
   }
 
@@ -99,7 +99,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       .getRawOne()
 
     if (result == null) {
-      throw new Error('Not found');
+      throw new HttpErrors.NotFound('Entity not found');
     }
     return result;
   }
@@ -370,8 +370,8 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
     for (const field of fields as any) {
       const m = /^(.+?)(\..+)?$/.exec(field)
-      if (!m) throw new Error('Unhandled error')
-      if (this.columns[m[1]] === undefined) throw new Error('Column does not exist')
+      if (!m) throw new HttpErrors.UnprocessableEntity('Field formatting error')
+      if (this.columns[m[1]] === undefined) throw new HttpErrors.UnprocessableEntity('Column does not exist')
       if (m[2]) {
         const s = m[0].split('.').map(this._sanitize)
         if (jsonQueries[this._sanitize(m[1])] === undefined)
@@ -467,7 +467,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     } else if (typeof fullTextSearch === 'string') {
       return this._fullTextSearchQuery({ 'and': fullTextSearch.split(/ +/g).map(term => ({ eq: term })) })
     }
-    throw new Error('Type not recognized for fullTextSearch query')
+    throw new HttpErrors.UnprocessableEntity('Type not recognized for fullTextSearch query')
   }
 
   _typeormWhere(where?: Where<T>, parent: string = 'and') {
@@ -629,7 +629,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     if (method === undefined) {
       method = 'btree'
     } else if (valid_methods.indexOf(method) === -1) {
-      throw new Error('Invalid index method')
+      throw new HttpErrors.UnprocessableEntity('Invalid index method')
     }
     await this.typeOrmRepo.query(`
       create index concurrently
@@ -652,13 +652,13 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     } else if (typeof order === 'object') {
       _order = Object.keys(order).map((o) => `${o} ${(order as any)[o]}`)
     } else {
-      throw new Error('Unrecognized order type')
+      throw new HttpErrors.UnprocessableEntity('Unrecognized order type')
     }
 
     const typeormOrder: { [key: string]: string } = {}
     for (const o of _order) {
       const m = /^(([^ ]+?)(\.[^ ]+)?)( (ASC|DESC))?$/.exec(o)
-      if (!m) throw new Error('Unrecognized order type')
+      if (!m) throw new HttpErrors.UnprocessableEntity('Unrecognized order type')
       if (m[3]) {
         typeormOrder[this._dotToCol(m[1])] = m[5] || 'ASC'
       } else {
@@ -680,7 +680,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
   _dotToCol(col: string, forceText?: boolean) {
     const ks = col.split('.')
-    if (this.columns[ks[0]] === undefined) throw new Error('Unrecognized column')
+    if (this.columns[ks[0]] === undefined) throw new HttpErrors.UnprocessableEntity('Unrecognized column')
     let col_id = `"${this.tableName}"."${this.columns[ks[0]]}"`
     if (ks.length > 1) {
       if (forceText === true) {

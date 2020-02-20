@@ -463,7 +463,7 @@ export function GenericControllerFactory<
             )
 
           if (possibilities.length > 1)
-            throw new Error(`Could not resolve single ${props.modelName} instance`)
+            throw new HttpErrors.UnprocessableEntity(`Could not resolve single ${props.modelName} instance`)
           else if (possibilities.length > 0)
             resolved_obj = possibilities[0]
 
