@@ -2,10 +2,36 @@ import { authenticate, AuthenticationBindings } from "@loopback/authentication";
 import { inject } from "@loopback/core";
 import { api, RequestContext, RestBindings, Response, get } from "@loopback/rest";
 import { UserProfile } from "../models";
-import { repository } from "@loopback/repository";
+import { repository, Fields, Entity, Filter, Where } from "@loopback/repository";
 import { EntityRepository, SummaryRepository, SchemaRepository, SignatureRepository, LibraryRepository, ResourceRepository } from "../repositories";
 import { IGenericEntity, IGenericRepository } from "../generic-controllers/generic.controller";
 import { Library as LibraryController, Resource as ResourceController, Signature as SignatureController } from '../generic-controllers'
+import { Schema } from "../entities";
+
+interface CountingSchema {
+  // The name of the field
+  Field_Name: string,
+  // The expected datatype of that field
+  Type: string,
+  // Display name of the field on the landing page
+  Preferred_Name?: string,
+  // Source table
+  Table: string,
+  // MDI icon to use
+  MDI_Icon?: string,
+  // Count this field as part of the meta counts
+  Meta_Count?: boolean,
+  // Count this field as part of the Bbr chart
+  Bar_Count?: boolean,
+  // Count this field as part of the Pie chart
+  Pie_Count?: boolean,
+  // States that this field is a table not a metadata
+  Table_Count: boolean,
+  // Make this field visible on landing page
+  Visible_On_Landing: boolean,
+  // Make this field visible on admin page
+  Visible_On_Admin: boolean,
+}
 
 function makeTemplate<T>(
     templateString: string,
@@ -34,23 +60,23 @@ function makeTemplate<T>(
 //     } catch {
 //       return (false)
 //     }
-//     if (typeof (m as any)[k] === 'string') {
+//     if (typeof (m)[k] === 'string') {
 //       let V
 //       try {
-//         V = makeTemplate((m as any)[k], o)
+//         V = makeTemplate((m)[k], o)
 //       } catch {
 //         return (false)
 //       }
 //       if (K.match(RegExp(V)) === null) {
 //         return false
 //       }
-//     } else if (typeof (m as any)[k] === 'object') {
-//       if ((m as any)[k]['ne'] !== undefined) {
-//         if ((m as any)[k]['ne'] === K) {
+//     } else if (typeof (m)[k] === 'object') {
+//       if ((m)[k]['ne'] !== undefined) {
+//         if ((m)[k]['ne'] === K) {
 //           return false
 //         }
 //       } else {
-//         throw new Error(`'Operation not recognized ${JSON.stringify((m as any)[k])} ${JSON.stringify(m)} ${JSON.stringify(o)}`)
+//         throw new Error(`'Operation not recognized ${JSON.stringify((m)[k])} ${JSON.stringify(m)} ${JSON.stringify(o)}`)
 //       }
 //     }
 //   }
@@ -102,12 +128,20 @@ class SummaryController {
     return (await this.tbl_to_repo(source).count()).count
   }
 
-  async get_counts(resource_count: any, ui_values: any) {
-    const counting_fields = await this.schemaRepo.find({
+  async get_counting_fields(additionalWhere: { [key: string]: any }): Promise<Array<Schema & { meta: CountingSchema }>> {
+    return await this.schemaRepo.find({
       where: {
-        'meta.$validator': '/dcic/signature-commons-schema/v5/meta/schema/counting.json',
-        'meta.Table_Count': true,
-      } as any,
+        'meta.$validator': {
+          'like': '/%dcic/signature-commons-schema/%/meta/schema/counting.json',
+        },
+        ...additionalWhere,
+      } as unknown as Where<Schema>,
+    }) as Array<Schema & { meta: CountingSchema }>
+  }
+
+  async get_counts(resource_count: any, ui_values: any) {
+    const counting_fields = await this.get_counting_fields({
+      'meta.Table_Count': true,
     })
     let table_counts
     if (counting_fields.length > 0) {
@@ -163,13 +197,10 @@ class SummaryController {
     }
     return { table_counts, ui_values }
   }
-  
+
   async get_metacounts() {
-    const counting_fields = await this.schemaRepo.find({
-      where: {
-        'meta.$validator': '/dcic/signature-commons-schema/v5/meta/schema/counting.json',
-        'meta.Meta_Count': true,
-      } as any,
+    const counting_fields = await this.get_counting_fields({
+      'meta.Meta_Count': true,
     })
     if (counting_fields.length === 0) {
       return ({ meta_counts: {} })
@@ -181,11 +212,11 @@ class SummaryController {
       const k = entry.meta.Field_Name
       const model = this.tbl_to_repo(entry.meta.Table).entityClass
       const count = (await this.tbl_to_repo(entry.meta.Table).dataSource.distinct_value_counts(model, {
-                        fields: [entry.meta.Field_Name],
-                      } as any) as any)
+                        fields: [entry.meta.Field_Name] as Fields<IGenericEntity>,
+                      }))
       meta_counts.push({
         name: entry.meta.Preferred_Name || k,
-        counts: (count as any)[k],
+        counts: (count)[k],
         icon: entry.meta.MDI_Icon,
         Preferred_Name: entry.meta.Preferred_Name || entry.meta.Field_Name 
       })
@@ -195,24 +226,31 @@ class SummaryController {
   }
   
   async get_pie_stats(ui_values: any) {
-    const piefields = await this.schemaRepo.find({
-      where: {
-        'meta.$validator': '/dcic/signature-commons-schema/v5/meta/schema/counting.json',
-        'meta.Pie_Count': true,
-      } as any,
+    const piefields = await this.get_counting_fields({
+      'meta.Pie_Count': true,
     })
   
-    const piecounts = {}
+    const piecounts: {
+      [key: string]: {
+        Preferred_Name: string,
+        table: string,
+        stats: Array<{
+          counts: number,
+          name: string,
+        }>,
+        slice: number,
+      }
+     } = {}
     for (const entry of piefields) {
       const model = this.tbl_to_repo(entry.meta.Table).entityClass
       const meta_stats = (await (this.tbl_to_repo(entry.meta.Table)).dataSource.value_counts(model, {
         fields: [entry.meta.Field_Name],
-      } as any))
+      } as Filter<Entity>))
       // await this.entityRepo.dataSource.connection.query('select blah from signatures where blah = :param', {param: ''})
-      ;(piecounts as any)[entry.meta.Preferred_Name || entry.meta.Field_Name] = {
+      ;(piecounts)[entry.meta.Preferred_Name || entry.meta.Field_Name] = {
         Preferred_Name: entry.meta.Preferred_Name_Singular || entry.meta.Preferred_Name || entry.meta.Field_Name,
         table: ui_values.preferred_name[entry.meta.Table],
-        stats: Object.entries((meta_stats as any)[entry.meta.Field_Name]).map(([key,val])=>(
+        stats: Object.entries(meta_stats[entry.meta.Field_Name]).map(([key,val])=>(
           {counts: val, name: key}
         )),
         slice: entry.meta.Slice || 14,
@@ -222,25 +260,22 @@ class SummaryController {
   }
   
   async get_barcounts() {
-    const counting_fields = await this.schemaRepo.find({
-      where: {
-        'meta.$validator': '/dcic/signature-commons-schema/v5/meta/schema/counting.json',
-        'meta.Bar_Count': true,
-      } as any,
+    const counting_fields = await this.get_counting_fields({
+      'meta.Bar_Count': true,
     })
     const barcounts: any = {}
     for (const entry of counting_fields) {
       const model = this.tbl_to_repo(entry.meta.Table).entityClass
       const meta_stats = (await (this.tbl_to_repo(entry.meta.Table)).dataSource.value_counts(model, {
-        fields: [entry.meta.Field_Name],
+        fields: [entry.meta.Field_Name] as Fields<IGenericEntity>,
         limit: 25,
-      } as any))
+      }))
       // await this.entityRepo.dataSource.connection.query('select blah from signatures where blah = :param', {param: ''})
-      ;(barcounts as any)[entry.meta.Preferred_Name || entry.meta.Field_Name] = {
+      ;(barcounts)[entry.meta.Preferred_Name || entry.meta.Field_Name] = {
         Preferred_Name: entry.meta.Preferred_Name_Singular || entry.meta.Preferred_Name || entry.meta.Field_Name,
         key: entry.meta.Preferred_Name_Singular || entry.meta.Preferred_Name || entry.meta.Field_Name,
         table: entry.meta.Table,
-        stats: Object.entries((meta_stats as any)[entry.meta.Field_Name]).map(([key,val])=>(
+        stats: Object.entries((meta_stats)[entry.meta.Field_Name]).map(([key,val])=>(
           {counts: val, name: key}
         )),
       }
@@ -250,25 +285,22 @@ class SummaryController {
 
 
   async get_wordcounts() {
-    const counting_fields = await this.schemaRepo.find({
-      where: {
-        'meta.$validator': '/dcic/signature-commons-schema/v5/meta/schema/counting.json',
-        'meta.Word_Count': true,
-      } as any,
+    const counting_fields = await this.get_counting_fields({
+      'meta.Word_Count': true,
     })
     const wordcounts: any = {}
     for (const entry of counting_fields) {
       const model = this.tbl_to_repo(entry.meta.Table).entityClass
       const meta_stats = (await (this.tbl_to_repo(entry.meta.Table)).dataSource.value_counts(model, {
-        fields: [entry.meta.Field_Name],
+        fields: [entry.meta.Field_Name] as Fields<IGenericEntity>,
         limit: 100,
-      } as any))
+      }))
       // await this.entityRepo.dataSource.connection.query('select blah from signatures where blah = :param', {param: ''})
-      ;(wordcounts as any)[entry.meta.Preferred_Name || entry.meta.Field_Name] = {
+      ;(wordcounts)[entry.meta.Preferred_Name || entry.meta.Field_Name] = {
         Preferred_Name: entry.meta.Preferred_Name_Singular || entry.meta.Preferred_Name || entry.meta.Field_Name,
         key: entry.meta.Preferred_Name_Singular || entry.meta.Preferred_Name || entry.meta.Field_Name,
         table: entry.meta.Table,
-        stats: Object.entries((meta_stats as any)[entry.meta.Field_Name]).map(([key,val])=>(
+        stats: Object.entries((meta_stats)[entry.meta.Field_Name]).map(([key,val])=>(
           {counts: val, name: key}
         )),
       }
@@ -277,24 +309,21 @@ class SummaryController {
   }
 
   async get_histograms() {
-    const counting_fields = await this.schemaRepo.find({
-      where: {
-        'meta.$validator': '/dcic/signature-commons-schema/v5/meta/schema/counting.json',
-        'meta.Histogram': true,
-      } as any,
+    const counting_fields = await this.get_counting_fields({
+      'meta.Histogram': true,
     })
     const histograms: any = {}
     for (const entry of counting_fields) {
       const model = this.tbl_to_repo(entry.meta.Table).entityClass
       const meta_stats = (await (this.tbl_to_repo(entry.meta.Table)).dataSource.value_counts(model, {
-        fields: [entry.meta.Field_Name],
-      } as any))
+        fields: [entry.meta.Field_Name] as Fields<IGenericEntity>,
+      }))
       // await this.entityRepo.dataSource.connection.query('select blah from signatures where blah = :param', {param: ''})
-      ;(histograms as any)[entry.meta.Preferred_Name || entry.meta.Field_Name] = {
+      ;(histograms)[entry.meta.Preferred_Name || entry.meta.Field_Name] = {
         Preferred_Name: entry.meta.Preferred_Name_Singular || entry.meta.Preferred_Name || entry.meta.Field_Name,
         key: entry.meta.Preferred_Name_Singular || entry.meta.Preferred_Name || entry.meta.Field_Name,
         table: entry.meta.Table,
-        stats: Object.entries((meta_stats as any)[entry.meta.Field_Name]).map(([key,val])=>(
+        stats: Object.entries((meta_stats)[entry.meta.Field_Name]).map(([key,val])=>(
           {counts: val, name: key}
         )),
       }
@@ -303,11 +332,8 @@ class SummaryController {
   }
 
   async get_barscores() {
-    const counting_fields = await this.schemaRepo.find({
-      where: {
-        'meta.$validator': '/dcic/signature-commons-schema/v5/meta/schema/counting.json',
-        'meta.Bar_Score': true,
-      } as any,
+    const counting_fields = await this.get_counting_fields({
+      'meta.Bar_Score': true,
     })
     const barscores: any = {}
     for (const entry of counting_fields) {
@@ -328,7 +354,7 @@ class SummaryController {
         stats.push({name, counts: Number(counts) })
       }
       // await this.entityRepo.dataSource.connection.query('select blah from signatures where blah = :param', {param: ''})
-      ;(barscores as any)[entry.meta.Preferred_Name || entry.meta.Field_Name] = {
+      ;(barscores)[entry.meta.Preferred_Name || entry.meta.Field_Name] = {
         Preferred_Name: entry.meta.Preferred_Name_Singular || entry.meta.Preferred_Name || entry.meta.Field_Name,
         key: entry.meta.Preferred_Name_Singular || entry.meta.Preferred_Name || entry.meta.Field_Name,
         table: entry.meta.Table,
@@ -343,7 +369,7 @@ class SummaryController {
   //     where: {
   //       'meta.$validator': '/dcic/signature-commons-schema/v5/meta/schema/counting.json',
   //       'meta.Bar_Score': true,
-  //     } as any,
+  //     },
   //   })
   //   const barscores: any = {}
   //   for (const entry of counting_fields) {
@@ -355,49 +381,42 @@ class SummaryController {
   //       },
   //       order: `${entry.meta.Order_By} DESC`,
   //       limit: 25,
-  //     } as any))
+  //     }))
       
   //     const stats: any = {}
   //     for (const bar_meta of meta_stats) {
   //       const count = Number(makeTemplate('${' + entry.meta.Order_By + '}', bar_meta))
   //       const name = makeTemplate('${' + entry.meta.Field_Name + '}', bar_meta)
   //       stats[name] = 
-  //       //const count = (meta_stats as any)[entry.meta.Field_Name][bar]
+  //       //const count = (meta_stats)[entry.meta.Field_Name][bar]
   //     }
   //     barscores[entry.meta.Field_Name] = Object.keys(stats).map((key) => ({ name: key, counts: stats[key] }))
   //   }
   //   return barscores
   // }
 
-  
-  async get_signature_keys() {
-    const libraries = await this.libraryRepo.find({ fields: [ 'id' ] as any })
-    const signature_keys: any = {}
-    for (const { id } of libraries) {
-      const fields = await this.libraryController.signatures_key_counts(id)
-      signature_keys[id] = Object.keys(fields)
-    }
-    return signature_keys
-  }
-  
   async get_schemas() {
     return (
       await this.schemaRepo.find({
         where: {
-          'meta.$validator': '/dcic/signature-commons-schema/v5/meta/schema/ui-schema.json',
+          'meta.$validator': {
+            'like': '/%dcic/signature-commons-schema/%/meta/schema/ui-schema.json',
+          },
         },
         fields: ['meta']
-      } as any)
+      } as Filter<Schema>)
     ).map(({ meta }) => meta)
   }
   
   async get_ui_values() {
     const ui_val = await this.schemaRepo.find({
       where: {
-        'meta.$validator': '/dcic/signature-commons-schema/v5/meta/schema/landing-ui.json',
+        'meta.$validator': {
+          'like': '/%dcic/signature-commons-schema/%/meta/schema/ui-schema.json',
+        },
         'meta.landing': true,
       },
-    } as any)
+    } as Filter<Schema>)
     const ui_values = ui_val.length > 0 ? ui_val[0].meta.content : {}
     return { ui_values }
   }
