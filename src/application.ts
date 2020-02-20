@@ -14,12 +14,24 @@ import {
 import { AuthStrategyProvider } from './providers/auth-strategy.provider';
 import { SmartTrieRouter } from './router';
 import { Sequence } from './sequence';
+import * as packageJson from '../package.json'
 
 export class App extends BootMixin(
   ServiceMixin(RepositoryMixin(RestApplication)),
 ) {
   constructor(options: ApplicationConfig = {}) {
     super(options);
+
+    // Initial API info
+    this.api({
+      openapi: '3.0.0',
+      info: {
+        title: 'Signature Commons Metadata API',
+        version: packageJson.version,
+      },
+      paths: {},
+      components: {},
+    })
 
     // Add authentication
     this.component(AuthenticationComponent);
