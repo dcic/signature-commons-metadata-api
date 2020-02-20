@@ -5,6 +5,9 @@ import { getJsonSchema } from '@loopback/rest';
 @model({
   name: 'Entity',
   description: 'Singular entities of a signature (e.g. Gene, Protein, Compound, etc..)',
+  settings: {
+    strict: false
+  },
 })
 @TypeORMEntity({
   name: 'entities',
