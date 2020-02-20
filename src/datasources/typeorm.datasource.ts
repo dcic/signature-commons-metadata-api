@@ -21,39 +21,46 @@ import { escapeLiteral, buildLimit } from '../util/sql_building';
 export class TypeORMDataSource extends DataSource {
   static dataSourceName = 'typeorm';
 
-  connection: Connection;
+  private _connection?: Connection;
 
   constructor(
     @inject('datasources.config.typeorm', { optional: true })
     public settings: Partial<ConnectionOptions> = {}
   ) { super() }
 
-  async connect(): Promise<Connection> {
-    if (this.connection) return this.connection;
-    const connectionOptions = await getConnectionOptions();
-    this.connection = await createConnection(
-      { ...connectionOptions, ...this.settings } as ConnectionOptions
-    );
-    return this.connection;
+  async connect(): Promise<void> {
+    if (this._connection !== undefined) return;
+    const connectionOptions = {
+      ...(await getConnectionOptions()),
+      ...this.settings,
+    } as ConnectionOptions
+    debug(connectionOptions)
+    this._connection = await createConnection(connectionOptions);
+    if (this._connection === undefined) {
+      throw new Error(`Database connection failed: ${JSON.stringify(connectionOptions)}`)
+    }
   }
 
   async disconnect(): Promise<void> {
-    if (!this.connection) return;
-    await this.connection.close();
+    if (this._connection === undefined) return;
+    await this._connection.close();
+    this._connection = undefined
+  }
+
+  async getConnection(): Promise<Connection> {
+    if (this._connection === undefined) await this.connect();
+    return this._connection as Connection
   }
 
   async getEntityManager() {
-    if (!this.connection) await this.connect();
-    return this.connection.createEntityManager();
+    return (await this.getConnection()).createEntityManager();
   }
 
   async getRepository<T>(entityClass: ObjectType<T>): Promise<Repository<T>> {
-    if (!this.connection) await this.connect();
-    return this.connection.getRepository(entityClass);
+    return (await this.getConnection()).getRepository(entityClass);
   }
 
   async refresh_materialized_views(view?: string) {
-    if (!this.connection) await this.connect();
     const views = [
       'entities_key_value_counts',
       'libraries_key_value_counts',
@@ -62,14 +69,13 @@ export class TypeORMDataSource extends DataSource {
     ]
     for (const v of views) {
       if (view === undefined || v == view) {
-        await this.connection.query(`refresh materialized view "${v}";`)
+        await (await this.getConnection()).query(`refresh materialized view "${v}";`)
       }
     }
   }
 
   async key_counts<TE extends typeof Entity, E extends Entity>(model: TE, filter?: Filter<E>): Promise<AnyObject> {
-    if (!this.connection) await this.connect();
-    const table_escaped = this.connection.getMetadata(model.modelName).tableName
+    const table_escaped = (await this.getConnection()).getMetadata(model.modelName).tableName
     const filter_fields = ((filter || {}).fields || []) as string[]
     const where_meta_clause = (filter_fields.length <= 0) ? '' : filter_fields.map(
       (field) => `r.key = ${escapeLiteral(field)} or r.key like ${escapeLiteral(field)} || '.%'`
@@ -94,7 +100,7 @@ export class TypeORMDataSource extends DataSource {
     `
     debug(query)
 
-    const results = await this.connection.query(query, [])
+    const results = await (await this.getConnection()).query(query, [])
 
     return (results as AnyObject[]).reduce<AnyObject>((grouped: any, { key, count }: any) => ({
       ...grouped,
@@ -103,8 +109,7 @@ export class TypeORMDataSource extends DataSource {
   }
 
   async value_counts<TE extends typeof Entity, E extends Entity>(model: TE, filter?: Filter<E>): Promise<AnyObject> {
-    if (!this.connection) await this.connect();
-    const table_escaped = this.connection.getMetadata(model.modelName).tableName
+    const table_escaped = (await this.getConnection()).getMetadata(model.modelName).tableName
     const filter_fields = ((filter || {}).fields || []) as string[]
     const where_meta_clause = (filter_fields.length <= 0) ? '' : filter_fields.map(
       (field) => `r.key = ${escapeLiteral(field==="library" ? "libid": field)} or r.key like ${escapeLiteral(field==="library" ? "libid": field)} || '.%'`
@@ -127,7 +132,7 @@ export class TypeORMDataSource extends DataSource {
     `
     debug(query)
 
-    const results = await this.connection.query(query, [])
+    const results = await (await this.getConnection()).query(query, [])
 
     return (results as AnyObject[]).reduce<AnyObject>((grouped: any, { key, value, count }: any) => ({
       ...grouped,
@@ -139,8 +144,7 @@ export class TypeORMDataSource extends DataSource {
   }
 
   async distinct_value_counts<TE extends typeof Entity, E extends Entity>(model: TE, filter?: Filter<E>): Promise<AnyObject> {
-    if (!this.connection) await this.connect();
-    const table_escaped = this.connection.getMetadata(model.modelName).tableName
+    const table_escaped = (await this.getConnection()).getMetadata(model.modelName).tableName
     const filter_fields = ((filter || {}).fields || []) as string[]
     const where_meta_clause = (filter_fields.length <= 0) ? '' : filter_fields.map(
       (field) => `r.key = ${escapeLiteral(field)} or r.key like ${escapeLiteral(field)} || '.%'`
@@ -165,7 +169,7 @@ export class TypeORMDataSource extends DataSource {
     `
     debug(query)
 
-    const results = await await this.connection.query(query, [])
+    const results = await await (await this.getConnection()).query(query, [])
 
     return (results as AnyObject[]).reduce<AnyObject>((grouped: any, { key, count }: any) => ({
       ...grouped,
