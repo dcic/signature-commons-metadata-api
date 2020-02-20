@@ -74,7 +74,7 @@ export class TypeORMDataSource extends DataSource {
     }
   }
 
-  async key_counts<TE extends typeof Entity, E extends Entity>(model: TE, filter?: Filter<E>): Promise<AnyObject> {
+  async key_counts<TE extends typeof Entity, E extends Entity>(model: TE, filter?: Filter<E>): Promise<{ [key: string]: number }> {
     const table_escaped = (await this.getConnection()).getMetadata(model.modelName).tableName
     const filter_fields = ((filter || {}).fields || []) as string[]
     const where_meta_clause = (filter_fields.length <= 0) ? '' : filter_fields.map(
@@ -102,13 +102,13 @@ export class TypeORMDataSource extends DataSource {
 
     const results = await (await this.getConnection()).query(query, [])
 
-    return (results as AnyObject[]).reduce<AnyObject>((grouped: any, { key, count }: any) => ({
+    return (results as AnyObject[]).reduce<{ [key: string]: number }>((grouped: any, { key, count }: any) => ({
       ...grouped,
       [key]: parseInt(count)
     }), {})
   }
 
-  async value_counts<TE extends typeof Entity, E extends Entity>(model: TE, filter?: Filter<E>): Promise<AnyObject> {
+  async value_counts<TE extends typeof Entity, E extends Entity>(model: TE, filter?: Filter<E>): Promise<{ [key: string]: { [key: string]: number } }> {
     const table_escaped = (await this.getConnection()).getMetadata(model.modelName).tableName
     const filter_fields = ((filter || {}).fields || []) as string[]
     const where_meta_clause = (filter_fields.length <= 0) ? '' : filter_fields.map(
@@ -134,7 +134,7 @@ export class TypeORMDataSource extends DataSource {
 
     const results = await (await this.getConnection()).query(query, [])
 
-    return (results as AnyObject[]).reduce<AnyObject>((grouped: any, { key, value, count }: any) => ({
+    return (results as AnyObject[]).reduce<{ [key: string]: { [key: string]: number } }>((grouped: any, { key, value, count }: any) => ({
       ...grouped,
       [key==="libid"?"library":key]: {
         ...grouped[key==="libid"?"library":key],
@@ -143,7 +143,7 @@ export class TypeORMDataSource extends DataSource {
     }), {})
   }
 
-  async distinct_value_counts<TE extends typeof Entity, E extends Entity>(model: TE, filter?: Filter<E>): Promise<AnyObject> {
+  async distinct_value_counts<TE extends typeof Entity, E extends Entity>(model: TE, filter?: Filter<E>): Promise<{ [key: string]: number }> {
     const table_escaped = (await this.getConnection()).getMetadata(model.modelName).tableName
     const filter_fields = ((filter || {}).fields || []) as string[]
     const where_meta_clause = (filter_fields.length <= 0) ? '' : filter_fields.map(
@@ -171,7 +171,7 @@ export class TypeORMDataSource extends DataSource {
 
     const results = await await (await this.getConnection()).query(query, [])
 
-    return (results as AnyObject[]).reduce<AnyObject>((grouped: any, { key, count }: any) => ({
+    return (results as AnyObject[]).reduce<{[key: string]: number}>((grouped: any, { key, count }: any) => ({
       ...grouped,
       [key]: parseInt(count)
     }), {})
