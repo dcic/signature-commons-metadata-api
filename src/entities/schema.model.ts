@@ -5,6 +5,9 @@ import { getJsonSchema } from '@loopback/rest';
 @model({
   name: 'Schema',
   description: 'A table for storing validatable schemas in the database',
+  settings: {
+    strict: false
+  },
 })
 @TypeORMEntity({
   name: 'schemas',

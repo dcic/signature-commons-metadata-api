@@ -7,6 +7,9 @@ import { Resource } from './resource.model';
 @model({
   name: 'Library',
   description: 'Collections of related signatures',
+  settings: {
+    strict: false
+  },
 })
 @TypeORMEntity({
   name: 'libraries',
