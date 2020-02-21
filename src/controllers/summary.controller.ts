@@ -31,6 +31,8 @@ interface CountingSchema {
   Visible_On_Landing: boolean,
   // Make this field visible on admin page
   Visible_On_Admin: boolean,
+  // Priority
+  Priority?: number,
 }
 
 function makeTemplate<T>(
@@ -239,6 +241,7 @@ class SummaryController {
           name: string,
         }>,
         slice: number,
+        priority: number
       }
      } = {}
     for (const entry of piefields) {
@@ -249,11 +252,12 @@ class SummaryController {
       // await this.entityRepo.dataSource.connection.query('select blah from signatures where blah = :param', {param: ''})
       ;(piecounts)[entry.meta.Preferred_Name || entry.meta.Field_Name] = {
         Preferred_Name: entry.meta.Preferred_Name_Singular || entry.meta.Preferred_Name || entry.meta.Field_Name,
-        table: ui_values.preferred_name[entry.meta.Table],
+        table: entry.meta.Table,
         stats: Object.entries(meta_stats[entry.meta.Field_Name]).map(([key,val])=>(
           {counts: val, name: key}
         )),
         slice: entry.meta.Slice || 14,
+        priority: entry.meta.Priority || 1
       }
     }
     return { piecounts }
@@ -278,6 +282,7 @@ class SummaryController {
         stats: Object.entries((meta_stats)[entry.meta.Field_Name]).map(([key,val])=>(
           {counts: val, name: key}
         )),
+        priority: entry.meta.Priority || 1
       }
     }
     return {barcounts}
@@ -303,6 +308,7 @@ class SummaryController {
         stats: Object.entries((meta_stats)[entry.meta.Field_Name]).map(([key,val])=>(
           {counts: val, name: key}
         )),
+        priority: entry.meta.Priority || 1
       }
     }
     return {wordcounts}
@@ -326,6 +332,7 @@ class SummaryController {
         stats: Object.entries((meta_stats)[entry.meta.Field_Name]).map(([key,val])=>(
           {counts: val, name: key}
         )),
+        priority: entry.meta.Priority || 1
       }
     }
     return {histograms}
@@ -359,6 +366,7 @@ class SummaryController {
         key: entry.meta.Preferred_Name_Singular || entry.meta.Preferred_Name || entry.meta.Field_Name,
         table: entry.meta.Table,
         stats: stats,
+        priority: entry.meta.Priority || 1
       }
     }
     return {barscores}
