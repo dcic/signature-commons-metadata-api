@@ -1,10 +1,10 @@
-import { Resource as ResourceEntity, ResourceSchema, Library } from '../entities';
+import { Resource as ResourceEntity, ResourceSchema, Library, Signature } from '../entities';
 import { ResourceRepository } from '../repositories';
 import { GenericControllerFactory } from './generic.controller'
 import { getFilterSchemaFor, get, param, getWhereSchemaFor } from '@loopback/rest';
 import { Library as LibraryController } from './library.controller';
 import { Signature as SignatureController } from './signature.controller';
-import { Filter, Count, Where } from '@loopback/repository';
+import { Filter, Count, Where, Fields } from '@loopback/repository';
 import { authenticate } from '@loopback/authentication';
 import { inject } from '@loopback/core';
 
@@ -65,6 +65,36 @@ export class Resource extends GenericResourceController {
     )
 
     return count
+  }
+
+  @authenticate('GET.resources.signatures')
+  @get('/{id}/signatures')
+  async signatures(
+    @inject('controllers.Library') libraryController: LibraryController,
+    @inject('controllers.Signature') signatureController: SignatureController,
+    @param.path.string('id') id: string,
+    @param.query.object('filter', getFilterSchemaFor(Signature)) filter?: Filter<Signature>,
+    @param.query.string('filter_str') filter_str: string = '',
+    @param.query.boolean('contentRange') contentRange: boolean = true,
+  ): Promise<Signature[]> {
+    if (filter_str !== '' && filter == null)
+      filter = JSON.parse(filter_str)
+    // TODO: use ORM inner join
+    const libraries = await libraryController.find({
+      filter: {
+        where: { resource: id },
+        fields: ['id'] as Fields<Library>,
+      },
+    })
+    return await signatureController.find({
+      filter: {
+        ...filter,
+        where: {
+          ...((filter || {}).where || {}),
+          library: { inq: libraries.map(({ id }) => id ) },
+        },
+      }
+    })
   }
 
   @authenticate('GET.resources.signatures.count')
