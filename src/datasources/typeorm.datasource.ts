@@ -34,10 +34,22 @@ export class TypeORMDataSource extends DataSource {
       ...(await getConnectionOptions()),
       ...this.settings,
     } as ConnectionOptions
-    debug(connectionOptions)
-    this._connection = await createConnection(connectionOptions);
+    this._connection = await createConnection({
+      ...connectionOptions,
+      synchronize: false,
+      migrationsRun: false,
+    });
     if (this._connection === undefined) {
       throw new Error(`Database connection failed: ${JSON.stringify(connectionOptions)}`)
+    } else {
+      if (connectionOptions.synchronize === true) {
+        console.log('Synchronizing database...')
+        await this._connection.synchronize(false)
+      }
+      if (connectionOptions.migrationsRun === true) {
+        console.log('Running any pending migrations...')
+        await this._connection.runMigrations({ transaction: 'all' })
+      }
     }
   }
 

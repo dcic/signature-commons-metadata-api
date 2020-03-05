@@ -9,12 +9,10 @@ export const typeorm_factory = async () => {
   const typeorm_ds = new TypeORMDataSource({
     name: `default-${n}`,
     url: process.env['TYPEORM_TEST_URL'],
-    synchronize: false,
-    migrationsRun: false,
+    synchronize: true,
+    migrationsRun: true,
   });
   await typeorm_ds.connect()
-  await (await typeorm_ds.getConnection()).synchronize(true)
-  await (await typeorm_ds.getConnection()).runMigrations()
   n += 1
   return typeorm_ds
 }

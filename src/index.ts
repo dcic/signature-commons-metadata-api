@@ -1,6 +1,7 @@
 import { App } from './application';
 import { ApplicationConfig } from '@loopback/core';
 import { UserProfileRepository } from './repositories';
+import { TypeORMDataSource } from './datasources';
 
 export { App };
 
@@ -33,6 +34,9 @@ export async function main(options: ApplicationConfig = {}) {
       roles: '^.+$',
     })
   }
+
+  const typeorm = await app.get<TypeORMDataSource>('datasources.typeorm')
+  await typeorm.connect()
 
   const url = app.restServer.url;
   console.log(`Server is running at ${url}`);
