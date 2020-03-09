@@ -15,6 +15,9 @@ export async function main(options: ApplicationConfig = {}) {
           [`${process.env.PREFIX}/openapi.yml`]: { version: '3.0.0', format: 'yaml' },
         },
       },
+      expressSettings: {
+        'trust proxy': process.env.EXPRESS_TRUST_PROXY,
+      },
     },
   });
   await app.boot();
