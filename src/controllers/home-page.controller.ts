@@ -1,10 +1,10 @@
-import { get } from '@loopback/openapi-v3';
-import { api } from '@loopback/rest';
+import {get} from '@loopback/openapi-v3';
+import {api} from '@loopback/rest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { inject } from '@loopback/context';
-import { RestBindings, Response, Request } from '@loopback/rest';
-import { authenticate } from '@loopback/authentication';
+import {inject} from '@loopback/context';
+import {RestBindings, Response, Request} from '@loopback/rest';
+import {authenticate} from '@loopback/authentication';
 
 @api({
   basePath: process.env.PREFIX,
@@ -16,10 +16,13 @@ export class HomePageController {
     @inject(RestBindings.Http.RESPONSE) private response: Response,
     @inject(RestBindings.Http.REQUEST) private request: Request,
   ) {
-    this.html = new Function('PREFIX', `return \`${fs.readFileSync(
-      path.join(__dirname, '../../../public/index.html'),
-      'utf-8',
-    )}\`;`)(process.env.PREFIX)
+    this.html = new Function(
+      'PREFIX',
+      `return \`${fs.readFileSync(
+        path.join(__dirname, '../../../public/index.html'),
+        'utf-8',
+      )}\`;`,
+    )(process.env.PREFIX);
   }
 
   @authenticate('GET.explorer')
@@ -27,26 +30,26 @@ export class HomePageController {
     tags: [],
     responses: {
       '302': {
-        description: 'API Explorer'
+        description: 'API Explorer',
       },
     },
   })
   explorer() {
-    let protocol, hostname, pathname, port
-    protocol = this.request.protocol
+    const protocol = this.request.protocol;
+    let hostname, pathname;
     if (process.env.SERVERNAME !== undefined) {
-      hostname = process.env.SERVERNAME
+      hostname = process.env.SERVERNAME;
       if (process.env.PREFIX !== undefined) {
-        pathname = process.env.PREFIX
+        pathname = process.env.PREFIX;
       } else {
-        pathname = this.request.path.replace(/\/explorer$/, '')
+        pathname = this.request.path.replace(/\/explorer$/, '');
       }
     } else {
-      hostname = this.request.headers.host
-      pathname = this.request.path.replace(/\/explorer$/, '')
+      hostname = this.request.headers.host;
+      pathname = this.request.path.replace(/\/explorer$/, '');
     }
     this.response.redirect(
-      `http://explorer.loopback.io/?url=${protocol}://${hostname}${pathname}/openapi.json`
+      `http://explorer.loopback.io/?url=${protocol}://${hostname}${pathname}/openapi.json`,
     );
   }
 
@@ -56,7 +59,7 @@ export class HomePageController {
     responses: {
       '200': {
         description: 'Home Page',
-        content: { 'text/html': { schema: { type: 'string' } } },
+        content: {'text/html': {schema: {type: 'string'}}},
       },
     },
   })

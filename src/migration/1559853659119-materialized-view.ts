@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import {MigrationInterface, QueryRunner} from 'typeorm';
 
 export class materializedView1559853659119 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<any> {
@@ -34,7 +34,7 @@ export class materializedView1559853659119 implements MigrationInterface {
         FROM r
       GROUP BY r.key, r.value
       ORDER BY (count(*)) DESC;
-    `)
+    `);
     await queryRunner.query(`
       CREATE MATERIALIZED VIEW signatures_key_value_counts
       AS
@@ -67,7 +67,7 @@ export class materializedView1559853659119 implements MigrationInterface {
         FROM r
       GROUP BY r.key, r.value
       ORDER BY (count(*)) DESC;
-    `)
+    `);
     await queryRunner.query(`
       CREATE MATERIALIZED VIEW entities_key_value_counts
       AS
@@ -100,7 +100,7 @@ export class materializedView1559853659119 implements MigrationInterface {
         FROM r
       GROUP BY r.key, r.value
       ORDER BY (count(*)) DESC;
-    `)
+    `);
     await queryRunner.query(`
       CREATE MATERIALIZED VIEW libraries_signatures_key_value_counts
       AS
@@ -138,21 +138,21 @@ export class materializedView1559853659119 implements MigrationInterface {
         FROM r
       GROUP BY r.library, r.key, r.value
       ORDER BY (count(*)) DESC;
-    `)
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<any> {
     await queryRunner.query(`
       drop materialized view libraries_key_value_counts;
-    `)
+    `);
     await queryRunner.query(`
       drop materialized view signatures_key_value_counts;
-    `)
+    `);
     await queryRunner.query(`
       drop materialized view entities_key_value_counts;
-    `)
+    `);
     await queryRunner.query(`
       drop materialized view libraries_signatures_key_value_counts;
-    `)
+    `);
   }
 }

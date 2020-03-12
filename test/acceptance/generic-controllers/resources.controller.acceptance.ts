@@ -1,6 +1,10 @@
-import { Resource } from '../../../src/entities';
-import { givenResource, givenInvalidResourceData, givenValidResourceData } from '../../helpers/database.helpers';
-import { test_generic } from './generic.controller.acceptance';
+import {Resource} from '../../../src/entities';
+import {
+  givenResource,
+  givenInvalidResourceData,
+  givenValidResourceData,
+} from '../../helpers/database.helpers';
+import {test_generic} from './generic.controller.acceptance';
 
 test_generic<Resource>({
   modelName: 'resource',
@@ -10,4 +14,4 @@ test_generic<Resource>({
   givenInvalidObject: givenInvalidResourceData,
   givenValidUpdatedObject: givenValidResourceData,
   givenInvalidUpdatedObject: givenInvalidResourceData,
-})
+});

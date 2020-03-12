@@ -1,5 +1,5 @@
-import * as assert from 'assert'
-import { applyFieldsFilter } from '../../../src/util/applyFieldsFilter'
+import * as assert from 'assert';
+import {applyFieldsFilter} from '../../../src/util/applyFieldsFilter';
 
 describe('util', () => {
   describe('applyFieldsFilter', () => {
@@ -19,15 +19,11 @@ describe('util', () => {
                   o: 'p',
                 },
                 q: {
-                  r: 's'
-                }
-              }
+                  r: 's',
+                },
+              },
             },
-            [
-              'c.d.e',
-              'c.d.j',
-              'c.n',
-            ]
+            ['c.d.e', 'c.d.j', 'c.n'],
           ),
           {
             c: {
@@ -38,11 +34,11 @@ describe('util', () => {
               n: {
                 o: 'p',
               },
-            }
-          }
-        )
-      })
-    })
+            },
+          },
+        );
+      });
+    });
 
     describe('value array', () => {
       it('works properly', () => {
@@ -50,26 +46,16 @@ describe('util', () => {
           applyFieldsFilter(
             {
               a: 'b',
-              c: [
-                'd',
-                'e',
-                'f',
-              ],
+              c: ['d', 'e', 'f'],
             },
-            [
-              'c',
-            ]
+            ['c'],
           ),
           {
-            c: [
-              'd',
-              'e',
-              'f',
-            ],
-          }
-        )
-      })
-    })
+            c: ['d', 'e', 'f'],
+          },
+        );
+      });
+    });
 
     describe('deep filter value array', () => {
       it('works properly', () => {
@@ -77,25 +63,16 @@ describe('util', () => {
           applyFieldsFilter(
             {
               a: 'b',
-              c: [
-                'd',
-                'e',
-                'f',
-              ],
+              c: ['d', 'e', 'f'],
             },
-            [
-              'c.e',
-            ]
+            ['c.e'],
           ),
           {
-            c: [
-              'e',
-            ],
-          }
-        )
-      })
-    })
-
+            c: ['e'],
+          },
+        );
+      });
+    });
 
     describe('deep array', () => {
       it('works properly', () => {
@@ -105,7 +82,7 @@ describe('util', () => {
               a: 'b',
               c: [
                 {
-                  d: 'e'
+                  d: 'e',
                 },
                 {
                   d: 'f',
@@ -113,9 +90,7 @@ describe('util', () => {
                 },
               ],
             },
-            [
-              'c.d',
-            ]
+            ['c.d'],
           ),
           {
             c: [
@@ -124,11 +99,11 @@ describe('util', () => {
               },
               {
                 d: 'f',
-              }
+              },
             ],
-          }
-        )
-      })
-    })
-  })
-})
+          },
+        );
+      });
+    });
+  });
+});

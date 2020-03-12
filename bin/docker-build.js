@@ -1,6 +1,6 @@
-var shell = require('shelljs')
-var process = require('process')
-var packageJson = require('../package.json')
+const shell = require('shelljs');
+const process = require('process');
+const packageJson = require('../package.json');
 
 if (
   shell.exec(`
@@ -9,6 +9,6 @@ if (
       .
   `).code !== 0
 ) {
-  shell.echo('Error: Docker build failed')
-  shell.exit(1)
+  shell.echo('Error: Docker build failed');
+  shell.exit(1);
 }

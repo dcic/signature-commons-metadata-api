@@ -1,6 +1,10 @@
-import { Schema } from '../../../src/entities';
-import { givenSchema, givenInvalidSchemaData, givenValidSchemaData } from '../../helpers/database.helpers';
-import { test_generic } from './generic.controller.acceptance';
+import {Schema} from '../../../src/entities';
+import {
+  givenSchema,
+  givenInvalidSchemaData,
+  givenValidSchemaData,
+} from '../../helpers/database.helpers';
+import {test_generic} from './generic.controller.acceptance';
 
 test_generic<Schema>({
   modelName: 'schema',
@@ -10,4 +14,4 @@ test_generic<Schema>({
   givenInvalidObject: givenInvalidSchemaData,
   givenValidUpdatedObject: givenValidSchemaData,
   givenInvalidUpdatedObject: givenInvalidSchemaData,
-})
+});

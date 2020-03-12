@@ -1,6 +1,6 @@
-import { Entity as EntityEntity, EntitySchema } from '../entities';
-import { EntityRepository } from '../repositories';
-import { GenericControllerFactory } from './generic.controller'
+import {Entity as EntityEntity, EntitySchema} from '../entities';
+import {EntityRepository} from '../repositories';
+import {GenericControllerFactory} from './generic.controller';
 
 const GenericEntityController = GenericControllerFactory<
   EntityEntity,
@@ -11,7 +11,6 @@ const GenericEntityController = GenericControllerFactory<
   GenericEntitySchema: EntitySchema,
   modelName: 'Entity',
   basePath: `${process.env.PREFIX}/entities`,
-})
+});
 
-export class Entity extends GenericEntityController {
-}
+export class Entity extends GenericEntityController {}

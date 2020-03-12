@@ -1,13 +1,21 @@
-import { Entity as TypeORMEntity, Column, ManyToOne, Generated, JoinColumn, Index, } from 'typeorm';
-import { Entity as LBEntity, model, property } from '@loopback/repository';
-import { getJsonSchema } from '@loopback/rest';
-import { Library } from './library.model';
+import {
+  Entity as TypeORMEntity,
+  Column,
+  ManyToOne,
+  Generated,
+  JoinColumn,
+  Index,
+} from 'typeorm';
+import {Entity as LBEntity, model, property} from '@loopback/repository';
+import {getJsonSchema} from '@loopback/rest';
+import {Library} from './library.model';
 
 @model({
   name: 'Signature',
-  description: 'A single signature consisting of weighted associations of entities',
+  description:
+    'A single signature consisting of weighted associations of entities',
   settings: {
-    strict: false
+    strict: false,
   },
 })
 @TypeORMEntity({
@@ -21,7 +29,7 @@ export class Signature extends LBEntity {
     unique: true,
   })
   @Generated()
-  _id: number
+  _id: number;
 
   @property({
     type: 'string',
@@ -51,25 +59,27 @@ export class Signature extends LBEntity {
     required: true,
     default: {},
   })
-  @Index('signatures_meta_gin_index', { synchronize: false })
-  @Index('signatures_meta_gist_fts_index', { synchronize: false })
+  @Index('signatures_meta_gin_index', {synchronize: false})
+  @Index('signatures_meta_gist_fts_index', {synchronize: false})
   @Column({
     type: 'jsonb',
   })
   meta: {
-    [key: string]: any
+    [key: string]: any;
   };
 
-  @ManyToOne(type => Library, library => library._signatures)
+  @ManyToOne(
+    type => Library,
+    library => library._signatures,
+  )
   @JoinColumn({
     name: 'libid',
-    referencedColumnName: 'id'
+    referencedColumnName: 'id',
   })
   _library: Promise<Library>;
-
 
   constructor(data?: Partial<Signature>) {
     super(data);
   }
 }
-export const SignatureSchema = getJsonSchema(Signature)
+export const SignatureSchema = getJsonSchema(Signature);

@@ -1,14 +1,22 @@
-import { Entity as TypeORMEntity, Column, OneToMany, Index, Generated, ManyToOne, JoinColumn, } from 'typeorm';
-import { Entity as LBEntity, model, property } from '@loopback/repository';
-import { getJsonSchema } from '@loopback/rest';
-import { Signature } from './signature.model';
-import { Resource } from './resource.model';
+import {
+  Entity as TypeORMEntity,
+  Column,
+  OneToMany,
+  Index,
+  Generated,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import {Entity as LBEntity, model, property} from '@loopback/repository';
+import {getJsonSchema} from '@loopback/rest';
+import {Signature} from './signature.model';
+import {Resource} from './resource.model';
 
 @model({
   name: 'Library',
   description: 'Collections of related signatures',
   settings: {
-    strict: false
+    strict: false,
   },
 })
 @TypeORMEntity({
@@ -22,7 +30,7 @@ export class Library extends LBEntity {
     unique: true,
   })
   @Generated()
-  _id: number
+  _id: number;
 
   @property({
     type: 'string',
@@ -72,24 +80,30 @@ export class Library extends LBEntity {
     type: 'object',
     required: true,
   })
-  @Index('libraries_meta_gin_index', { synchronize: false })
-  @Index('libraries_meta_gist_fts_index', { synchronize: false })
+  @Index('libraries_meta_gin_index', {synchronize: false})
+  @Index('libraries_meta_gist_fts_index', {synchronize: false})
   @Column({
     name: 'meta',
     type: 'jsonb',
   })
   meta: {
-    [key: string]: any
+    [key: string]: any;
   };
 
-  @ManyToOne(type => Resource, resource => resource._libraries)
+  @ManyToOne(
+    type => Resource,
+    resource => resource._libraries,
+  )
   @JoinColumn({
     name: 'resource',
-    referencedColumnName: 'id'
+    referencedColumnName: 'id',
   })
   _resource: Promise<Resource>;
 
-  @OneToMany(type => Signature, signature => signature._library)
+  @OneToMany(
+    type => Signature,
+    signature => signature._library,
+  )
   _signatures: Promise<Signature[]>;
 
   constructor(data?: Partial<Library>) {
@@ -97,4 +111,4 @@ export class Library extends LBEntity {
   }
 }
 
-export const LibrarySchema = getJsonSchema(Library)
+export const LibrarySchema = getJsonSchema(Library);

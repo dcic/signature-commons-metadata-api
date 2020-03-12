@@ -1,6 +1,10 @@
-import { Library } from '../../../src/entities';
-import { givenInvalidLibraryData, givenLibrary, givenValidLibraryData } from '../../helpers/database.helpers';
-import { test_generic } from './generic.controller.acceptance';
+import {Library} from '../../../src/entities';
+import {
+  givenInvalidLibraryData,
+  givenLibrary,
+  givenValidLibraryData,
+} from '../../helpers/database.helpers';
+import {test_generic} from './generic.controller.acceptance';
 
 test_generic<Library>({
   modelName: 'library',
@@ -10,4 +14,4 @@ test_generic<Library>({
   givenInvalidObject: givenInvalidLibraryData,
   givenValidUpdatedObject: givenValidLibraryData,
   givenInvalidUpdatedObject: givenInvalidLibraryData,
-})
+});

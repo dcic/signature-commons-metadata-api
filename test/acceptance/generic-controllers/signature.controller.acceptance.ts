@@ -1,6 +1,10 @@
-import { Signature } from '../../../src/entities';
-import { givenInvalidSignatureData, givenSignature, givenValidSignatureData } from '../../helpers/database.helpers';
-import { test_generic } from './generic.controller.acceptance';
+import {Signature} from '../../../src/entities';
+import {
+  givenInvalidSignatureData,
+  givenSignature,
+  givenValidSignatureData,
+} from '../../helpers/database.helpers';
+import {test_generic} from './generic.controller.acceptance';
 
 test_generic<Signature>({
   modelName: 'signature',
@@ -10,4 +14,4 @@ test_generic<Signature>({
   givenInvalidObject: givenInvalidSignatureData,
   givenValidUpdatedObject: givenValidSignatureData,
   givenInvalidUpdatedObject: givenInvalidSignatureData,
-})
+});

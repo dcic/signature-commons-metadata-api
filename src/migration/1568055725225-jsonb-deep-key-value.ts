@@ -1,7 +1,6 @@
-import {MigrationInterface, QueryRunner} from "typeorm";
+import {MigrationInterface, QueryRunner} from 'typeorm';
 
 export class jsonbDeepKeyValue1568055725225 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<any> {
     await queryRunner.query(`
       create or replace function jsonb_deep_key_value (j jsonb)
@@ -46,13 +45,12 @@ export class jsonbDeepKeyValue1568055725225 implements MigrationInterface {
           from t
           where jsonb_typeof(t.value) not in ('object', 'array')
         $$ LANGUAGE SQL;
-    `)
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<any> {
     await queryRunner.query(`
       drop function jsonb_deep_key_value;
-    `)
+    `);
   }
-
 }

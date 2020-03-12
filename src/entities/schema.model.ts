@@ -1,12 +1,12 @@
-import { Entity as TypeORMEntity, Column, Generated, Index } from 'typeorm';
-import { Entity as LBEntity, model, property } from '@loopback/repository';
-import { getJsonSchema } from '@loopback/rest';
+import {Entity as TypeORMEntity, Column, Generated, Index} from 'typeorm';
+import {Entity as LBEntity, model, property} from '@loopback/repository';
+import {getJsonSchema} from '@loopback/rest';
 
 @model({
   name: 'Schema',
   description: 'A table for storing validatable schemas in the database',
   settings: {
-    strict: false
+    strict: false,
   },
 })
 @TypeORMEntity({
@@ -20,7 +20,7 @@ export class Schema extends LBEntity {
     unique: true,
   })
   @Generated()
-  _id: number
+  _id: number;
 
   @property({
     type: 'string',
@@ -40,17 +40,17 @@ export class Schema extends LBEntity {
     required: true,
     default: {},
   })
-  @Index('schemas_meta_gin_index', { synchronize: false })
-  @Index('schemas_meta_gist_fts_index', { synchronize: false })
+  @Index('schemas_meta_gin_index', {synchronize: false})
+  @Index('schemas_meta_gist_fts_index', {synchronize: false})
   @Column({
     type: 'jsonb',
   })
   meta: {
-    [key: string]: any
+    [key: string]: any;
   };
 
   constructor(data?: Partial<Schema>) {
     super(data);
   }
 }
-export const SchemaSchema = getJsonSchema(Schema)
+export const SchemaSchema = getJsonSchema(Schema);
