@@ -2,7 +2,7 @@ import { Client, supertest } from '@loopback/testlab';
 import { App } from '../../..';
 import { IGenericEntity } from '../../../src/generic-controllers/generic.controller';
 import { setupApplication } from '../../helpers/application.helpers';
-import { givenAdminUserProfile, givenEmptyDatabase } from '../../helpers/database.helpers';
+import { givenAdminUserProfile, givenEmptyDatabase, DatabaseTestContext, givenDatabaseTestContext } from '../../helpers/database.helpers';
 import debug from '../../../src/util/debug'
 import assert = require('assert');
 
@@ -32,28 +32,30 @@ export function expect_response(obj: { status?: number | number[], body?: object
 export function test_generic<GenericEntity extends IGenericEntity>(props: {
   modelName: string
   basePath: string
-  givenObject: () => Promise<GenericEntity>
-  givenValidObject: (obj?: Partial<GenericEntity>) => Promise<Partial<GenericEntity>>
-  givenInvalidObject: (obj?: Partial<GenericEntity>) => Promise<Partial<GenericEntity>>
-  givenValidUpdatedObject: (obj?: Partial<GenericEntity>) => Promise<Partial<GenericEntity>>
-  givenInvalidUpdatedObject: (obj?: Partial<GenericEntity>) => Promise<Partial<GenericEntity>>
+  givenObject: (ctx: DatabaseTestContext) => Promise<GenericEntity>
+  givenValidObject: (ctx: DatabaseTestContext, obj?: Partial<GenericEntity>) => Promise<Partial<GenericEntity>>
+  givenInvalidObject: (ctx: DatabaseTestContext, obj?: Partial<GenericEntity>) => Promise<Partial<GenericEntity>>
+  givenValidUpdatedObject: (ctx: DatabaseTestContext, obj?: Partial<GenericEntity>) => Promise<Partial<GenericEntity>>
+  givenInvalidUpdatedObject: (ctx: DatabaseTestContext, obj?: Partial<GenericEntity>) => Promise<Partial<GenericEntity>>
 }) {
   return describe(props.modelName + 'Controller', () => {
     let app: App;
     let client: Client;
-
-    beforeEach(givenEmptyDatabase)
+    let ctx: DatabaseTestContext;
 
     before('setupApplication', async () => {
       ({ app, client } = await setupApplication());
+      ctx = await givenDatabaseTestContext();
     });
-
+    
     after(async () => {
       await app.stop();
     });
+    
+    beforeEach(async () => await givenEmptyDatabase(ctx))
 
     it("can count anonymous", async () => {
-      await props.givenObject()
+      await props.givenObject(ctx)
 
       await client
         .get(
@@ -65,9 +67,9 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     });
 
     it("can count authenticated", async () => {
-      const user = await givenAdminUserProfile()
+      const user = await givenAdminUserProfile(ctx)
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
-      await props.givenObject()
+      await props.givenObject(ctx)
 
       await client
         .get(
@@ -80,7 +82,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     });
 
     it("can key_count anonymous", async () => {
-      await props.givenObject()
+      await props.givenObject(ctx)
 
       await client
         .get(
@@ -91,9 +93,9 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     });
 
     it("can key_count authenticated", async () => {
-      const user = await givenAdminUserProfile()
+      const user = await givenAdminUserProfile(ctx)
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
-      await props.givenObject()
+      await props.givenObject(ctx)
 
       await client
         .get(
@@ -106,7 +108,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     });
 
     it("can value_count anonymous", async () => {
-      await props.givenObject()
+      await props.givenObject(ctx)
 
       await client
         .get(
@@ -117,9 +119,9 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     });
 
     it("can value_count authenticated", async () => {
-      const user = await givenAdminUserProfile()
+      const user = await givenAdminUserProfile(ctx)
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
-      await props.givenObject()
+      await props.givenObject(ctx)
 
       await client
         .get(
@@ -132,7 +134,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     });
 
     it("can dbck anonymous", async () => {
-      await props.givenObject()
+      await props.givenObject(ctx)
       await client
         .get(
           props.basePath
@@ -142,9 +144,9 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     });
 
     it("can dbck, and no errors authenticated", async () => {
-      const user = await givenAdminUserProfile()
+      const user = await givenAdminUserProfile(ctx)
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
-      await props.givenObject()
+      await props.givenObject(ctx)
 
       await client
         .get(
@@ -158,7 +160,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     });
 
     it("can find anonymous", async () => {
-      const obj = await props.givenObject()
+      const obj = await props.givenObject(ctx)
 
       await client
         .get(
@@ -170,9 +172,9 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     })
 
     it("can find authenticated", async () => {
-      const user = await givenAdminUserProfile()
+      const user = await givenAdminUserProfile(ctx)
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
-      const obj = await props.givenObject()
+      const obj = await props.givenObject(ctx)
 
       await client
         .get(
@@ -185,7 +187,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     })
 
     it("can findById anonymous", async () => {
-      const obj = await props.givenObject()
+      const obj = await props.givenObject(ctx)
 
       await client
         .get(
@@ -198,9 +200,9 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     })
 
     it("can findById authenticated", async () => {
-      const user = await givenAdminUserProfile()
+      const user = await givenAdminUserProfile(ctx)
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
-      const obj = await props.givenObject()
+      const obj = await props.givenObject(ctx)
 
       await client
         .get(
@@ -214,7 +216,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     })
 
     it("can't delete anonymous", async () => {
-      const obj = await props.givenObject()
+      const obj = await props.givenObject(ctx)
 
       await client
         .del(
@@ -226,9 +228,9 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     })
 
     it("can delete authenticated", async () => {
-      const user = await givenAdminUserProfile()
+      const user = await givenAdminUserProfile(ctx)
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
-      const obj = await props.givenObject()
+      const obj = await props.givenObject(ctx)
 
       await client
         .del(
@@ -241,7 +243,7 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     })
 
     it("can't create valid anonymous", async () => {
-      const validObj = await props.givenValidObject()
+      const validObj = await props.givenValidObject(ctx)
 
       await client
         .post(props.basePath)
@@ -250,9 +252,9 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     })
 
     it("can create valid authenticated", async () => {
-      const user = await givenAdminUserProfile()
+      const user = await givenAdminUserProfile(ctx)
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
-      const validObj = await props.givenValidObject()
+      const validObj = await props.givenValidObject(ctx)
 
       await client
         .post(props.basePath)
@@ -263,9 +265,9 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     })
 
     it("can't create invalid authenticated", async () => {
-      const user = await givenAdminUserProfile()
+      const user = await givenAdminUserProfile(ctx)
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
-      const invalidObj = await props.givenInvalidObject()
+      const invalidObj = await props.givenInvalidObject(ctx)
 
       await client
         .post(props.basePath)
@@ -276,8 +278,8 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     });
 
     it("can't updateAll valid anonymous", async () => {
-      const obj = await props.givenObject()
-      const validObj = await props.givenValidObject()
+      const obj = await props.givenObject(ctx)
+      const validObj = await props.givenValidObject(ctx)
       validObj.id = obj.id
 
       await client
@@ -290,10 +292,10 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     })
 
     it("can updateAll valid authenticated", async () => {
-      const user = await givenAdminUserProfile()
+      const user = await givenAdminUserProfile(ctx)
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
-      const obj = await props.givenObject()
-      const validObj = await props.givenValidObject()
+      const obj = await props.givenObject(ctx)
+      const validObj = await props.givenValidObject(ctx)
       validObj.id = obj.id
 
       await client
@@ -308,10 +310,10 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     })
 
     it("can't updateAll invalid authenticated", async () => {
-      const user = await givenAdminUserProfile()
+      const user = await givenAdminUserProfile(ctx)
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
-      const obj = await props.givenObject()
-      const invalidObj = await props.givenInvalidObject()
+      const obj = await props.givenObject(ctx)
+      const invalidObj = await props.givenInvalidObject(ctx)
       invalidObj.id = obj.id
 
       await client
@@ -326,8 +328,8 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     });
 
     it("can't updateById valid anonymous", async () => {
-      const obj = await props.givenObject()
-      const validObj = await props.givenValidObject()
+      const obj = await props.givenObject(ctx)
+      const validObj = await props.givenValidObject(ctx)
       validObj.id = obj.id
 
       await client
@@ -341,10 +343,10 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     })
 
     it("can updateById valid authenticated", async () => {
-      const user = await givenAdminUserProfile()
+      const user = await givenAdminUserProfile(ctx)
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
-      const obj = await props.givenObject()
-      const validObj = await props.givenValidObject()
+      const obj = await props.givenObject(ctx)
+      const validObj = await props.givenValidObject(ctx)
       validObj.id = obj.id
 
       await client
@@ -359,10 +361,10 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     })
 
     it("can't updateById invalid authenticated", async () => {
-      const user = await givenAdminUserProfile()
+      const user = await givenAdminUserProfile(ctx)
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
-      const obj = await props.givenObject()
-      const invalidObj = await props.givenInvalidObject()
+      const obj = await props.givenObject(ctx)
+      const invalidObj = await props.givenInvalidObject(ctx)
       invalidObj.id = obj.id
 
       await client
@@ -377,9 +379,9 @@ export function test_generic<GenericEntity extends IGenericEntity>(props: {
     });
 
     it("can find_or_create valid authenticated", async () => {
-      const user = await givenAdminUserProfile()
+      const user = await givenAdminUserProfile(ctx)
       const auth = Buffer.from(user.username + ':' + user.password).toString('base64')
-      const validObj = await props.givenValidObject()
+      const validObj = await props.givenValidObject(ctx)
       const resolvedObj = {
         $validator: `/dcic/signature-commons-schema/v5/core/${props.modelName}.json`,
         ...validObj,

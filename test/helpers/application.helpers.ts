@@ -4,7 +4,7 @@ import {
   givenHttpServerConfig,
   Client,
 } from '@loopback/testlab';
-import { memory_db, typeorm_db, library_id_created, signature_id_created, entity_id_created, givenLibrary, givenSignature, givenEntity, givenResource, resource_id_created, givenSchema, schema_id_created } from '../helpers/database.helpers';
+import { memory_db, typeorm_db } from '../helpers/database.helpers';
 import { LibraryRepository, SignatureRepository, EntityRepository, UserProfileRepository, SchemaRepository, ResourceRepository } from '../../src/repositories';
 import { DataSource } from 'loopback-datasource-juggler';
 import { TypeORMDataSource } from '../../src/datasources';
@@ -23,12 +23,6 @@ export async function setupApplication(): Promise<AppWithClient> {
   await (await app.getRepository(SignatureRepository)).init()
   await (await app.getRepository(EntityRepository)).init()
   await (await app.getRepository(SchemaRepository)).init()
-
-  await givenResource({ id: resource_id_created });
-  await givenLibrary({ id: library_id_created });
-  await givenSignature({ id: signature_id_created });
-  await givenEntity({ id: entity_id_created });
-  await givenSchema({ id: schema_id_created });
 
   app.dataSource(await memory_db, 'memory')
   const memory_ds = await app.get<DataSource>('datasources.memory')
