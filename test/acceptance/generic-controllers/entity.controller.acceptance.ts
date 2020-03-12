@@ -1,6 +1,10 @@
-import { Entity } from '../../../src/entities';
-import { givenEntity, givenInvalidEntityData, givenValidEntityData } from '../../helpers/database.helpers';
-import { test_generic } from './generic.controller.acceptance';
+import {Entity} from '../../../src/entities';
+import {
+  givenEntity,
+  givenInvalidEntityData,
+  givenValidEntityData,
+} from '../../helpers/database.helpers';
+import {test_generic} from './generic.controller.acceptance';
 
 test_generic<Entity>({
   modelName: 'entity',
@@ -10,4 +14,4 @@ test_generic<Entity>({
   givenInvalidObject: givenInvalidEntityData,
   givenValidUpdatedObject: givenValidEntityData,
   givenInvalidUpdatedObject: givenInvalidEntityData,
-})
+});

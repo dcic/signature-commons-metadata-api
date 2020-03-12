@@ -1,8 +1,8 @@
-import { Entity, model, property } from '@loopback/repository';
+import {Entity, model, property} from '@loopback/repository';
 
 @model({
   name: 'Summary',
-  description: 'Cached summaries'
+  description: 'Cached summaries',
 })
 export class Summary extends Entity {
   @property({

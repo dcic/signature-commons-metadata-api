@@ -1,15 +1,15 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import {MigrationInterface, QueryRunner} from 'typeorm';
 
 export class resources1560868639791 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<any> {
     await queryRunner.query(`
       create index resources_meta_gin_index
       on resources using gin ( meta );
-    `)
+    `);
     await queryRunner.query(`
       create index resources_meta_gist_fts_index
       on resources using gist ( to_tsvector('english', meta) );
-    `)
+    `);
     await queryRunner.query(`
       CREATE MATERIALIZED VIEW resources_key_value_counts
       AS
@@ -42,18 +42,18 @@ export class resources1560868639791 implements MigrationInterface {
         FROM r
       GROUP BY r.key, r.value
       ORDER BY (count(*)) DESC;
-    `)
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<any> {
     await queryRunner.query(`
       drop index resources_meta_gin_index;
-    `)
+    `);
     await queryRunner.query(`
       drop index resources_meta_gist_fts_index;
-    `)
+    `);
     await queryRunner.query(`
       drop materialized view resources_key_value_counts;
-    `)
+    `);
   }
 }

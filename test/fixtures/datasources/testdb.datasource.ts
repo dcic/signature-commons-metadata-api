@@ -1,10 +1,10 @@
-import { TypeORMDataSource, MemoryDataSource } from "../../../src/datasources";
+import {TypeORMDataSource, MemoryDataSource} from '../../../src/datasources';
 
-let n = 0
+let n = 0;
 
 export const typeorm_factory = async () => {
   if (process.env['TYPEORM_TEST_URL'] === undefined) {
-    throw new Error('TYPEORM_TEST_URL required to perform tests')
+    throw new Error('TYPEORM_TEST_URL required to perform tests');
   }
   const typeorm_ds = new TypeORMDataSource({
     name: `default-${n}`,
@@ -12,11 +12,11 @@ export const typeorm_factory = async () => {
     synchronize: true,
     migrationsRun: true,
   });
-  await typeorm_ds.connect()
-  n += 1
-  return typeorm_ds
-}
+  await typeorm_ds.connect();
+  n += 1;
+  return typeorm_ds;
+};
 
 export const memory_factory = async () => {
-  return new MemoryDataSource()
-}
+  return new MemoryDataSource();
+};

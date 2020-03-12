@@ -1,9 +1,12 @@
-import { AuthenticationBindings, AuthenticationComponent } from '@loopback/authentication';
-import { BootMixin } from '@loopback/boot';
-import { ApplicationConfig } from '@loopback/core';
-import { RepositoryMixin } from '@loopback/repository';
-import { RestApplication, RestBindings } from '@loopback/rest';
-import { ServiceMixin } from '@loopback/service-proxy';
+import {
+  AuthenticationBindings,
+  AuthenticationComponent,
+} from '@loopback/authentication';
+import {BootMixin} from '@loopback/boot';
+import {ApplicationConfig} from '@loopback/core';
+import {RepositoryMixin} from '@loopback/repository';
+import {RestApplication, RestBindings} from '@loopback/rest';
+import {ServiceMixin} from '@loopback/service-proxy';
 import {
   Resource as ResourceController,
   Library as LibraryController,
@@ -11,10 +14,10 @@ import {
   Entity as EntityController,
   Schema as SchemaController,
 } from './generic-controllers';
-import { AuthStrategyProvider } from './providers/auth-strategy.provider';
-import { SmartTrieRouter } from './router';
-import { Sequence } from './sequence';
-import * as packageJson from '../package.json'
+import {AuthStrategyProvider} from './providers/auth-strategy.provider';
+import {SmartTrieRouter} from './router';
+import {Sequence} from './sequence';
+import * as packageJson from '../package.json';
 
 export class App extends BootMixin(
   ServiceMixin(RepositoryMixin(RestApplication)),
@@ -31,13 +34,11 @@ export class App extends BootMixin(
       },
       paths: {},
       components: {},
-    })
+    });
 
     // Add authentication
     this.component(AuthenticationComponent);
-    this.bind(AuthenticationBindings.STRATEGY).toProvider(
-      AuthStrategyProvider,
-    );
+    this.bind(AuthenticationBindings.STRATEGY).toProvider(AuthStrategyProvider);
 
     // Manually setup named custom generic controllers
     this.controller(ResourceController, 'Resource');

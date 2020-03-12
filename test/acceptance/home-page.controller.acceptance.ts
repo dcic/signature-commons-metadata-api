@@ -3,16 +3,16 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
-import { Client } from '@loopback/testlab';
-import { App } from '../..';
-import { setupApplication } from '../helpers/application.helpers';
+import {Client} from '@loopback/testlab';
+import {App} from '../..';
+import {setupApplication} from '../helpers/application.helpers';
 
 describe('HomePageController', () => {
   let app: App;
   let client: Client;
 
   before('setupApplication', async () => {
-    ({ app, client } = await setupApplication());
+    ({app, client} = await setupApplication());
   });
 
   after(async () => {
@@ -27,8 +27,6 @@ describe('HomePageController', () => {
   });
 
   it('returns 404 errors on missing pages', async () => {
-    await client
-      .get('/page_that_doesnt_exist')
-      .expect(404);
+    await client.get('/page_that_doesnt_exist').expect(404);
   });
 });

@@ -1,6 +1,6 @@
-import { Schema as SchemaEntity, SchemaSchema } from '../entities';
-import { SchemaRepository } from '../repositories';
-import { GenericControllerFactory } from './generic.controller'
+import {Schema as SchemaEntity, SchemaSchema} from '../entities';
+import {SchemaRepository} from '../repositories';
+import {GenericControllerFactory} from './generic.controller';
 
 const GenericEntityController = GenericControllerFactory<
   SchemaEntity,
@@ -11,7 +11,6 @@ const GenericEntityController = GenericControllerFactory<
   GenericEntitySchema: SchemaSchema,
   modelName: 'Schema',
   basePath: `${process.env.PREFIX}/schemas`,
-})
+});
 
-export class Schema extends GenericEntityController {
-}
+export class Schema extends GenericEntityController {}

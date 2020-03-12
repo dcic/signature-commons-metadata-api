@@ -1,12 +1,13 @@
-import { Entity as TypeORMEntity, Column, Generated, Index, } from 'typeorm';
-import { Entity as LBEntity, model, property } from '@loopback/repository';
-import { getJsonSchema } from '@loopback/rest';
+import {Entity as TypeORMEntity, Column, Generated, Index} from 'typeorm';
+import {Entity as LBEntity, model, property} from '@loopback/repository';
+import {getJsonSchema} from '@loopback/rest';
 
 @model({
   name: 'Entity',
-  description: 'Singular entities of a signature (e.g. Gene, Protein, Compound, etc..)',
+  description:
+    'Singular entities of a signature (e.g. Gene, Protein, Compound, etc..)',
   settings: {
-    strict: false
+    strict: false,
   },
 })
 @TypeORMEntity({
@@ -20,7 +21,7 @@ export class Entity extends LBEntity {
     unique: true,
   })
   @Generated()
-  _id: number
+  _id: number;
 
   @property({
     type: 'string',
@@ -40,11 +41,11 @@ export class Entity extends LBEntity {
     required: true,
     default: {},
   })
-  @Index('entities_meta_gin_index', { synchronize: false })
-  @Index('entities_meta_gist_fts_index', { synchronize: false })
+  @Index('entities_meta_gin_index', {synchronize: false})
+  @Index('entities_meta_gist_fts_index', {synchronize: false})
   @Column('jsonb')
   meta: {
-    [key: string]: any
+    [key: string]: any;
   };
 
   constructor(data?: Partial<Entity>) {
@@ -52,4 +53,4 @@ export class Entity extends LBEntity {
   }
 }
 
-export const EntitySchema = getJsonSchema(Entity)
+export const EntitySchema = getJsonSchema(Entity);
