@@ -6,6 +6,7 @@
 import {
   EntityCrudRepository,
   Entity,
+  InclusionResolver,
   DataObject,
   Options,
   Filter,
@@ -20,17 +21,22 @@ import {
   DeepPartial,
   Brackets,
 } from 'typeorm';
+import { HttpErrors } from '@loopback/rest'
 
 import { TypeORMDataSource } from '../datasources'
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { UniqueIDGenerator } from '../util/unique_id_generator'
-import { parse } from 'path-to-regexp';
 
 /**
  * An implementation of EntityCrudRepository using TypeORM
  */
 export class TypeORMRepository<T extends Entity, ID extends string>
   implements EntityCrudRepository<T, ID> {
+  inclusionResolvers: Map<
+    string,
+    InclusionResolver<T, Entity>
+  > = new Map();
+
   typeOrmRepo: Repository<T>;
   tableName: string
   columns: { [colName: string]: string }
@@ -69,7 +75,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     await this.init();
     const id = (entity as any).getId()
     if (id === undefined)
-      throw new Error("Entity not found")
+      throw new HttpErrors.NotFound("Entity not found")
     await this.typeOrmRepo.update(
       { id } as unknown as FindOptionsWhereCondition<T>,
       entity as QueryDeepPartialEntity<T>
@@ -80,7 +86,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     await this.init();
     const id = (entity as any).getId()
     if (id === undefined)
-      throw new Error("Entity not found")
+      throw new HttpErrors.NotFound("Entity not found")
     await this.typeOrmRepo.delete({ id } as unknown as FindOptionsWhereCondition<T>);
   }
 
@@ -93,7 +99,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       .getRawOne()
 
     if (result == null) {
-      throw new Error('Not found');
+      throw new HttpErrors.NotFound('Entity not found');
     }
     return result;
   }
@@ -167,6 +173,119 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       .getRawMany()
 
     return result as T[];
+  }
+
+  async key_counts(filter?: Filter<T>): Promise<{ [key: string]: number }> {
+    await this.init();
+    
+    if (filter === undefined) filter = {};
+
+    const queryset = this.typeOrmRepo
+      .createQueryBuilder(this.tableName)
+      .select(this._typeormSelect(filter.fields) as any)
+      .where(this._typeormWhere(filter.where))
+      .orderBy(this._typeormOrder(filter.order) as any);
+    const [queryset_query, queryset_params] = queryset.getQueryAndParameters()
+    const params = [
+      ...queryset_params,
+      ...(filter.skip ? [filter.skip] : []),
+      ...(filter.limit ? [filter.limit] : []),
+    ]
+    const results = await this.typeOrmRepo.query(`
+      select
+        key,
+        count(*) as count
+      from
+        (
+          ${queryset_query}
+        ) qs inner join lateral jsonb_deep_key_value(row_to_json(qs)::jsonb) on true
+      group by key
+      order by count desc
+      ${filter.skip ? `offset $${1 + queryset_params.length}` : ''}
+      ${filter.limit ? `limit $${1 + queryset_params.length + (filter.skip ? 1 : 0)}` : ''}
+    `, params)
+    const counts: { [key: string]: number } = {}
+    for (const { key, count } of results) {
+      counts[key] = Number(count)
+    }
+    return counts
+  }
+
+  async value_counts(filter?: Filter<T>): Promise<{ [key: string]: { [value: string]: number } }> {
+    await this.init();
+    
+    if (filter === undefined) filter = {};
+
+    const queryset = this.typeOrmRepo
+      .createQueryBuilder(this.tableName)
+      .select(this._typeormSelect(filter.fields) as any)
+      .where(this._typeormWhere(filter.where))
+      .orderBy(this._typeormOrder(filter.order) as any);
+    const [queryset_query, queryset_params] = queryset.getQueryAndParameters()
+    const params = [
+      ...queryset_params,
+      ...(filter.skip ? [filter.skip] : []),
+      ...(filter.limit ? [filter.limit] : []),
+    ]
+    const results = await this.typeOrmRepo.query(`
+      select
+        key,
+        value,
+        count(*) as count
+      from
+        (
+          ${queryset_query}
+        ) qs inner join lateral jsonb_deep_key_value(row_to_json(qs)::jsonb) on true
+      group by key, value
+      order by count desc
+      ${filter.skip ? `offset $${1 + queryset_params.length}` : ''}
+      ${filter.limit ? `limit $${1 + queryset_params.length + (filter.skip ? 1 : 0)}` : ''}
+    `, params)
+    const counts: { [key: string]: { [value: string]: number } } = {}
+    for (const { key, value, count } of results) {
+      if (counts[key] === undefined)
+        counts[key] = {}
+      counts[key][value] = Number(count)
+    }
+    return counts
+  }
+
+  async distinct_value_counts(filter?: Filter<T>): Promise<{ [key: string]: number }> {
+    await this.init();
+    
+    if (filter === undefined) filter = {};
+
+    const queryset = this.typeOrmRepo
+      .createQueryBuilder(this.tableName)
+      .select(this._typeormSelect(filter.fields) as any)
+      .where(this._typeormWhere(filter.where))
+      .orderBy(this._typeormOrder(filter.order) as any);
+    const [queryset_query, queryset_params] = queryset.getQueryAndParameters()
+
+    const params = [
+      ...queryset_params,
+      ...(filter.skip ? [filter.skip] : []),
+      ...(filter.limit ? [filter.limit] : []),
+    ]
+    const results = await this.typeOrmRepo.query(`
+      select distinct
+        key,
+        count(*) as count
+      from
+        (
+          ${queryset_query}
+        ) qs inner join lateral jsonb_deep_key_value(row_to_json(qs)::jsonb) on true
+      group by key, value
+      order by count desc
+      ${filter.skip ? `offset $${1 + queryset_params.length}` : ''}
+      ${filter.limit ? `limit $${1 + queryset_params.length + (filter.skip ? 1 : 0)}` : ''}
+    `, params)
+
+    const counts: { [key: string]: number } = {}
+    for (const { key, count } of results) {
+      counts[key] = Number(count)
+    }
+    return counts
   }
 
   async updateAll(
@@ -251,8 +370,8 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
     for (const field of fields as any) {
       const m = /^(.+?)(\..+)?$/.exec(field)
-      if (!m) throw new Error('Unhandled error')
-      if (this.columns[m[1]] === undefined) throw new Error('Column does not exist')
+      if (!m) throw new HttpErrors.UnprocessableEntity('Field formatting error')
+      if (this.columns[m[1]] === undefined) throw new HttpErrors.UnprocessableEntity('Column does not exist')
       if (m[2]) {
         const s = m[0].split('.').map(this._sanitize)
         if (jsonQueries[this._sanitize(m[1])] === undefined)
@@ -348,7 +467,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     } else if (typeof fullTextSearch === 'string') {
       return this._fullTextSearchQuery({ 'and': fullTextSearch.split(/ +/g).map(term => ({ eq: term })) })
     }
-    throw new Error('Type not recognized for fullTextSearch query')
+    throw new HttpErrors.UnprocessableEntity('Type not recognized for fullTextSearch query')
   }
 
   _typeormWhere(where?: Where<T>, parent: string = 'and') {
@@ -483,6 +602,11 @@ export class TypeORMRepository<T extends Entity, ID extends string>
             const isJson = col.indexOf('->') !== -1
             if (condition === null) {
               this._where(qb, `${col} is null`, {}, parent, first); first = false
+            } else if (isJson && typeof condition === 'string') {
+              const id = this.id_generator.id()
+              this._where(qb, `${col} ? :${slug}_${id}`, {
+                [`${slug}_${id}`]: condition
+              }, parent, first); first = false
             } else {
               const id = this.id_generator.id()
               this._where(qb, `${col} = :${slug}_${id}`, {
@@ -495,6 +619,29 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     })
   }
 
+  async ensureIndex(field: string, method?: string): Promise<void> {
+    const valid_methods = [
+      'btree',
+      'gist',
+      'gin',
+      'hash',
+    ]
+    if (method === undefined) {
+      method = 'btree'
+    } else if (valid_methods.indexOf(method) === -1) {
+      throw new HttpErrors.UnprocessableEntity('Invalid index method')
+    }
+    await this.typeOrmRepo.query(`
+      create index concurrently
+      if not exists
+      on "${this.tableName}"
+      using ${method}
+      (
+        ${this._dotToCol(field)}
+      )`
+    )
+  }
+
   _typeormOrder(order?: string | string[] | { [key: string]: string }) {
     let _order
     if (order === undefined) return {}
@@ -505,13 +652,13 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     } else if (typeof order === 'object') {
       _order = Object.keys(order).map((o) => `${o} ${(order as any)[o]}`)
     } else {
-      throw new Error('Unrecognized order type')
+      throw new HttpErrors.UnprocessableEntity('Unrecognized order type')
     }
 
     const typeormOrder: { [key: string]: string } = {}
     for (const o of _order) {
       const m = /^(([^ ]+?)(\.[^ ]+)?)( (ASC|DESC))?$/.exec(o)
-      if (!m) throw new Error('Unrecognized order type')
+      if (!m) throw new HttpErrors.UnprocessableEntity('Unrecognized order type')
       if (m[3]) {
         typeormOrder[this._dotToCol(m[1])] = m[5] || 'ASC'
       } else {
@@ -533,7 +680,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
   _dotToCol(col: string, forceText?: boolean) {
     const ks = col.split('.')
-    if (this.columns[ks[0]] === undefined) throw new Error('Unrecognized column')
+    if (this.columns[ks[0]] === undefined) throw new HttpErrors.UnprocessableEntity('Unrecognized column')
     let col_id = `"${this.tableName}"."${this.columns[ks[0]]}"`
     if (ks.length > 1) {
       if (forceText === true) {

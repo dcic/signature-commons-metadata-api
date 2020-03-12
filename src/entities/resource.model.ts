@@ -6,6 +6,9 @@ import { Library } from './library.model';
 @model({
   name: 'Resource',
   description: 'A table for storing validatable resources in the database',
+  settings: {
+    strict: false
+  },
 })
 @TypeORMEntity({
   name: 'resources',

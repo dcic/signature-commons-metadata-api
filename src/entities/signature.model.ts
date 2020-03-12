@@ -6,6 +6,9 @@ import { Library } from './library.model';
 @model({
   name: 'Signature',
   description: 'A single signature consisting of weighted associations of entities',
+  settings: {
+    strict: false
+  },
 })
 @TypeORMEntity({
   name: 'signatures',

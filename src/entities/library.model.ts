@@ -7,6 +7,9 @@ import { Resource } from './resource.model';
 @model({
   name: 'Library',
   description: 'Collections of related signatures',
+  settings: {
+    strict: false
+  },
 })
 @TypeORMEntity({
   name: 'libraries',
@@ -78,18 +81,6 @@ export class Library extends LBEntity {
   meta: {
     [key: string]: any
   };
-
-  @property({
-    type: 'array',
-    itemType: 'string',
-    required: false,
-  })
-  @Column({
-    name: 'signature_keys',
-    type: 'jsonb',
-    default: [],
-  })
-  signature_keys: JSON;
 
   @ManyToOne(type => Resource, resource => resource._libraries)
   @JoinColumn({

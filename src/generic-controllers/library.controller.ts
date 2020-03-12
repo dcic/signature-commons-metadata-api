@@ -115,7 +115,7 @@ export class Library extends GenericLibraryController {
     `
     debug(query)
 
-    const results = await this.genericRepository.dataSource.connection.query(query, [])
+    const results = await (await this.genericRepository.dataSource.getConnection()).query(query, [])
 
     return (results as AnyObject[]).reduce<AnyObject>((grouped: any, { key, count }: any) => ({
       ...grouped,
@@ -157,7 +157,7 @@ export class Library extends GenericLibraryController {
     `
     debug(query)
 
-    const results = await this.genericRepository.dataSource.connection.query(query, [])
+    const results = await (await this.genericRepository.dataSource.getConnection()).query(query, [])
 
     return (results as AnyObject[]).reduce<AnyObject>((grouped: any, { key, value, count }: any) => ({
       ...grouped,
