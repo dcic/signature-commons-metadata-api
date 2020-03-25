@@ -47,6 +47,11 @@ export async function main(options: ApplicationConfig = {}) {
   const typeorm = await app.get<TypeORMDataSource>('datasources.typeorm');
   await typeorm.connect();
 
+  if (process.env.REFRESH_ON_STARTUP === 'true') {
+    console.log(`Refreshing materialized views...`);
+    await typeorm.refresh_materialized_views()
+  }
+
   const url = app.restServer.url;
   console.log(`Server is running at ${url}`);
 
