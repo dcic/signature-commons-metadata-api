@@ -1,5 +1,6 @@
 # signature-commons-metadata-api
-Signature Commons Metadata API
+
+[![Build Status](https://travis-ci.org/MaayanLab/signature-commons-metadata-api.svg?branch=master)](https://travis-ci.org/MaayanLab/signature-commons-metadata-api)
 
 [![LoopBack](https://github.com/strongloop/loopback-next/raw/master/docs/site/imgs/branding/Powered-by-LoopBack-Badge-(blue)-@2x.png)](http://loopback.io/)
 
