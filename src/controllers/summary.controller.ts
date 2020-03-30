@@ -296,7 +296,7 @@ class SummaryController {
           entry.meta.Field_Name,
         table: entry.meta.Table,
         stats: Object.entries(
-          meta_stats[entry.meta.Field_Name],
+          meta_stats[entry.meta.Field_Name]  || {}
         ).map(([key, val]) => ({counts: val, name: key})),
         slice: entry.meta.Slice || 14,
         priority: entry.meta.Priority ?? 1,
@@ -330,7 +330,7 @@ class SummaryController {
           entry.meta.Field_Name,
         table: entry.meta.Table,
         stats: Object.entries(
-          meta_stats[entry.meta.Field_Name],
+          meta_stats[entry.meta.Field_Name] || {}
         ).map(([key, val]) => ({counts: val, name: key})),
         priority: entry.meta.Priority ?? 1,
       };
@@ -363,7 +363,7 @@ class SummaryController {
           entry.meta.Field_Name,
         table: entry.meta.Table,
         stats: Object.entries(
-          meta_stats[entry.meta.Field_Name],
+          meta_stats[entry.meta.Field_Name]  || {}
         ).map(([key, val]) => ({counts: val, name: key})),
         priority: entry.meta.Priority ?? 1,
       };
@@ -395,7 +395,7 @@ class SummaryController {
           entry.meta.Field_Name,
         table: entry.meta.Table,
         stats: Object.entries(
-          meta_stats[entry.meta.Field_Name],
+          meta_stats[entry.meta.Field_Name]  || {}
         ).map(([key, val]) => ({counts: val, name: key})),
         priority: entry.meta.Priority ?? 1,
       };
