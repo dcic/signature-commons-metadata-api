@@ -13,8 +13,7 @@ export class StartupObserver implements LifeCycleObserver {
   ) {}
 
   async start() {
-    console.log('[INFO]: Setting up datasource...')
-    await this.typeorm.connect();
+    if (process.env['TESTING'] !== undefined) return
 
     if (process.env['ADMIN_USERNAME'] !== undefined && process.env['ADMIN_PASSWORD'] !== undefined) {
       console.log('[INFO]: Creating admin...');
@@ -30,6 +29,9 @@ export class StartupObserver implements LifeCycleObserver {
     }
 
     if (process.env.REFRESH_ON_STARTUP === 'true') {
+      console.log('[INFO]: Setting up datasource...')
+      await this.typeorm.connect();
+
       console.log(`[INFO]: Refreshing materialized views...`);
       await this.typeorm.refresh_materialized_views()
 

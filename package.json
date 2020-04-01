@@ -32,7 +32,7 @@
     "prettier:fix": "npm run prettier:cli -- --write",
     "start": "dotenv-load npm run build && dotenv-load node .",
     "test:ci": "npm run test",
-    "test": "dotenv-load lb-nyc lb-mocha \"dist/test\" --scripts-prepend-node-path --allow-console-logs",
+    "test": "TESTING=true dotenv-load lb-nyc lb-mocha \"dist/test\" --scripts-prepend-node-path --allow-console-logs",
     "version:major": "npm version --no-git-tag-version major",
     "version:minor": "npm version --no-git-tag-version minor",
     "version:patch": "npm version --no-git-tag-version patch"
