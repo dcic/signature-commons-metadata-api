@@ -47,11 +47,11 @@ export class TypeORMDataSource extends DataSource {
       );
     } else {
       if (connectionOptions.synchronize === true) {
-        debug('Synchronizing database...');
+        console.log('[INFO]: Synchronizing database...');
         await this._connection.synchronize(false);
       }
       if (connectionOptions.migrationsRun === true) {
-        debug('Running any pending migrations...');
+        console.log('[INFO]: Running any pending migrations...');
         await this._connection.runMigrations({transaction: 'all'});
       }
     }
