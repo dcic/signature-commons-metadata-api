@@ -32,8 +32,8 @@ const controllers = {
 })
 class BulkController {
   constructor(
-    @inject(AuthenticationBindings.CURRENT_USER) private user: UserProfile,
-    @inject(RestBindings.Http.RESPONSE) private response: Response,
+    @inject(AuthenticationBindings.CURRENT_USER, { optional: true }) private user: UserProfile,
+    @inject(RestBindings.Http.RESPONSE, { optional: true }) private response: Response,
     @inject.context() private ctx: RequestContext,
   ) {}
 

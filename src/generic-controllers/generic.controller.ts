@@ -146,8 +146,8 @@ export function GenericControllerFactory<
     constructor(
       @repository(props.GenericRepository)
       public genericRepository: IGenericRepository<GenericEntity>,
-      @inject(AuthenticationBindings.CURRENT_USER) private user: UserProfile,
-      @inject(RestBindings.Http.RESPONSE) private response: Response,
+      @inject(AuthenticationBindings.CURRENT_USER, { optional: true }) private user: UserProfile,
+      @inject(RestBindings.Http.RESPONSE, { optional: true }) private response: Response,
     ) {}
 
     async set_content_range({
@@ -159,7 +159,7 @@ export function GenericControllerFactory<
       contentRange?: boolean;
       results: GenericEntity[];
     }) {
-      if (contentRange !== false) {
+      if (contentRange !== false && this.response !== undefined) {
         if (filter === undefined) filter = {};
         let count: number;
         if (filter.limit === undefined)
