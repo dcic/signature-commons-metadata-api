@@ -1,22 +1,17 @@
-import {MigrationInterface, QueryRunner} from "typeorm";
+import {MigrationInterface, QueryRunner} from 'typeorm';
 
-const tables = [
-  'resources',
-  'libraries',
-  'signatures',
-  'entities',
-  'schemas',
-]
+const tables = ['resources', 'libraries', 'signatures', 'entities', 'schemas'];
 const relationships = [
   {
     parent_singular: 'library',
-    parent: 'libraries', parent_on: 'uuid',
-    child: 'signatures', child_on: 'libid',
+    parent: 'libraries',
+    parent_on: 'uuid',
+    child: 'signatures',
+    child_on: 'libid',
   },
-]
+];
 
 export class complete1585757343614 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<any> {
     for (const tbl of tables) {
       // generalized key/value search on meta
@@ -51,9 +46,11 @@ export class complete1585757343614 implements MigrationInterface {
 
     for (const {
       parent_singular,
-      parent, parent_on,
-      child, child_on,
-     } of relationships) {
+      parent,
+      parent_on,
+      child,
+      child_on,
+    } of relationships) {
       // materialized key value counts for parent-child relationship
       await queryRunner.query(`
         drop materialized view if exists ${parent}_${child}_key_value_counts;
@@ -86,7 +83,7 @@ export class complete1585757343614 implements MigrationInterface {
     ]) {
       await queryRunner.query(`
         drop index if exists ${tbl}_meta_gin_index;
-      `)
+      `);
       await queryRunner.query(`
         drop index if exists ${tbl}_meta_gist_fts_index;
       `);
@@ -94,7 +91,7 @@ export class complete1585757343614 implements MigrationInterface {
         drop materialized view if exists ${tbl}_key_value_counts;
       `);
     }
-    for (const { parent, child } of relationships) {
+    for (const {parent, child} of relationships) {
       await queryRunner.query(`
         drop materialized view if exists ${parent}_${child}_key_value_counts;
       `);

@@ -21,8 +21,10 @@ import {
 })
 class OptimizationController {
   constructor(
-    @inject(AuthenticationBindings.CURRENT_USER, { optional: true }) private user: UserProfile,
-    @inject(RestBindings.Http.RESPONSE, { optional: true }) private response: Response,
+    @inject(AuthenticationBindings.CURRENT_USER, {optional: true})
+    private user: UserProfile,
+    @inject(RestBindings.Http.RESPONSE, {optional: true})
+    private response: Response,
     @inject('datasources.typeorm') private dataSource: TypeORMDataSource,
     @inject.context() private ctx: RequestContext,
   ) {}

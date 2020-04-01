@@ -120,8 +120,10 @@ function makeTemplate<T>(templateString: string, templateVariables: T): string {
 })
 class SummaryController {
   constructor(
-    @inject(AuthenticationBindings.CURRENT_USER, { optional: true }) private user: UserProfile,
-    @inject(RestBindings.Http.RESPONSE, { optional: true }) private response: Response,
+    @inject(AuthenticationBindings.CURRENT_USER, {optional: true})
+    private user: UserProfile,
+    @inject(RestBindings.Http.RESPONSE, {optional: true})
+    private response: Response,
     @inject.context() private ctx: RequestContext,
     @repository(SummaryRepository) public summaryRepo: SummaryRepository,
     @repository(SchemaRepository) public schemaRepo: SchemaRepository,
@@ -130,8 +132,10 @@ class SummaryController {
     @repository(SignatureRepository) public signatureRepo: SignatureRepository,
     @repository(EntityRepository) public entityRepo: EntityRepository,
     @inject('controllers.Library') private libraryController: LibraryController,
-    @inject('controllers.Signature') private signatureController: SignatureController,
-    @inject('controllers.Resource') private resourceController: ResourceController,
+    @inject('controllers.Signature')
+    private signatureController: SignatureController,
+    @inject('controllers.Resource')
+    private resourceController: ResourceController,
   ) {}
 
   tbl_to_repo(tbl: string): IGenericRepository<IGenericEntity> {
@@ -294,7 +298,7 @@ class SummaryController {
           entry.meta.Field_Name,
         table: entry.meta.Table,
         stats: Object.entries(
-          meta_stats[entry.meta.Field_Name]  || {}
+          meta_stats[entry.meta.Field_Name] || {},
         ).map(([key, val]) => ({counts: val, name: key})),
         slice: entry.meta.Slice || 14,
         priority: entry.meta.Priority ?? 1,
@@ -328,7 +332,7 @@ class SummaryController {
           entry.meta.Field_Name,
         table: entry.meta.Table,
         stats: Object.entries(
-          meta_stats[entry.meta.Field_Name] || {}
+          meta_stats[entry.meta.Field_Name] || {},
         ).map(([key, val]) => ({counts: val, name: key})),
         priority: entry.meta.Priority ?? 1,
       };
@@ -361,7 +365,7 @@ class SummaryController {
           entry.meta.Field_Name,
         table: entry.meta.Table,
         stats: Object.entries(
-          meta_stats[entry.meta.Field_Name]  || {}
+          meta_stats[entry.meta.Field_Name] || {},
         ).map(([key, val]) => ({counts: val, name: key})),
         priority: entry.meta.Priority ?? 1,
       };
@@ -393,7 +397,7 @@ class SummaryController {
           entry.meta.Field_Name,
         table: entry.meta.Table,
         stats: Object.entries(
-          meta_stats[entry.meta.Field_Name]  || {}
+          meta_stats[entry.meta.Field_Name] || {},
         ).map(([key, val]) => ({counts: val, name: key})),
         priority: entry.meta.Priority ?? 1,
       };
