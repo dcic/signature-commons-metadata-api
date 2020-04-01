@@ -146,8 +146,10 @@ export function GenericControllerFactory<
     constructor(
       @repository(props.GenericRepository)
       public genericRepository: IGenericRepository<GenericEntity>,
-      @inject(AuthenticationBindings.CURRENT_USER, { optional: true }) private user: UserProfile,
-      @inject(RestBindings.Http.RESPONSE, { optional: true }) private response: Response,
+      @inject(AuthenticationBindings.CURRENT_USER, {optional: true})
+      private user: UserProfile,
+      @inject(RestBindings.Http.RESPONSE, {optional: true})
+      private response: Response,
     ) {}
 
     async set_content_range({
