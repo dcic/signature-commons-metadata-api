@@ -17,6 +17,7 @@ import {
 import {AuthStrategyProvider} from './providers/auth-strategy.provider';
 import {SmartTrieRouter} from './router';
 import {Sequence} from './sequence';
+import {StartupObserver} from './observers/startup';
 import * as packageJson from '../package.json';
 
 export class App extends BootMixin(
@@ -49,6 +50,9 @@ export class App extends BootMixin(
 
     // Set up custom router
     this.bind(RestBindings.ROUTER).toClass(SmartTrieRouter);
+
+    // Lifecycle observers
+    this.lifeCycleObserver(StartupObserver)
 
     // Set up the custom sequence
     this.sequence(Sequence);

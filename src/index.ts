@@ -1,7 +1,5 @@
 import {App} from './application';
 import {ApplicationConfig} from '@loopback/core';
-import {UserProfileRepository} from './repositories';
-import {TypeORMDataSource} from './datasources';
 
 export {App};
 
@@ -28,29 +26,6 @@ export async function main(options: ApplicationConfig = {}) {
   });
   await app.boot();
   await app.start();
-
-  if (
-    process.env['ADMIN_USERNAME'] !== undefined &&
-    process.env['ADMIN_PASSWORD'] !== undefined
-  ) {
-    const userRepo = await app.getRepository(UserProfileRepository);
-    console.log('Creating admin...');
-    await userRepo.deleteAll();
-    await userRepo.create({
-      id: 'admin',
-      username: process.env['ADMIN_USERNAME'],
-      password: process.env['ADMIN_PASSWORD'],
-      roles: '^.+$',
-    });
-  }
-
-  const typeorm = await app.get<TypeORMDataSource>('datasources.typeorm');
-  await typeorm.connect();
-
-  if (process.env.REFRESH_ON_STARTUP === 'true') {
-    console.log(`Refreshing materialized views...`);
-    await typeorm.refresh_materialized_views()
-  }
 
   const url = app.restServer.url;
   console.log(`Server is running at ${url}`);
