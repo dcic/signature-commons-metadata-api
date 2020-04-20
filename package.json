@@ -68,6 +68,7 @@
     "dotenv": "^8.2.0",
     "loopback-connector-postgresql": "github:u8sand/loopback-connector-postgresql#fullTextSearch",
     "memory": "0.0.3",
+    "node-jq": "^1.11.0",
     "passport": "^0.4.1",
     "passport-http": "^0.3.0",
     "reflect-metadata": "^0.1.13",
