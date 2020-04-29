@@ -30,7 +30,7 @@ export class App extends BootMixin(
     this.api({
       openapi: '3.0.0',
       info: {
-        title: 'Signature Commons Metadata API',
+        title: process.env.OPENAPI_TITLE || 'Signature Commons Metadata API',
         version: packageJson.version,
       },
       paths: {},
