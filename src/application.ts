@@ -19,7 +19,6 @@ import {SmartTrieRouter} from './router';
 import {Sequence} from './sequence';
 import {StartupObserver} from './observers/startup';
 import * as packageJson from '../package.json';
-import { BackgroundProcessService } from './services';
 
 export class App extends BootMixin(
   ServiceMixin(RepositoryMixin(RestApplication)),
@@ -54,9 +53,6 @@ export class App extends BootMixin(
 
     // Lifecycle observers
     this.lifeCycleObserver(StartupObserver)
-
-    // Services
-    this.service(BackgroundProcessService)
 
     // Set up the custom sequence
     this.sequence(Sequence);

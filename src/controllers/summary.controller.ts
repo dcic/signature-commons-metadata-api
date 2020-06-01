@@ -1,13 +1,6 @@
 import {authenticate, AuthenticationBindings} from '@loopback/authentication';
-import {inject, service} from '@loopback/core';
-import {
-  api,
-  RequestContext,
-  RestBindings,
-  Response,
-  get,
-  HttpErrors,
-} from '@loopback/rest';
+import {inject} from '@loopback/core';
+import {api, RequestContext, RestBindings, Response, get} from '@loopback/rest';
 import {UserProfile} from '../models';
 import {repository, Fields, Entity, Filter, Where} from '@loopback/repository';
 import {
@@ -28,7 +21,6 @@ import {
   Signature as SignatureController,
 } from '../generic-controllers';
 import {Schema} from '../entities';
-import {BackgroundProcessService} from '../services';
 
 interface CountingSchema {
   // The name of the field
@@ -127,8 +119,6 @@ function makeTemplate<T>(templateString: string, templateVariables: T): string {
   paths: {},
 })
 class SummaryController {
-  _status?: string;
-
   constructor(
     @inject(AuthenticationBindings.CURRENT_USER, {optional: true})
     private user: UserProfile,
@@ -145,12 +135,8 @@ class SummaryController {
     @inject('controllers.Signature')
     private signatureController: SignatureController,
     @inject('controllers.Resource')
-    @service('BackgroundProcessService')
-    private bg: BackgroundProcessService,
     private resourceController: ResourceController,
-  ) {
-    this.bg.status = undefined;
-  }
+  ) {}
 
   tbl_to_repo(tbl: string): IGenericRepository<IGenericEntity> {
     return ({
@@ -532,7 +518,7 @@ class SummaryController {
 
   @authenticate('POST.refresh_summary')
   @get('/refresh', {
-    operationId: 'Summary.refresh',
+    operationId: 'refresh',
     responses: {
       '200': {
         description: 'Compute the summary',
@@ -540,100 +526,76 @@ class SummaryController {
     },
   })
   async refresh(): Promise<void> {
-    if (
-      this.bg.status !== undefined &&
-      this.bg.status.indexOf('ERROR:') !== 0
-    ) {
-      throw new HttpErrors.Conflict(
-        `Summary.refresh already running: ${this.bg.status}`,
-      );
-    } else {
-      this.bg.status = 'Starting...';
-      this.bg.spawn(async () => {
-        this.bg.status = 'get_ui_values';
-        const {ui_values} = await this.get_ui_values();
-        // Check if it has library_name and resource_from_library
-        this.bg.status = 'get_schemas';
-        const schemas = await this.get_schemas();
-        // console.log(schemas)
-        this.bg.status = 'get_resource_signatures_count';
-        const resource_signature_count = await this.get_resource_signatures_count(
-          schemas,
-        );
-        // console.log(resource_signature_count)
-        this.bg.status = 'get_counts';
-        const {table_counts, ui_values: ui_val} = await this.get_counts(
-          Object.keys(resource_signature_count).length,
-          ui_values,
-        );
-        // console.log(table_counts)
-        this.bg.status = 'get_metacounts';
-        const {meta_counts} = await this.get_metacounts();
-        // console.log(meta_counts)
-        this.bg.status = 'get_pie_stats';
-        const {piecounts} = await this.get_pie_stats(ui_val);
-        // console.log(piecounts)
-        // let signature_keys: any = {}
-        // const { count } = await this.signatureRepo.count()
-        // if (count > 0){
-        //   signature_keys = await this.get_signature_keys()
-        // }
-        this.bg.status = 'get_barcounts';
-        const {barcounts} = await this.get_barcounts();
-        this.bg.status = 'get_histograms';
-        const {histograms} = await this.get_histograms();
-        this.bg.status = 'get_barscores';
-        const {barscores} = await this.get_barscores();
-        this.bg.status = 'get_wordcounts';
-        const {wordcounts} = await this.get_wordcounts();
-        this.bg.status = 'Refreshing summary...';
-        await this.summaryRepo.deleteAll();
-        await this.summaryRepo.createAll([
-          {
-            id: 'schemas',
-            value: schemas,
-          },
-          {
-            id: 'resource_signature_count',
-            value: resource_signature_count,
-          },
-          {
-            id: 'table_counts',
-            value: table_counts,
-          },
-          {
-            id: 'meta_counts',
-            value: meta_counts,
-          },
-          {
-            id: 'piecounts',
-            value: piecounts,
-          },
-          {
-            id: 'wordcounts',
-            value: wordcounts,
-          },
-          {
-            id: 'barcounts',
-            value: barcounts,
-          },
-          {
-            id: 'barscores',
-            value: barscores,
-          },
-          {
-            id: 'histograms',
-            value: histograms,
-          },
-        ]);
-        this.bg.status = undefined;
-      });
-    }
+    const {ui_values} = await this.get_ui_values();
+    // Check if it has library_name and resource_from_library
+    const schemas = await this.get_schemas();
+    // console.log(schemas)
+    const resource_signature_count = await this.get_resource_signatures_count(
+      schemas,
+    );
+    // console.log(resource_signature_count)
+    const {table_counts, ui_values: ui_val} = await this.get_counts(
+      Object.keys(resource_signature_count).length,
+      ui_values,
+    );
+    // console.log(table_counts)
+    const {meta_counts} = await this.get_metacounts();
+    // console.log(meta_counts)
+    const {piecounts} = await this.get_pie_stats(ui_val);
+    // console.log(piecounts)
+    // let signature_keys: any = {}
+    // const { count } = await this.signatureRepo.count()
+    // if (count > 0){
+    //   signature_keys = await this.get_signature_keys()
+    // }
+    const {barcounts} = await this.get_barcounts();
+    const {histograms} = await this.get_histograms();
+    const {barscores} = await this.get_barscores();
+    const {wordcounts} = await this.get_wordcounts();
+    await this.summaryRepo.deleteAll();
+    await this.summaryRepo.createAll([
+      {
+        id: 'schemas',
+        value: schemas,
+      },
+      {
+        id: 'resource_signature_count',
+        value: resource_signature_count,
+      },
+      {
+        id: 'table_counts',
+        value: table_counts,
+      },
+      {
+        id: 'meta_counts',
+        value: meta_counts,
+      },
+      {
+        id: 'piecounts',
+        value: piecounts,
+      },
+      {
+        id: 'wordcounts',
+        value: wordcounts,
+      },
+      {
+        id: 'barcounts',
+        value: barcounts,
+      },
+      {
+        id: 'barscores',
+        value: barscores,
+      },
+      {
+        id: 'histograms',
+        value: histograms,
+      },
+    ]);
   }
 
   @authenticate('GET.summary')
   @get('', {
-    operationId: 'Summary.get',
+    operationId: 'get',
     responses: {
       '200': {
         description: 'Get the latest computed summary',
@@ -651,32 +613,6 @@ class SummaryController {
       summary[id] = value;
     }
     return summary;
-  }
-
-  @authenticate('GET.refresh_status')
-  @get('/status', {
-    operationId: 'Summary.status',
-    responses: {
-      '200': {
-        description: 'The status of the last refresh_summary request',
-        content: {
-          'application/json': {
-            schema: {
-              description:
-                'A human readable description of the status. "Ready" will be used when it is done.',
-              type: 'string',
-            },
-          },
-        },
-      },
-    },
-  })
-  async status(): Promise<string> {
-    if (this.bg.status === undefined) {
-      return 'Ready';
-    } else {
-      return this.bg.status;
-    }
   }
 }
 
