@@ -538,10 +538,7 @@ class SummaryController {
   })
   async refresh(): Promise<void> {
     if (this._status !== undefined && this._status.indexOf('ERROR:') !== 0) {
-      throw new HttpErrors.createError(
-        409,
-        `Summary.refresh already running: ${this._status}`,
-      );
+      throw new HttpErrors.Conflict(`Summary.refresh already running: ${this._status}`);
     } else {
       this._status = 'Starting...';
       setTimeout(() => {

@@ -46,10 +46,7 @@ class OptimizationController {
   })
   async refresh(@param.query.string('view') view?: string): Promise<void> {
     if (this._status !== undefined && this._status.indexOf('ERROR:') !== 0) {
-      throw new HttpErrors.createError(
-        409,
-        `Optimization already running: ${this._status}`,
-      );
+      throw new HttpErrors.Conflict(`Optimization already running: ${this._status}`);
     } else {
       this._status = 'Starting...';
       setTimeout(() => {
@@ -77,10 +74,7 @@ class OptimizationController {
   })
   async index(@param.query.string('field') field: string): Promise<void> {
     if (this._status !== undefined && this._status.indexOf('ERROR:') !== 0) {
-      throw new HttpErrors.createError(
-        409,
-        `Optimization already running: ${this._status}`,
-      );
+      throw new HttpErrors.Conflict(`Optimization already running: ${this._status}`);
     } else {
       this._status = 'Starting...';
       setTimeout(() => {
