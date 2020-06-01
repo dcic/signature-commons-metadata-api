@@ -5,6 +5,7 @@ import {
   RequestContext,
   get,
   Response,
+  HttpErrors,
 } from '@loopback/rest';
 import {authenticate, AuthenticationBindings} from '@loopback/authentication';
 import {inject} from '@loopback/core';
@@ -20,7 +21,7 @@ import {
   paths: {},
 })
 class OptimizationController {
-  _status?: string
+  _status?: string;
 
   constructor(
     @inject(AuthenticationBindings.CURRENT_USER, {optional: true})
@@ -30,7 +31,7 @@ class OptimizationController {
     @inject('datasources.typeorm') private dataSource: TypeORMDataSource,
     @inject.context() private ctx: RequestContext,
   ) {
-    this._status = undefined
+    this._status = undefined;
   }
 
   @authenticate('OPTIMIZE.refresh')
@@ -48,14 +49,22 @@ class OptimizationController {
       throw new HttpErrors.HttpError({
         message: `Optimization already running: ${this._status}`,
         statusCode: 409,
-      })
+      });
     } else {
-      this._status = 'Starting...'
-      setTimeout(async () => {
-        this._status = 'refresh_materialized_views'
-        await this.dataSource.refresh_materialized_views(view);
-        this._status = undefined
-      }, 0)
+      this._status = 'Starting...';
+      setTimeout(() => {
+        (async () => {
+          this._status = 'refresh_materialized_views';
+          await this.dataSource.refresh_materialized_views(view);
+          this._status = undefined;
+        })().catch(err => {
+          console.error(err);
+          this._status = `ERROR: ${err}`;
+          setTimeout(() => {
+            this._status = undefined;
+          }, 5 * 60 * 1000);
+        });
+      }, 0);
     }
   }
 
@@ -74,20 +83,28 @@ class OptimizationController {
       throw new HttpErrors.HttpError({
         message: `Optimization already running: ${this._status}`,
         statusCode: 409,
-      })
+      });
     } else {
-      this._status = 'Starting...'
-      setTimeout(async () => {
-        this._status = 'get repo'
-        const field_split = field.split('.');
-        const table = field_split[0];
-        const repo = await this.ctx.get<IGenericRepository<IGenericEntity>>(
-          `repositories.${table}`,
-        );
-        this._status = 'ensureIndex'
-        await repo.ensureIndex(field_split.slice(1).join('.'));
-        this._status = undefined
-      }, 0)
+      this._status = 'Starting...';
+      setTimeout(() => {
+        (async () => {
+          this._status = 'get repo';
+          const field_split = field.split('.');
+          const table = field_split[0];
+          const repo = await this.ctx.get<IGenericRepository<IGenericEntity>>(
+            `repositories.${table}`,
+          );
+          this._status = 'ensureIndex';
+          await repo.ensureIndex(field_split.slice(1).join('.'));
+          this._status = undefined;
+        })().catch(err => {
+          console.error(err);
+          this._status = `ERROR: ${err}`;
+          setTimeout(() => {
+            this._status = undefined;
+          }, 5 * 60 * 1000);
+        });
+      }, 0);
     }
   }
 
@@ -101,7 +118,8 @@ class OptimizationController {
         content: {
           'application/json': {
             schema: {
-              description: 'A human readable description of the status. "Ready" will be used when it is done.',
+              description:
+                'A human readable description of the status. "Ready" will be used when it is done.',
               type: 'string',
             },
           },
@@ -111,9 +129,9 @@ class OptimizationController {
   })
   async status(): Promise<string> {
     if (this._status === undefined) {
-      return 'Ready'
+      return 'Ready';
     } else {
-      return this._status
+      return this._status;
     }
   }
 }
