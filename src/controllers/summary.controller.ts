@@ -1,6 +1,6 @@
 import {authenticate, AuthenticationBindings} from '@loopback/authentication';
 import {inject} from '@loopback/core';
-import {api, RequestContext, RestBindings, Response, get} from '@loopback/rest';
+import {api, RequestContext, RestBindings, Response, get, HttpErrors} from '@loopback/rest';
 import {UserProfile} from '../models';
 import {repository, Fields, Entity, Filter, Where} from '@loopback/repository';
 import {
@@ -119,6 +119,8 @@ function makeTemplate<T>(templateString: string, templateVariables: T): string {
   paths: {},
 })
 class SummaryController {
+  _status?: string
+
   constructor(
     @inject(AuthenticationBindings.CURRENT_USER, {optional: true})
     private user: UserProfile,
@@ -136,7 +138,9 @@ class SummaryController {
     private signatureController: SignatureController,
     @inject('controllers.Resource')
     private resourceController: ResourceController,
-  ) {}
+  ) {
+    this._status = undefined
+  }
 
   tbl_to_repo(tbl: string): IGenericRepository<IGenericEntity> {
     return ({
@@ -518,7 +522,7 @@ class SummaryController {
 
   @authenticate('POST.refresh_summary')
   @get('/refresh', {
-    operationId: 'refresh',
+    operationId: 'Summary.refresh',
     responses: {
       '200': {
         description: 'Compute the summary',
@@ -526,76 +530,98 @@ class SummaryController {
     },
   })
   async refresh(): Promise<void> {
-    const {ui_values} = await this.get_ui_values();
-    // Check if it has library_name and resource_from_library
-    const schemas = await this.get_schemas();
-    // console.log(schemas)
-    const resource_signature_count = await this.get_resource_signatures_count(
-      schemas,
-    );
-    // console.log(resource_signature_count)
-    const {table_counts, ui_values: ui_val} = await this.get_counts(
-      Object.keys(resource_signature_count).length,
-      ui_values,
-    );
-    // console.log(table_counts)
-    const {meta_counts} = await this.get_metacounts();
-    // console.log(meta_counts)
-    const {piecounts} = await this.get_pie_stats(ui_val);
-    // console.log(piecounts)
-    // let signature_keys: any = {}
-    // const { count } = await this.signatureRepo.count()
-    // if (count > 0){
-    //   signature_keys = await this.get_signature_keys()
-    // }
-    const {barcounts} = await this.get_barcounts();
-    const {histograms} = await this.get_histograms();
-    const {barscores} = await this.get_barscores();
-    const {wordcounts} = await this.get_wordcounts();
-    await this.summaryRepo.deleteAll();
-    await this.summaryRepo.createAll([
-      {
-        id: 'schemas',
-        value: schemas,
-      },
-      {
-        id: 'resource_signature_count',
-        value: resource_signature_count,
-      },
-      {
-        id: 'table_counts',
-        value: table_counts,
-      },
-      {
-        id: 'meta_counts',
-        value: meta_counts,
-      },
-      {
-        id: 'piecounts',
-        value: piecounts,
-      },
-      {
-        id: 'wordcounts',
-        value: wordcounts,
-      },
-      {
-        id: 'barcounts',
-        value: barcounts,
-      },
-      {
-        id: 'barscores',
-        value: barscores,
-      },
-      {
-        id: 'histograms',
-        value: histograms,
-      },
-    ]);
+    if (this._status !== undefined) {
+      throw new HttpErrors.HttpError({
+        message: 'Summary.refresh already running',
+        statusCode: 409,
+      })
+    } else {
+      this._status = 'Starting...'
+      setTimeout(async () => {
+        this._status = 'get_ui_values'
+        const {ui_values} = await this.get_ui_values();
+        // Check if it has library_name and resource_from_library
+        this._status = 'get_schemas'
+        const schemas = await this.get_schemas();
+        // console.log(schemas)
+        this._status = 'get_resource_signatures_count'
+        const resource_signature_count = await this.get_resource_signatures_count(
+          schemas,
+        );
+        // console.log(resource_signature_count)
+        this._status = 'get_counts'
+        const {table_counts, ui_values: ui_val} = await this.get_counts(
+          Object.keys(resource_signature_count).length,
+          ui_values,
+        );
+        // console.log(table_counts)
+        this._status = 'get_metacounts'
+        const {meta_counts} = await this.get_metacounts();
+        // console.log(meta_counts)
+        this._status = 'get_pie_stats'
+        const {piecounts} = await this.get_pie_stats(ui_val);
+        // console.log(piecounts)
+        // let signature_keys: any = {}
+        // const { count } = await this.signatureRepo.count()
+        // if (count > 0){
+        //   signature_keys = await this.get_signature_keys()
+        // }
+        this._status = 'get_barcounts'
+        const {barcounts} = await this.get_barcounts();
+        this._status = 'get_histograms'
+        const {histograms} = await this.get_histograms();
+        this._status = 'get_barscores'
+        const {barscores} = await this.get_barscores();
+        this._status = 'get_wordcounts'
+        const {wordcounts} = await this.get_wordcounts();
+        this._status = 'Refreshing summary...'
+        await this.summaryRepo.deleteAll();
+        await this.summaryRepo.createAll([
+          {
+            id: 'schemas',
+            value: schemas,
+          },
+          {
+            id: 'resource_signature_count',
+            value: resource_signature_count,
+          },
+          {
+            id: 'table_counts',
+            value: table_counts,
+          },
+          {
+            id: 'meta_counts',
+            value: meta_counts,
+          },
+          {
+            id: 'piecounts',
+            value: piecounts,
+          },
+          {
+            id: 'wordcounts',
+            value: wordcounts,
+          },
+          {
+            id: 'barcounts',
+            value: barcounts,
+          },
+          {
+            id: 'barscores',
+            value: barscores,
+          },
+          {
+            id: 'histograms',
+            value: histograms,
+          },
+        ]);
+        this._status = undefined
+      }, 0)
+    }
   }
 
   @authenticate('GET.summary')
   @get('', {
-    operationId: 'get',
+    operationId: 'Summary.get',
     responses: {
       '200': {
         description: 'Get the latest computed summary',
@@ -613,6 +639,31 @@ class SummaryController {
       summary[id] = value;
     }
     return summary;
+  }
+
+  @authenticate('GET.refresh_status')
+  @get('/status', {
+    operationId: 'Summary.status',
+    responses: {
+      '200': {
+        description: 'The status of the last refresh_summary request',
+        content: {
+          'application/json': {
+            schema: {
+              description: 'A human readable description of the status. "Ready" will be used when it is done.',
+              type: 'string',
+            },
+          },
+        },
+      }
+    },
+  })
+  async status(): Promise<string> {
+    if (this._status === undefined) {
+      return 'Ready'
+    } else {
+      return this._status
+    }
   }
 }
 

@@ -20,6 +20,8 @@ import {
   paths: {},
 })
 class OptimizationController {
+  _status?: string
+
   constructor(
     @inject(AuthenticationBindings.CURRENT_USER, {optional: true})
     private user: UserProfile,
@@ -27,11 +29,13 @@ class OptimizationController {
     private response: Response,
     @inject('datasources.typeorm') private dataSource: TypeORMDataSource,
     @inject.context() private ctx: RequestContext,
-  ) {}
+  ) {
+    this._status = undefined
+  }
 
-  @authenticate('OPTIMIZE')
+  @authenticate('OPTIMIZE.refresh')
   @get('/refresh', {
-    operationId: 'optimize.refresh',
+    operationId: 'Optimization.refresh',
     tags: ['Optimization'],
     responses: {
       '200': {
@@ -40,12 +44,24 @@ class OptimizationController {
     },
   })
   async refresh(@param.query.string('view') view?: string): Promise<void> {
-    await this.dataSource.refresh_materialized_views(view);
+    if (this._status !== undefined) {
+      throw new HttpErrors.HttpError({
+        message: `Optimization already running: ${this._status}`,
+        statusCode: 409,
+      })
+    } else {
+      this._status = 'Starting...'
+      setTimeout(async () => {
+        this._status = 'refresh_materialized_views'
+        await this.dataSource.refresh_materialized_views(view);
+        this._status = undefined
+      }, 0)
+    }
   }
 
-  @authenticate('OPTIMIZE')
+  @authenticate('OPTIMIZE.index')
   @get('/index', {
-    operationId: 'optimize.index',
+    operationId: 'Optimization.index',
     tags: ['Optimization'],
     responses: {
       '200': {
@@ -54,12 +70,51 @@ class OptimizationController {
     },
   })
   async index(@param.query.string('field') field: string): Promise<void> {
-    const field_split = field.split('.');
-    const table = field_split[0];
-    const repo = await this.ctx.get<IGenericRepository<IGenericEntity>>(
-      `repositories.${table}`,
-    );
-    await repo.ensureIndex(field_split.slice(1).join('.'));
+    if (this._status !== undefined) {
+      throw new HttpErrors.HttpError({
+        message: `Optimization already running: ${this._status}`,
+        statusCode: 409,
+      })
+    } else {
+      this._status = 'Starting...'
+      setTimeout(async () => {
+        this._status = 'get repo'
+        const field_split = field.split('.');
+        const table = field_split[0];
+        const repo = await this.ctx.get<IGenericRepository<IGenericEntity>>(
+          `repositories.${table}`,
+        );
+        this._status = 'ensureIndex'
+        await repo.ensureIndex(field_split.slice(1).join('.'));
+        this._status = undefined
+      }, 0)
+    }
+  }
+
+  @authenticate('OPTIMIZE.status')
+  @get('/status', {
+    operationId: 'Optimization.status',
+    tags: ['Optimization'],
+    responses: {
+      '200': {
+        description: 'The status of the last optimization request',
+        content: {
+          'application/json': {
+            schema: {
+              description: 'A human readable description of the status. "Ready" will be used when it is done.',
+              type: 'string',
+            },
+          },
+        },
+      },
+    },
+  })
+  async status(): Promise<string> {
+    if (this._status === undefined) {
+      return 'Ready'
+    } else {
+      return this._status
+    }
   }
 }
 
