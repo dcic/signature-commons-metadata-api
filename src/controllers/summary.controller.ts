@@ -537,11 +537,11 @@ class SummaryController {
     },
   })
   async refresh(): Promise<void> {
-    if (this._status !== undefined) {
-      throw new HttpErrors.HttpError({
-        message: 'Summary.refresh already running',
-        statusCode: 409,
-      });
+    if (this._status !== undefined && this._status.indexOf('ERROR:') !== 0) {
+      throw new HttpErrors.createError(
+        409,
+        `Summary.refresh already running: ${this._status}`,
+      );
     } else {
       this._status = 'Starting...';
       setTimeout(() => {
@@ -626,9 +626,6 @@ class SummaryController {
         })().catch(err => {
           console.error(err);
           this._status = `ERROR: ${err}`;
-          setTimeout(() => {
-            this._status = undefined;
-          }, 5 * 60 * 1000);
         });
       }, 0);
     }
