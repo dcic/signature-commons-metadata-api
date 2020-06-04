@@ -127,8 +127,6 @@ function makeTemplate<T>(templateString: string, templateVariables: T): string {
   paths: {},
 })
 class SummaryController {
-  _status?: string;
-
   constructor(
     @inject(AuthenticationBindings.CURRENT_USER, {optional: true})
     private user: UserProfile,
@@ -532,7 +530,7 @@ class SummaryController {
 
   @authenticate('POST.refresh_summary')
   @get('/refresh', {
-    operationId: 'Summary.refresh',
+    operationId: 'refresh',
     responses: {
       '200': {
         description: 'Compute the summary',
@@ -633,7 +631,7 @@ class SummaryController {
 
   @authenticate('GET.summary')
   @get('', {
-    operationId: 'Summary.get',
+    operationId: 'get',
     responses: {
       '200': {
         description: 'Get the latest computed summary',

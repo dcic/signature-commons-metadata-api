@@ -5,7 +5,6 @@ import {
   RequestContext,
   get,
   Response,
-  HttpErrors,
 } from '@loopback/rest';
 import {authenticate, AuthenticationBindings} from '@loopback/authentication';
 import {inject, service} from '@loopback/core';
@@ -32,9 +31,9 @@ class OptimizationController {
     @inject.context() private ctx: RequestContext,
   ) {}
 
-  @authenticate('OPTIMIZE.refresh')
+  @authenticate('OPTIMIZE')
   @get('/refresh', {
-    operationId: 'Optimization.refresh',
+    operationId: 'optimize.refresh',
     tags: ['Optimization'],
     responses: {
       '200': {
@@ -60,9 +59,9 @@ class OptimizationController {
     }
   }
 
-  @authenticate('OPTIMIZE.index')
+  @authenticate('OPTIMIZE')
   @get('/index', {
-    operationId: 'Optimization.index',
+    operationId: 'optimize.index',
     tags: ['Optimization'],
     responses: {
       '200': {
