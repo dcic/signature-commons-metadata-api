@@ -27,13 +27,13 @@ class OptimizationController {
     @inject(RestBindings.Http.RESPONSE, {optional: true})
     private response: Response,
     @inject('datasources.typeorm') private dataSource: TypeORMDataSource,
-    @service('BackgroundProcessService') private bg: BackgroundProcessService,
+    @service(BackgroundProcessService) private bg: BackgroundProcessService,
     @inject.context() private ctx: RequestContext,
   ) {}
 
   @authenticate('OPTIMIZE')
   @get('/refresh', {
-    operationId: 'optimize.refresh',
+    operationId: 'Optimize.refresh',
     tags: ['Optimization'],
     responses: {
       '200': {
@@ -42,26 +42,15 @@ class OptimizationController {
     },
   })
   async refresh(@param.query.string('view') view?: string): Promise<void> {
-    if (
-      this.bg.status !== undefined &&
-      this.bg.status.indexOf('ERROR:') !== 0
-    ) {
-      throw new HttpErrors.Conflict(
-        `Optimization already running: ${this.bg.status}`,
-      );
-    } else {
-      this.bg.status = 'Starting...';
-      this.bg.spawn(async () => {
-        this.bg.status = 'refresh_materialized_views';
-        await this.dataSource.refresh_materialized_views(view);
-        this.bg.status = undefined;
-      });
-    }
+    await this.bg.spawn(async () => {
+      await this.bg.setStatus('refresh_materialized_views');
+      await this.dataSource.refresh_materialized_views(view);
+    });
   }
 
   @authenticate('OPTIMIZE')
   @get('/index', {
-    operationId: 'optimize.index',
+    operationId: 'Optimize.index',
     tags: ['Optimization'],
     responses: {
       '200': {
@@ -70,32 +59,21 @@ class OptimizationController {
     },
   })
   async index(@param.query.string('field') field: string): Promise<void> {
-    if (
-      this.bg.status !== undefined &&
-      this.bg.status.indexOf('ERROR:') !== 0
-    ) {
-      throw new HttpErrors.Conflict(
-        `Optimization already running: ${this.bg.status}`,
+    await this.bg.spawn(async () => {
+      await this.bg.setStatus('get repo');
+      const field_split = field.split('.');
+      const table = field_split[0];
+      const repo = await this.ctx.get<IGenericRepository<IGenericEntity>>(
+        `repositories.${table}`,
       );
-    } else {
-      this.bg.status = 'Starting...';
-      this.bg.spawn(async () => {
-        this.bg.status = 'get repo';
-        const field_split = field.split('.');
-        const table = field_split[0];
-        const repo = await this.ctx.get<IGenericRepository<IGenericEntity>>(
-          `repositories.${table}`,
-        );
-        this.bg.status = 'ensureIndex';
-        await repo.ensureIndex(field_split.slice(1).join('.'));
-        this.bg.status = undefined;
-      });
-    }
+      await this.bg.setStatus('ensureIndex');
+      await repo.ensureIndex(field_split.slice(1).join('.'));
+    });
   }
 
   @authenticate('OPTIMIZE.status')
   @get('/status', {
-    operationId: 'Optimization.status',
+    operationId: 'Optimize.status',
     tags: ['Optimization'],
     responses: {
       '200': {
@@ -113,11 +91,7 @@ class OptimizationController {
     },
   })
   async status(): Promise<string> {
-    if (this.bg.status === undefined) {
-      return 'Ready';
-    } else {
-      return this.bg.status;
-    }
+    return this.bg.getStatus();
   }
 }
 

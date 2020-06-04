@@ -1,13 +1,6 @@
 import {authenticate, AuthenticationBindings} from '@loopback/authentication';
 import {inject, service} from '@loopback/core';
-import {
-  api,
-  RequestContext,
-  RestBindings,
-  Response,
-  get,
-  HttpErrors,
-} from '@loopback/rest';
+import {api, RequestContext, RestBindings, Response, get} from '@loopback/rest';
 import {UserProfile} from '../models';
 import {repository, Fields, Entity, Filter, Where} from '@loopback/repository';
 import {
@@ -139,16 +132,13 @@ class SummaryController {
     @repository(LibraryRepository) public libraryRepo: LibraryRepository,
     @repository(SignatureRepository) public signatureRepo: SignatureRepository,
     @repository(EntityRepository) public entityRepo: EntityRepository,
+    @service(BackgroundProcessService) private bg: BackgroundProcessService,
     @inject('controllers.Library') private libraryController: LibraryController,
     @inject('controllers.Signature')
     private signatureController: SignatureController,
     @inject('controllers.Resource')
-    @service('BackgroundProcessService')
-    private bg: BackgroundProcessService,
     private resourceController: ResourceController,
-  ) {
-    this.bg.status = undefined;
-  }
+  ) {}
 
   tbl_to_repo(tbl: string): IGenericRepository<IGenericEntity> {
     return ({
@@ -538,95 +528,84 @@ class SummaryController {
     },
   })
   async refresh(): Promise<void> {
-    if (
-      this.bg.status !== undefined &&
-      this.bg.status.indexOf('ERROR:') !== 0
-    ) {
-      throw new HttpErrors.Conflict(
-        `Summary.refresh already running: ${this.bg.status}`,
+    await this.bg.spawn(async () => {
+      await this.bg.setStatus('get_ui_values');
+      const {ui_values} = await this.get_ui_values();
+      // Check if it has library_name and resource_from_library
+      await this.bg.setStatus('get_schemas');
+      const schemas = await this.get_schemas();
+      // console.log(schemas)
+      await this.bg.setStatus('get_resource_signatures_count');
+      const resource_signature_count = await this.get_resource_signatures_count(
+        schemas,
       );
-    } else {
-      this.bg.status = 'Starting...';
-      this.bg.spawn(async () => {
-        this.bg.status = 'get_ui_values';
-        const {ui_values} = await this.get_ui_values();
-        // Check if it has library_name and resource_from_library
-        this.bg.status = 'get_schemas';
-        const schemas = await this.get_schemas();
-        // console.log(schemas)
-        this.bg.status = 'get_resource_signatures_count';
-        const resource_signature_count = await this.get_resource_signatures_count(
-          schemas,
-        );
-        // console.log(resource_signature_count)
-        this.bg.status = 'get_counts';
-        const {table_counts, ui_values: ui_val} = await this.get_counts(
-          Object.keys(resource_signature_count).length,
-          ui_values,
-        );
-        // console.log(table_counts)
-        this.bg.status = 'get_metacounts';
-        const {meta_counts} = await this.get_metacounts();
-        // console.log(meta_counts)
-        this.bg.status = 'get_pie_stats';
-        const {piecounts} = await this.get_pie_stats(ui_val);
-        // console.log(piecounts)
-        // let signature_keys: any = {}
-        // const { count } = await this.signatureRepo.count()
-        // if (count > 0){
-        //   signature_keys = await this.get_signature_keys()
-        // }
-        this.bg.status = 'get_barcounts';
-        const {barcounts} = await this.get_barcounts();
-        this.bg.status = 'get_histograms';
-        const {histograms} = await this.get_histograms();
-        this.bg.status = 'get_barscores';
-        const {barscores} = await this.get_barscores();
-        this.bg.status = 'get_wordcounts';
-        const {wordcounts} = await this.get_wordcounts();
-        this.bg.status = 'Refreshing summary...';
-        await this.summaryRepo.deleteAll();
-        await this.summaryRepo.createAll([
-          {
-            id: 'schemas',
-            value: schemas,
-          },
-          {
-            id: 'resource_signature_count',
-            value: resource_signature_count,
-          },
-          {
-            id: 'table_counts',
-            value: table_counts,
-          },
-          {
-            id: 'meta_counts',
-            value: meta_counts,
-          },
-          {
-            id: 'piecounts',
-            value: piecounts,
-          },
-          {
-            id: 'wordcounts',
-            value: wordcounts,
-          },
-          {
-            id: 'barcounts',
-            value: barcounts,
-          },
-          {
-            id: 'barscores',
-            value: barscores,
-          },
-          {
-            id: 'histograms',
-            value: histograms,
-          },
-        ]);
-        this.bg.status = undefined;
-      });
-    }
+      // console.log(resource_signature_count)
+      await this.bg.setStatus('get_counts');
+      const {table_counts, ui_values: ui_val} = await this.get_counts(
+        Object.keys(resource_signature_count).length,
+        ui_values,
+      );
+      // console.log(table_counts)
+      await this.bg.setStatus('get_metacounts');
+      const {meta_counts} = await this.get_metacounts();
+      // console.log(meta_counts)
+      await this.bg.setStatus('get_pie_stats');
+      const {piecounts} = await this.get_pie_stats(ui_val);
+      // console.log(piecounts)
+      // let signature_keys: any = {}
+      // const { count } = await this.signatureRepo.count()
+      // if (count > 0){
+      //   signature_keys = await this.get_signature_keys()
+      // }
+      await this.bg.setStatus('get_barcounts');
+      const {barcounts} = await this.get_barcounts();
+      await this.bg.setStatus('get_histograms');
+      const {histograms} = await this.get_histograms();
+      await this.bg.setStatus('get_barscores');
+      const {barscores} = await this.get_barscores();
+      await this.bg.setStatus('get_wordcounts');
+      const {wordcounts} = await this.get_wordcounts();
+      await this.bg.setStatus('Refreshing summary...');
+      await this.summaryRepo.deleteAll();
+      await this.summaryRepo.createAll([
+        {
+          id: 'schemas',
+          value: schemas,
+        },
+        {
+          id: 'resource_signature_count',
+          value: resource_signature_count,
+        },
+        {
+          id: 'table_counts',
+          value: table_counts,
+        },
+        {
+          id: 'meta_counts',
+          value: meta_counts,
+        },
+        {
+          id: 'piecounts',
+          value: piecounts,
+        },
+        {
+          id: 'wordcounts',
+          value: wordcounts,
+        },
+        {
+          id: 'barcounts',
+          value: barcounts,
+        },
+        {
+          id: 'barscores',
+          value: barscores,
+        },
+        {
+          id: 'histograms',
+          value: histograms,
+        },
+      ]);
+    });
   }
 
   @authenticate('GET.summary')
@@ -670,11 +649,7 @@ class SummaryController {
     },
   })
   async status(): Promise<string> {
-    if (this.bg.status === undefined) {
-      return 'Ready';
-    } else {
-      return this.bg.status;
-    }
+    return this.bg.getStatus();
   }
 }
 
