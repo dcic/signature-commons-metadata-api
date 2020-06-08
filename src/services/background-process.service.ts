@@ -37,16 +37,16 @@ export class BackgroundProcessService {
         `Summary.refresh already running: ${await this.getStatus()}`,
       );
     } else {
-      try {
-        await this.setStatus('Starting...');
-        process.nextTick(async () => {
+      await this.setStatus('Starting...');
+      process.nextTick(async () => {
+        try {
           await callable();
           await this.resetStatus();
-        });
-      } catch (err) {
-        console.error(err);
-        await this.setStatus(`ERROR: ${err}`);
-      }
+        } catch (err) {
+          console.error(err);
+          await this.setStatus(`ERROR: ${err}`);
+        }
+      });
     }
   }
 }
