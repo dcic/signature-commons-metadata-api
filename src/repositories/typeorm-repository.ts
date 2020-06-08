@@ -501,7 +501,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       }
     } else if (typeof fullTextSearch === 'string') {
       return this._fullTextSearchQuery({
-        and: fullTextSearch.split(/ +/g).map(term => ({eq: term})),
+        and: fullTextSearch.split(/[ :_]+/g).map(term => ({eq: term})),
       });
     }
     throw new HttpErrors.UnprocessableEntity(
