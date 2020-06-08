@@ -125,6 +125,7 @@ export class Resource extends GenericResourceController {
         },
         fields: ['id'],
       },
+      contentRange: false,
     } as any)) {
       count += (
         await libraryController.signatures_count(
