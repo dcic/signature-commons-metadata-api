@@ -88,12 +88,12 @@ export class TypeORMDataSource extends DataSource {
   }
 
   async refresh_materialized_views(view?: string) {
-    const views = []
+    const views = [];
     for (const tbl of tables) {
-      views.push(`${tbl}_key_value_counts`)
+      views.push(`${tbl}_key_value_counts`);
     }
-    for (const { parent, child } of relationships) {
-      views.push(`${parent}_${child}_key_value_counts`)
+    for (const {parent, child} of relationships) {
+      views.push(`${parent}_${child}_key_value_counts`);
     }
 
     for (const v of views) {
