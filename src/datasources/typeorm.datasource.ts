@@ -18,6 +18,17 @@ import {AnyObject} from 'loopback-datasource-juggler';
 import debug from '../util/debug';
 import {escapeLiteral, buildLimit} from '../util/sql_building';
 
+const tables = ['resources', 'libraries', 'signatures', 'entities', 'schemas'];
+const relationships = [
+  {
+    parent_singular: 'library',
+    parent: 'libraries',
+    parent_on: 'uuid',
+    child: 'signatures',
+    child_on: 'libid',
+  },
+];
+
 export class TypeORMDataSource extends DataSource {
   static dataSourceName = 'typeorm';
 
@@ -77,12 +88,14 @@ export class TypeORMDataSource extends DataSource {
   }
 
   async refresh_materialized_views(view?: string) {
-    const views = [
-      'entities_key_value_counts',
-      'libraries_key_value_counts',
-      'libraries_signatures_key_value_counts',
-      'signatures_key_value_counts',
-    ];
+    const views = []
+    for (const tbl of tables) {
+      views.push(`${tbl}_key_value_counts`)
+    }
+    for (const { parent, child } of relationships) {
+      views.push(`${parent}_${child}_key_value_counts`)
+    }
+
     for (const v of views) {
       if (view === undefined || v === view) {
         await (await this.getConnection()).query(
