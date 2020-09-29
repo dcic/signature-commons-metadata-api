@@ -44,10 +44,13 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     public dataSource: TypeORMDataSource,
   ) {
     this.id_generator = new UniqueIDGenerator();
+    if (this.typeOrmRepo == undefined){
+      this.init()
+    }
   }
 
   async init() {
-    if (this.typeOrmRepo != null) return;
+    if (this.typeOrmRepo != null && this.typeOrmRepo != undefined) return;
     this.typeOrmRepo = <Repository<T>>(
       await this.dataSource.getRepository(this.entityClass as any)
     );
@@ -836,11 +839,12 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     await this.typeOrmRepo.query(`
       create index concurrently
       if not exists
+      ${this.tableName}_${field.replace(/\./g, "_")}
       on "${this.tableName}"
       using ${method}
-      (
+      ((
         ${this._dotToCol(field)}
-      )`);
+      ))`);
   }
 
   _typeormOrder(order?: string | string[] | {[key: string]: string}) {
