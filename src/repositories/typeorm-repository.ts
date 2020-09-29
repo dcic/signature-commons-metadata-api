@@ -47,7 +47,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
   }
 
   async init() {
-    if (this.typeOrmRepo != null && this.typeOrmRepo != undefined) return;
+    if (this.typeOrmRepo !== null && this.typeOrmRepo !== undefined) return;
     this.typeOrmRepo = <Repository<T>>(
       await this.dataSource.getRepository(this.entityClass as any)
     );
