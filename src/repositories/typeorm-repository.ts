@@ -44,9 +44,6 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     public dataSource: TypeORMDataSource,
   ) {
     this.id_generator = new UniqueIDGenerator();
-    if (this.typeOrmRepo == undefined){
-      this.init()
-    }
   }
 
   async init() {
@@ -830,6 +827,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
   }
 
   async ensureIndex(field: string, method?: string): Promise<void> {
+    await this.init();
     const valid_methods = ['btree', 'gist', 'gin', 'hash'];
     if (method === undefined) {
       method = 'btree';
@@ -839,7 +837,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     await this.typeOrmRepo.query(`
       create index concurrently
       if not exists
-      ${this.tableName}_${field.replace(/\./g, "_")}
+      ${this.tableName}_${this._slugify(field)}_${method}
       on "${this.tableName}"
       using ${method}
       ((
