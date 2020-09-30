@@ -471,7 +471,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
           Object.assign(all_params, params);
         }
         return {
-          query: `'('||${all_queries.join(`||'&'||`)}||')'`,
+          query: `(${all_queries.join(` && `)})'`,
           params: all_params,
         };
       } else if (fullTextSearch.or !== undefined) {
@@ -483,26 +483,28 @@ export class TypeORMRepository<T extends Entity, ID extends string>
           Object.assign(all_params, params);
         }
         return {
-          query: `'('||${all_queries.join(`||'|'||`)}||')'`,
+          query: `(${all_queries.join(` || `)})`,
           params: all_params,
         };
       } else if (fullTextSearch.eq !== undefined) {
         const id = this.id_generator.id();
         return {
-          query: `:s_${id}`,
+          query: `plainto_tsquery('english', :s_${id})`,
           params: {[`s_${id}`]: fullTextSearch.eq},
         };
       } else if (fullTextSearch.ne !== undefined) {
         const id = this.id_generator.id();
         return {
-          query: `'!'||:s_${id}`,
+          query: `(!! plainto_tsquery('english', :s_${id}))`,
           params: {[`s_${id}`]: fullTextSearch.ne},
         };
       }
     } else if (typeof fullTextSearch === 'string') {
-      return this._fullTextSearchQuery({
-        and: fullTextSearch.split(/[ :_]+/g).map(term => ({eq: term})),
-      });
+      const id = this.id_generator.id();
+      return {
+        query: `plainto_tsquery('english', :s_${id})`,
+        params: {[`s_${id}`]: fullTextSearch},
+      };
     }
     throw new HttpErrors.UnprocessableEntity(
       'Type not recognized for fullTextSearch query',
@@ -766,7 +768,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
             );
             this._where(
               qb,
-              `to_tsvector('english', ${col}) @@ to_tsquery('english', ${query})`,
+              `to_tsvector('english', ${col}) @@ ${query}`,
               {
                 ...params,
               },
