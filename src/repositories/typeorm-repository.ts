@@ -486,6 +486,12 @@ export class TypeORMRepository<T extends Entity, ID extends string>
           query: `(${all_queries.join(` || `)})`,
           params: all_params,
         };
+      } else if (fullTextSearch.not !== undefined) {
+        const { query, params } = this._fullTextSearchQuery(fullTextSearch.not);
+        return {
+          query: `(!! ${query})`,
+          params: params,
+        };
       } else if (fullTextSearch.eq !== undefined) {
         const id = this.id_generator.id();
         return {
