@@ -471,7 +471,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
           Object.assign(all_params, params);
         }
         return {
-          query: `(${all_queries.join(` && `)})'`,
+          query: `(${all_queries.join(` && `)})`,
           params: all_params,
         };
       } else if (fullTextSearch.or !== undefined) {
