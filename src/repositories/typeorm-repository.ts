@@ -487,7 +487,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
           params: all_params,
         };
       } else if (fullTextSearch.not !== undefined) {
-        const { query, params } = this._fullTextSearchQuery(fullTextSearch.not);
+        const {query, params} = this._fullTextSearchQuery(fullTextSearch.not);
         return {
           query: `(!! ${query})`,
           params: params,
