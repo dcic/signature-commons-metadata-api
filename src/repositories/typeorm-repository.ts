@@ -203,6 +203,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
         (
           ${queryset_query}
         ) qs inner join lateral jsonb_deep_key_value(row_to_json(qs)::jsonb) on true
+      where value != 'null'::jsonb
       group by key
       order by count desc
       ${filter.skip ? `offset $${1 + queryset_params.length}` : ''}
@@ -249,6 +250,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
         (
           ${queryset_query}
         ) qs inner join lateral jsonb_deep_key_value(row_to_json(qs)::jsonb) on true
+      where value != 'null'::jsonb
       group by key, value
       order by count desc
       ${filter.skip ? `offset $${1 + queryset_params.length}` : ''}
@@ -296,6 +298,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
         (
           ${queryset_query}
         ) qs inner join lateral jsonb_deep_key_value(row_to_json(qs)::jsonb) on true
+      where value != 'null'::jsonb
       group by key, value
       order by count desc
       ${filter.skip ? `offset $${1 + queryset_params.length}` : ''}
