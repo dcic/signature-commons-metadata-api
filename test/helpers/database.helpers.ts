@@ -1,8 +1,8 @@
-import * as libraryTest from '@dcic/signature-commons-schema/core/library.test.json';
-import * as signatureTest from '@dcic/signature-commons-schema/core/signature.test.json';
-import * as entityTest from '@dcic/signature-commons-schema/core/entity.test.json';
-import * as resourceTest from '@dcic/signature-commons-schema/core/resource.test.json';
-import * as schemaTest from '@dcic/signature-commons-schema/core/schema.test.json';
+import * as libraryTest from '@maayanlab/signature-commons-schema/core/library.test.json';
+import * as signatureTest from '@maayanlab/signature-commons-schema/core/signature.test.json';
+import * as entityTest from '@maayanlab/signature-commons-schema/core/entity.test.json';
+import * as resourceTest from '@maayanlab/signature-commons-schema/core/resource.test.json';
+import * as schemaTest from '@maayanlab/signature-commons-schema/core/schema.test.json';
 import {Resource, Library, Signature, Entity, Schema} from '../../src/entities';
 import {UserProfile} from '../../src/models';
 import {
