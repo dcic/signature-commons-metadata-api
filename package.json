@@ -51,7 +51,7 @@
     "src"
   ],
   "dependencies": {
-    "@dcic/signature-commons-schema": "^1.5.0",
+    "@maayanlab/signature-commons-schema": "1.5.5",
     "@loopback/authentication": "^1.2.1",
     "@loopback/boot": "^1.7.4",
     "@loopback/context": "^1.25.1",
