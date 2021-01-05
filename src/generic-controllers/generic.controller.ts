@@ -1,4 +1,4 @@
-import {validate} from '@dcic/signature-commons-schema';
+import {validate} from '@maayanlab/signature-commons-schema';
 import {
   authenticate,
   AuthenticationBindings,

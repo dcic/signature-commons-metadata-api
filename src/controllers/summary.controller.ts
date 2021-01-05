@@ -276,6 +276,7 @@ class SummaryController {
     const piecounts: {
       [key: string]: {
         Preferred_Name: string;
+        Field_Name: string;
         table: string;
         stats: Array<{
           counts: number;
@@ -298,6 +299,7 @@ class SummaryController {
           entry.meta.Preferred_Name_Singular ||
           entry.meta.Preferred_Name ||
           entry.meta.Field_Name,
+        Field_Name: entry.meta.Filter_Field || entry.meta.Field_Name,
         table: entry.meta.Table,
         stats: Object.entries(
           meta_stats[entry.meta.Field_Name] || {},
@@ -328,6 +330,7 @@ class SummaryController {
           entry.meta.Preferred_Name_Singular ||
           entry.meta.Preferred_Name ||
           entry.meta.Field_Name,
+        Field_Name: entry.meta.Filter_Field || entry.meta.Field_Name,
         key:
           entry.meta.Preferred_Name_Singular ||
           entry.meta.Preferred_Name ||
@@ -361,6 +364,7 @@ class SummaryController {
           entry.meta.Preferred_Name_Singular ||
           entry.meta.Preferred_Name ||
           entry.meta.Field_Name,
+        Field_Name: entry.meta.Filter_Field || entry.meta.Field_Name,
         key:
           entry.meta.Preferred_Name_Singular ||
           entry.meta.Preferred_Name ||
@@ -393,6 +397,7 @@ class SummaryController {
           entry.meta.Preferred_Name_Singular ||
           entry.meta.Preferred_Name ||
           entry.meta.Field_Name,
+        Field_Name: entry.meta.Filter_Field || entry.meta.Field_Name,
         key:
           entry.meta.Preferred_Name_Singular ||
           entry.meta.Preferred_Name ||
@@ -435,6 +440,7 @@ class SummaryController {
           entry.meta.Preferred_Name_Singular ||
           entry.meta.Preferred_Name ||
           entry.meta.Field_Name,
+        Field_Name: entry.meta.Filter_Field || entry.meta.Field_Name,
         key:
           entry.meta.Preferred_Name_Singular ||
           entry.meta.Preferred_Name ||
