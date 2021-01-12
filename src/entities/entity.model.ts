@@ -49,7 +49,7 @@ export class Entity extends LBEntity {
     [key: string]: any;
   };
 
-  @ManyToMany(() => Signature, signature => signature.entityset)
+  @ManyToMany(() => Signature, signature => signature._entityset)
   @JoinTable({
     name: "signatures_entities",
     joinColumn: {
@@ -61,7 +61,7 @@ export class Entity extends LBEntity {
         referencedColumnName: "id"
     }
   })
-  signatureset:  Promise<Signature[]>;
+  _signatureset:  Promise<Signature[]>;
 
   constructor(data?: Partial<Entity>) {
     super(data);
