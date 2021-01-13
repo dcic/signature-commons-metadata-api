@@ -47,11 +47,18 @@ export interface IGenericRepository<T extends IGenericEntity>
   extends EntityCrudRepository<T, string> {
   dataSource: TypeORMDataSource;
   ensureIndex(field: string, method?: string): Promise<void>;
-  key_counts(filter?: Filter<T>): Promise<{[key: string]: number}>;
+  key_counts(
+    filter?: Filter<T>,
+    options?: object,
+    ): Promise<{[key: string]: number}>;
   value_counts(
     filter?: Filter<T>,
+    options?: object,
   ): Promise<{[key: string]: {[key: string]: number}}>;
-  distinct_value_counts(filter?: Filter<T>): Promise<{[key: string]: number}>;
+  distinct_value_counts(
+    filter?: Filter<T>,
+    options?: object,
+    ): Promise<{[key: string]: number}>;
 }
 
 export interface GenericController<
@@ -64,24 +71,48 @@ export interface GenericController<
     filter?: Filter<GenericEntity>;
     contentRange?: boolean;
     results: GenericEntity[];
+    options?: object,
   }): Promise<void>;
   create(obj: GenericEntity): Promise<GenericEntity>;
-  count(where?: Where<GenericEntity>, where_str?: string): Promise<Count>;
+  count(where?: Where<GenericEntity>,
+    where_str?: string,
+    join?: {
+      select: string,
+      relation: string,
+      alias: string,
+      id: string,
+    },
+    ): Promise<Count>;
   key_count(
     filter?: Filter<GenericEntity>,
     filter_str?: string,
+    join?: {
+      relation: string,
+      alias: string,
+      id: string,
+    },
     depth?: number,
     contentRange?: boolean,
   ): Promise<{[key: string]: number}>;
   value_count(
     filter?: Filter<GenericEntity>,
     filter_str?: string,
+    join?: {
+      relation: string,
+      alias: string,
+      id: string,
+    },
     depth?: number,
     contentRange?: boolean,
   ): Promise<{[key: string]: {[value: string]: number}}>;
   distinct_value_count(
     filter?: Filter<GenericEntity>,
     filter_str?: string,
+    join?: {
+      relation: string,
+      alias: string,
+      id: string,
+    },
     depth?: number,
     contentRange?: boolean,
   ): Promise<{[key: string]: number}>;
@@ -94,6 +125,12 @@ export interface GenericController<
     filter?: Filter<GenericEntity>,
     filter_str?: string,
     contentRange?: boolean,
+    join?: {
+      select: string,
+      relation: string,
+      alias: string,
+      id: string,
+    }
   ): Promise<GenericEntity[]>;
   find(props: {
     filter?: Filter<GenericEntity>;
@@ -162,17 +199,19 @@ export function GenericControllerFactory<
       filter,
       results,
       contentRange,
+      options
     }: {
       filter?: Filter<GenericEntity>;
       contentRange?: boolean;
       results: GenericEntity[];
+      options: {}
     }) {
       if (contentRange !== false && this.response !== undefined) {
         if (filter === undefined) filter = {};
         let count: number;
         if (filter.limit === undefined)
           count = results.length + (filter.skip ?? filter.offset ?? 0);
-        else count = (await this.genericRepository.count(filter.where)).count;
+        else count = (await this.genericRepository.count(filter.where, options)).count;
 
         const start: number = filter.skip ?? filter.offset ?? 0;
         const end = Math.min(start + (filter.limit ?? Infinity), count);
@@ -270,10 +309,17 @@ export function GenericControllerFactory<
       @param.query.object('where', getWhereSchemaFor(props.GenericEntity))
       where?: Where<GenericEntity>,
       @param.query.string('where_str') where_str = '',
+      @param.query.object('join') join?: {
+        select: string,
+        relation: string,
+        alias: string,
+        id: string,
+      }
+
     ): Promise<Count> {
       if (where_str !== '' && where === {}) where = JSON.parse(where_str);
 
-      return this.genericRepository.count(where);
+      return this.genericRepository.count(where, {join});
     }
 
     @authenticate('GET.' + props.modelName + '.key_count')
@@ -307,19 +353,29 @@ export function GenericControllerFactory<
       @param.query.object('filter', getFilterSchemaFor(props.GenericEntity))
       filter?: Filter<GenericEntity>,
       @param.query.string('filter_str') filter_str = '',
+      @param.query.object('join') join?: {
+        relation: string,
+        alias: string,
+        id: string,
+      },
       @param.query.number('depth') depth = 0,
       @param.query.boolean('contentRange') contentRange = true,
     ): Promise<{[key: string]: number}> {
       if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
       if (filter === undefined) filter = {};
-
-      if (!filter.where) {
+      let options
+      if (join === undefined){
+        options = {}
+      }else {
+        options = {join}
+      }
+      if (!filter.where && !join) {
         return this.genericRepository.dataSource.key_counts(
           props.GenericEntity,
           filter,
         );
       } else {
-        return this.genericRepository.key_counts(filter);
+        return this.genericRepository.key_counts(filter, options);
       }
     }
 
@@ -354,20 +410,30 @@ export function GenericControllerFactory<
       @param.query.object('filter', getFilterSchemaFor(props.GenericEntity))
       filter?: Filter<GenericEntity>,
       @param.query.string('filter_str') filter_str = '',
+      @param.query.object('join') join?: {
+        relation: string,
+        alias: string,
+        id: string,
+      },
       @param.query.number('depth') depth = 0,
       @param.query.boolean('contentRange') contentRange = true,
     ): Promise<{[key: string]: {[key: string]: number}}> {
       if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
 
       if (filter === undefined) filter = {};
-
-      if (!filter.where) {
+      let options
+      if (join === undefined){
+        options = {}
+      }else {
+        options = {join}
+      }
+      if (!filter.where && !join) {
         return this.genericRepository.dataSource.value_counts(
           props.GenericEntity,
-          filter,
+          filter
         );
       } else {
-        return this.genericRepository.value_counts(filter);
+        return this.genericRepository.value_counts(filter, options);
       }
     }
 
@@ -402,20 +468,30 @@ export function GenericControllerFactory<
       @param.query.object('filter', getFilterSchemaFor(props.GenericEntity))
       filter?: Filter<GenericEntity>,
       @param.query.string('filter_str') filter_str = '',
+      @param.query.object('join') join?: {
+        relation: string,
+        alias: string,
+        id: string,
+      },
       @param.query.number('depth') depth = 0,
       @param.query.boolean('contentRange') contentRange = true,
     ): Promise<{[key: string]: number}> {
       if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
 
       if (filter === undefined) filter = {};
-
-      if (!filter.where) {
+      let options
+      if (join === undefined){
+        options = {}
+      }else {
+        options = {join}
+      }
+      if (!filter.where && !join) {
         return this.genericRepository.dataSource.distinct_value_counts(
           props.GenericEntity,
           filter,
         );
       } else {
-        return this.genericRepository.distinct_value_counts(filter);
+        return this.genericRepository.distinct_value_counts(filter, options);
       }
     }
 
@@ -460,7 +536,7 @@ export function GenericControllerFactory<
         limit: undefined,
       });
 
-      await this.set_content_range({filter, results, contentRange});
+      await this.set_content_range({filter, results, contentRange, options:{}});
 
       let objs: Array<object> = [];
       let n = 0;
@@ -661,12 +737,12 @@ export function GenericControllerFactory<
       },
     ): Promise<GenericEntity[]> {
       if (filter === undefined) filter = {};
-
+      const options = {join}
       const results = await this.genericRepository.find({
         ...filter,
-      }, {join});
+      }, options);
 
-      await this.set_content_range({filter, results, contentRange});
+      await this.set_content_range({filter, results, contentRange, options});
       return results.map(obj =>
         applyFieldsFilter(
           {
