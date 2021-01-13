@@ -2,7 +2,6 @@ import {
   Entity as TypeORMEntity,
   Column,
   ManyToOne,
-  OneToMany,
   Generated,
   JoinColumn,
   Index,
