@@ -165,15 +165,62 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     await this.init();
 
     if (filter === undefined) filter = {};
-
-    const result = await this.typeOrmRepo
-      .createQueryBuilder(this.tableName)
-      .select(this._typeormSelect(filter.fields) as any)
-      .where(this._typeormWhere(filter.where))
-      .orderBy(this._typeormOrder(filter.order) as any)
-      .skip(filter.skip)
-      .take(filter.limit)
-      .getRawMany();
+    if (options === undefined) options = {};
+    let result
+    if (options.join !== undefined){
+      // let query = this.typeOrmRepo
+      //   .createQueryBuilder(this.tableName)
+      //   .select(join.select)
+      //   .innerJoin("signatures_entities",
+      //     "signatures_entities",
+      //     "signatures_entities.entity = entities.uuid" 
+      //   ).innerJoin("signatures",
+      //   "signature",
+      //   "signature.uuid = signatures_entities.signature" 
+      //   )
+      // .where("signature.uuid = :id", {id: options.join.id})
+      // .orderBy(this._typeormOrder(filter.order) as any)
+      // .offset(filter.skip)
+      // .limit(filter.limit)
+      const {join} = options
+      // let query = this.typeOrmRepo
+      //   .createQueryBuilder(this.tableName)
+      //   .select(join.select)
+      //   .innerJoin("signatures_entities",
+      //     "signatures_entities",
+      //     join.signature_entities_join 
+      //   ).innerJoin(join.table,
+      //   join.alias,
+      //   join.condition 
+      //   )
+      // .where(join.where, {id: options.join.id})
+      // .orderBy(this._typeormOrder(filter.order) as any)
+      // .offset(filter.skip)
+      // .limit(filter.limit)
+      let query = this.typeOrmRepo
+        .createQueryBuilder(this.tableName)
+        .select(join.select)
+        .innerJoin(this.tableName+'.'+join.relation, join.alias)
+        .where(join.alias + ".uuid = :id", { id: join.id })
+        .orderBy(this._typeormOrder(filter.order) as any)
+        .offset(filter.skip)
+        .limit(filter.limit)
+      if (filter.where!==undefined && Object.keys(filter.where ?? {}).length > 0){
+        query = query.andWhere(this._typeormWhere(filter.where))
+      }
+      result = await query
+        .getRawMany()
+    }else {
+      result = await this.typeOrmRepo
+        .createQueryBuilder(this.tableName)
+        .select(this._typeormSelect(filter.fields) as any)
+        .where(this._typeormWhere(filter.where))
+        .orderBy(this._typeormOrder(filter.order) as any)
+        .skip(filter.skip)
+        .take(filter.limit)
+        .getRawMany();
+    }
+    
 
     return result as T[];
   }
