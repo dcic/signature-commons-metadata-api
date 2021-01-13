@@ -98,6 +98,12 @@ export interface GenericController<
   find(props: {
     filter?: Filter<GenericEntity>;
     contentRange?: boolean;
+    join?: {
+      select: string,
+      relation: string,
+      alias: string,
+      id: string,
+    };
   }): Promise<GenericEntity[]>;
   updateAll(
     body: DataObject<GenericEntity>,
@@ -642,16 +648,23 @@ export function GenericControllerFactory<
       {
         filter,
         contentRange,
+        join
       }: {
         filter?: Filter<GenericEntity>;
         contentRange?: boolean;
+        join?: {
+          select: string,
+          relation: string,
+          alias: string,
+          id: string,
+        };
       },
     ): Promise<GenericEntity[]> {
       if (filter === undefined) filter = {};
 
       const results = await this.genericRepository.find({
         ...filter,
-      });
+      }, {join});
 
       await this.set_content_range({filter, results, contentRange});
       return results.map(obj =>
