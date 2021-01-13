@@ -168,35 +168,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     if (options === undefined) options = {};
     let result
     if (options.join !== undefined){
-      // let query = this.typeOrmRepo
-      //   .createQueryBuilder(this.tableName)
-      //   .select(join.select)
-      //   .innerJoin("signatures_entities",
-      //     "signatures_entities",
-      //     "signatures_entities.entity = entities.uuid" 
-      //   ).innerJoin("signatures",
-      //   "signature",
-      //   "signature.uuid = signatures_entities.signature" 
-      //   )
-      // .where("signature.uuid = :id", {id: options.join.id})
-      // .orderBy(this._typeormOrder(filter.order) as any)
-      // .offset(filter.skip)
-      // .limit(filter.limit)
       const {join} = options
-      // let query = this.typeOrmRepo
-      //   .createQueryBuilder(this.tableName)
-      //   .select(join.select)
-      //   .innerJoin("signatures_entities",
-      //     "signatures_entities",
-      //     join.signature_entities_join 
-      //   ).innerJoin(join.table,
-      //   join.alias,
-      //   join.condition 
-      //   )
-      // .where(join.where, {id: options.join.id})
-      // .orderBy(this._typeormOrder(filter.order) as any)
-      // .offset(filter.skip)
-      // .limit(filter.limit)
       let query = this.typeOrmRepo
         .createQueryBuilder(this.tableName)
         .select(join.select)
