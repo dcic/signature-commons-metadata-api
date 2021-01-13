@@ -64,9 +64,6 @@ export class ManyToMany {
 		},
 		contentRange,
 		join: {
-		  select: "signatures.uuid as id, signatures.libid as library, signatures.meta as meta",
-		  relation: "_entityset",
-		  alias: "entity",
 		  id
 		}
 	  });
@@ -110,9 +107,6 @@ export class ManyToMany {
 		  },
 		  contentRange,
 		  join: {
-			select: "entities.uuid as id,  entities.meta as meta",
-			relation: "_signatureset",
-			alias: "signature",
 			id
 		  }
 		});
@@ -148,9 +142,6 @@ export class ManyToMany {
 			where,
 			'',
 			{
-				select: "signatures.uuid as id, signatures.libid as library, signatures.meta as meta",
-				relation: "_entityset",
-				alias: "entity",
 				id
 			}
 		);
@@ -185,9 +176,6 @@ export class ManyToMany {
 			where,
 			'',
 			{
-				select: "entities.uuid as id,  entities.meta as meta",
-				relation: "_signatureset",
-				alias: "signature",
 				id
 			}
 		);
@@ -235,8 +223,6 @@ export class ManyToMany {
 			},
 			'',
 			{
-				relation: "_entityset",
-				alias: "entity",
 				id
 			}
 		);
@@ -283,8 +269,6 @@ export class ManyToMany {
 			},
 			'',
 			{
-				relation: "_signatureset",
-				alias: "signature",
 				id
 			}
 		);
@@ -333,8 +317,6 @@ export class ManyToMany {
 			},
 			'',
 			{
-				relation: "_entityset",
-				alias: "entity",
 				id
 			}  
 		);
@@ -381,8 +363,6 @@ export class ManyToMany {
 			},
 			'',
 			{
-				relation: "_signatureset",
-				alias: "signature",
 				id
 			}
 		);
@@ -431,8 +411,6 @@ export class ManyToMany {
 			},
 			'',
 			{
-				relation: "_entityset",
-				alias: "entity",
 				id
 			}  
 		);
@@ -479,8 +457,6 @@ export class ManyToMany {
 			},
 			'',
 			{
-				relation: "_signatureset",
-				alias: "signature",
 				id
 			}
 		);

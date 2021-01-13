@@ -77,9 +77,6 @@ export interface GenericController<
   count(where?: Where<GenericEntity>,
     where_str?: string,
     join?: {
-      select: string,
-      relation: string,
-      alias: string,
       id: string,
     },
     ): Promise<Count>;
@@ -87,8 +84,6 @@ export interface GenericController<
     filter?: Filter<GenericEntity>,
     filter_str?: string,
     join?: {
-      relation: string,
-      alias: string,
       id: string,
     },
     depth?: number,
@@ -98,8 +93,6 @@ export interface GenericController<
     filter?: Filter<GenericEntity>,
     filter_str?: string,
     join?: {
-      relation: string,
-      alias: string,
       id: string,
     },
     depth?: number,
@@ -109,8 +102,6 @@ export interface GenericController<
     filter?: Filter<GenericEntity>,
     filter_str?: string,
     join?: {
-      relation: string,
-      alias: string,
       id: string,
     },
     depth?: number,
@@ -126,9 +117,6 @@ export interface GenericController<
     filter_str?: string,
     contentRange?: boolean,
     join?: {
-      select: string,
-      relation: string,
-      alias: string,
       id: string,
     }
   ): Promise<GenericEntity[]>;
@@ -136,9 +124,6 @@ export interface GenericController<
     filter?: Filter<GenericEntity>;
     contentRange?: boolean;
     join?: {
-      select: string,
-      relation: string,
-      alias: string,
       id: string,
     };
   }): Promise<GenericEntity[]>;
@@ -310,9 +295,6 @@ export function GenericControllerFactory<
       where?: Where<GenericEntity>,
       @param.query.string('where_str') where_str = '',
       @param.query.object('join') join?: {
-        select: string,
-        relation: string,
-        alias: string,
         id: string,
       }
 
@@ -354,8 +336,6 @@ export function GenericControllerFactory<
       filter?: Filter<GenericEntity>,
       @param.query.string('filter_str') filter_str = '',
       @param.query.object('join') join?: {
-        relation: string,
-        alias: string,
         id: string,
       },
       @param.query.number('depth') depth = 0,
@@ -411,8 +391,6 @@ export function GenericControllerFactory<
       filter?: Filter<GenericEntity>,
       @param.query.string('filter_str') filter_str = '',
       @param.query.object('join') join?: {
-        relation: string,
-        alias: string,
         id: string,
       },
       @param.query.number('depth') depth = 0,
@@ -469,8 +447,6 @@ export function GenericControllerFactory<
       filter?: Filter<GenericEntity>,
       @param.query.string('filter_str') filter_str = '',
       @param.query.object('join') join?: {
-        relation: string,
-        alias: string,
         id: string,
       },
       @param.query.number('depth') depth = 0,
@@ -729,9 +705,6 @@ export function GenericControllerFactory<
         filter?: Filter<GenericEntity>;
         contentRange?: boolean;
         join?: {
-          select: string,
-          relation: string,
-          alias: string,
           id: string,
         };
       },

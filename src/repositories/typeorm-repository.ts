@@ -27,6 +27,18 @@ import {TypeORMDataSource} from '../datasources';
 import {QueryDeepPartialEntity} from 'typeorm/query-builder/QueryPartialEntity';
 import {UniqueIDGenerator} from '../util/unique_id_generator';
 
+const manyToManyJoin = {
+  "signatures": {
+    select: "signatures.uuid as id, signatures.libid as library, signatures.meta as meta",
+    relation: "_entityset",
+    alias: "entity",
+  }, 
+  "entities": {
+      select: "entities.uuid as id,  entities.meta as meta",
+			relation: "_signatureset",
+			alias: "signature",
+  }
+}
 /**
  * An implementation of EntityCrudRepository using TypeORM
  */
@@ -168,7 +180,19 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     if (options === undefined) options = {};
     let result
     if (options.join !== undefined){
-      const {join} = options
+      let join
+      if (this.tableName === "entities"){
+        join = {
+          ...options.join,
+          ...manyToManyJoin.entities
+        }
+      }else if (this.tableName === "signatures"){
+        join = {
+          ...options.join,
+          ...manyToManyJoin.signatures
+        }
+      }
+
       let query = this.typeOrmRepo
         .createQueryBuilder(this.tableName)
         .select(join.select)
@@ -203,7 +227,18 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     if (options === undefined) options = {};
     let queryset
     if (options.join !== undefined){
-      const {join} = options
+      let join
+      if (this.tableName === "entities"){
+        join = {
+          ...options.join,
+          ...manyToManyJoin.entities
+        }
+      }else if (this.tableName === "signatures"){
+        join = {
+          ...options.join,
+          ...manyToManyJoin.signatures
+        }
+      }
       queryset = this.typeOrmRepo
         .createQueryBuilder(this.tableName)
         .select(this._typeormSelect(filter.fields) as any)
@@ -266,7 +301,18 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     if (options === undefined) options = {};
     let queryset
     if (options.join !== undefined){
-      const {join} = options
+      let join
+      if (this.tableName === "entities"){
+        join = {
+          ...options.join,
+          ...manyToManyJoin.entities
+        }
+      }else if (this.tableName === "signatures"){
+        join = {
+          ...options.join,
+          ...manyToManyJoin.signatures
+        }
+      }
       queryset = this.typeOrmRepo
         .createQueryBuilder(this.tableName)
         .select(this._typeormSelect(filter.fields) as any)
@@ -331,7 +377,18 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     if (options === undefined) options = {};
     let queryset
     if (options.join !== undefined){
-      const {join} = options
+      let join
+      if (this.tableName === "entities"){
+        join = {
+          ...options.join,
+          ...manyToManyJoin.entities
+        }
+      }else if (this.tableName === "signatures"){
+        join = {
+          ...options.join,
+          ...manyToManyJoin.signatures
+        }
+      }
       queryset = this.typeOrmRepo
         .createQueryBuilder(this.tableName)
         .select(this._typeormSelect(filter.fields) as any)
@@ -418,7 +475,18 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     if (options === undefined) options = {};
     let result
     if (options.join !== undefined){
-      const {join} = options
+      let join
+      if (this.tableName === "entities"){
+        join = {
+          ...options.join,
+          ...manyToManyJoin.entities
+        }
+      }else if (this.tableName === "signatures"){
+        join = {
+          ...options.join,
+          ...manyToManyJoin.signatures
+        }
+      }
       let query = this.typeOrmRepo
         .createQueryBuilder(this.tableName)
         .select(join.select)
