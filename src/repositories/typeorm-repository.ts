@@ -53,7 +53,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
   constructor(
     public entityClass: typeof Entity & {prototype: T},
-    public dataSource: TypeORMDataSource,
+    public dataSource: TypeORMDataSource
   ) {
     this.id_generator = new UniqueIDGenerator();
   }
@@ -175,87 +175,31 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
   async find(filter?: Filter<T>, options?: Options): Promise<T[]> {
     await this.init();
-
+    
     if (filter === undefined) filter = {};
-    if (options === undefined) options = {};
-    let result
-    if (options.join !== undefined){
-      let join
-      if (this.tableName === "entities"){
-        join = {
-          ...options.join,
-          ...manyToManyJoin.entities
-        }
-      }else if (this.tableName === "signatures"){
-        join = {
-          ...options.join,
-          ...manyToManyJoin.signatures
-        }
-      }
+    const result = await this.typeOrmRepo
+      .createQueryBuilder(this.tableName)
+      .select(this._typeormSelect(filter.fields) as any)
+      .where(this._typeormWhere(filter.where))
+      .orderBy(this._typeormOrder(filter.order) as any)
+      .skip(filter.skip)
+      .take(filter.limit)
+      .getRawMany();
 
-      let query = this.typeOrmRepo
-        .createQueryBuilder(this.tableName)
-        .select(join.select)
-        .innerJoin(this.tableName+'.'+join.relation, join.alias)
-        .where(join.alias + ".uuid = :id", { id: join.id })
-        .orderBy(this._typeormOrder(filter.order) as any)
-        .offset(filter.skip)
-        .limit(filter.limit)
-      if (filter.where!==undefined && Object.keys(filter.where || {}).length > 0){
-        query = query.andWhere(this._typeormWhere(filter.where))
-      }
-      result = await query
-        .getRawMany()
-    }else {
-      result = await this.typeOrmRepo
-        .createQueryBuilder(this.tableName)
-        .select(this._typeormSelect(filter.fields) as any)
-        .where(this._typeormWhere(filter.where))
-        .orderBy(this._typeormOrder(filter.order) as any)
-        .skip(filter.skip)
-        .take(filter.limit)
-        .getRawMany();
-    }
     return result as T[];
   }
-
-  async key_counts(filter?: Filter<T>, options?: Options): Promise<{[key: string]: number}> {
+  
+  async key_counts(filter?: Filter<T>): Promise<{[key: string]: number}> {
     await this.init();
 
     if (filter === undefined) filter = {};
 
-    if (options === undefined) options = {};
-    let queryset
-    if (options.join !== undefined){
-      let join
-      if (this.tableName === "entities"){
-        join = {
-          ...options.join,
-          ...manyToManyJoin.entities
-        }
-      }else if (this.tableName === "signatures"){
-        join = {
-          ...options.join,
-          ...manyToManyJoin.signatures
-        }
-      }
-      queryset = this.typeOrmRepo
-        .createQueryBuilder(this.tableName)
-        .select(this._typeormSelect(filter.fields) as any)
-        .innerJoin(this.tableName+'.'+join.relation, join.alias)
-        .where(join.alias + ".uuid = :id", { id: join.id })
-        .orderBy(this._typeormOrder(filter.order) as any)
-      if (filter.where!==undefined && Object.keys(filter.where || {}).length > 0){
-        queryset = queryset.andWhere(this._typeormWhere(filter.where))
-      }
-    }else {
-      queryset = this.typeOrmRepo
-        .createQueryBuilder(this.tableName)
-        .select(this._typeormSelect(filter.fields) as any)
-        .where(this._typeormWhere(filter.where))
-        .orderBy(this._typeormOrder(filter.order) as any);
-    }
-
+    const queryset = this.typeOrmRepo
+      .createQueryBuilder(this.tableName)
+      .select(this._typeormSelect(filter.fields) as any)
+      .where(this._typeormWhere(filter.where))
+      .orderBy(this._typeormOrder(filter.order) as any);
+    
     const [queryset_query, queryset_params] = queryset.getQueryAndParameters();
     const params = [
       ...queryset_params,
@@ -291,44 +235,17 @@ export class TypeORMRepository<T extends Entity, ID extends string>
   }
 
   async value_counts(
-    filter?: Filter<T>,
-    options?: Options
+    filter?: Filter<T>
   ): Promise<{[key: string]: {[value: string]: number}}> {
     await this.init();
 
     if (filter === undefined) filter = {};
 
-    if (options === undefined) options = {};
-    let queryset
-    if (options.join !== undefined){
-      let join
-      if (this.tableName === "entities"){
-        join = {
-          ...options.join,
-          ...manyToManyJoin.entities
-        }
-      }else if (this.tableName === "signatures"){
-        join = {
-          ...options.join,
-          ...manyToManyJoin.signatures
-        }
-      }
-      queryset = this.typeOrmRepo
-        .createQueryBuilder(this.tableName)
-        .select(this._typeormSelect(filter.fields) as any)
-        .innerJoin(this.tableName+'.'+join.relation, join.alias)
-        .where(join.alias + ".uuid = :id", { id: join.id })
-        .orderBy(this._typeormOrder(filter.order) as any)
-      if (filter.where!==undefined && Object.keys(filter.where || {}).length > 0){
-        queryset = queryset.andWhere(this._typeormWhere(filter.where))
-      }
-    }else {
-      queryset = this.typeOrmRepo
-        .createQueryBuilder(this.tableName)
-        .select(this._typeormSelect(filter.fields) as any)
-        .where(this._typeormWhere(filter.where))
-        .orderBy(this._typeormOrder(filter.order) as any);
-    }
+    const queryset = this.typeOrmRepo
+      .createQueryBuilder(this.tableName)
+      .select(this._typeormSelect(filter.fields) as any)
+      .where(this._typeormWhere(filter.where))
+      .orderBy(this._typeormOrder(filter.order) as any);
 
     const [queryset_query, queryset_params] = queryset.getQueryAndParameters();
     const params = [
@@ -367,44 +284,17 @@ export class TypeORMRepository<T extends Entity, ID extends string>
   }
 
   async distinct_value_counts(
-    filter?: Filter<T>,
-    options?: Options,
+    filter?: Filter<T>
   ): Promise<{[key: string]: number}> {
     await this.init();
 
     if (filter === undefined) filter = {};
 
-    if (options === undefined) options = {};
-    let queryset
-    if (options.join !== undefined){
-      let join
-      if (this.tableName === "entities"){
-        join = {
-          ...options.join,
-          ...manyToManyJoin.entities
-        }
-      }else if (this.tableName === "signatures"){
-        join = {
-          ...options.join,
-          ...manyToManyJoin.signatures
-        }
-      }
-      queryset = this.typeOrmRepo
-        .createQueryBuilder(this.tableName)
-        .select(this._typeormSelect(filter.fields) as any)
-        .innerJoin(this.tableName+'.'+join.relation, join.alias)
-        .where(join.alias + ".uuid = :id", { id: join.id })
-        .orderBy(this._typeormOrder(filter.order) as any)
-      if (filter.where!==undefined && Object.keys(filter.where || {}).length > 0){
-        queryset = queryset.andWhere(this._typeormWhere(filter.where))
-      }
-    }else {
-      queryset = this.typeOrmRepo
-        .createQueryBuilder(this.tableName)
-        .select(this._typeormSelect(filter.fields) as any)
-        .where(this._typeormWhere(filter.where))
-        .orderBy(this._typeormOrder(filter.order) as any);
-    }
+    const queryset = this.typeOrmRepo
+      .createQueryBuilder(this.tableName)
+      .select(this._typeormSelect(filter.fields) as any)
+      .where(this._typeormWhere(filter.where))
+      .orderBy(this._typeormOrder(filter.order) as any);
     const [queryset_query, queryset_params] = queryset.getQueryAndParameters();
 
     const params = [
@@ -472,36 +362,10 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
   async count(where?: Where, options?: Options): Promise<Count> {
     await this.init();
-    if (options === undefined) options = {};
-    let result
-    if (options.join !== undefined){
-      let join
-      if (this.tableName === "entities"){
-        join = {
-          ...options.join,
-          ...manyToManyJoin.entities
-        }
-      }else if (this.tableName === "signatures"){
-        join = {
-          ...options.join,
-          ...manyToManyJoin.signatures
-        }
-      }
-      let query = this.typeOrmRepo
-        .createQueryBuilder(this.tableName)
-        .select(join.select)
-        .innerJoin(this.tableName+'.'+join.relation, join.alias)
-        .where(join.alias + ".uuid = :id", { id: join.id })
-      if (Object.keys(where || {}).length > 0){
-        query = query.andWhere(this._typeormWhere(where as any))
-      }
-      result = await query.getCount();
-    } else {
-      result = await this.typeOrmRepo
-        .createQueryBuilder(this.tableName)
-        .where(this._typeormWhere(where as any))
-        .getCount();
-    }
+    const result = await this.typeOrmRepo
+    .createQueryBuilder(this.tableName)
+    .where(this._typeormWhere(where as any))
+    .getCount();
 
     return {count: result.valueOf()};
   }

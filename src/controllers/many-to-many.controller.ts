@@ -1,6 +1,7 @@
-import {authenticate} from '@loopback/authentication';
+import {authenticate, AuthenticationBindings} from '@loopback/authentication';
 import {inject} from '@loopback/core';
 import {
+	repository,
 	Count,
 	Filter,
 	CountSchema,
@@ -12,21 +13,40 @@ import {
 	getFilterSchemaFor,
 	getWhereSchemaFor,
 	param,
+	Response,
+	RestBindings
   } from '@loopback/rest';
 import {
 	Entity as EntityController,
 	Signature as SignatureController,
   } from '../generic-controllers';
 
+import { prune } from '../generic-controllers/generic.controller'
+
+import {EntityRepository,
+	SignatureRepository} from '../repositories';
+
+import {applyFieldsFilter} from '../util/applyFieldsFilter';
+
+
 import {Entity,
 	Signature
 } from '../entities';
+import {UserProfile} from '../models';
+
 
 @api({
 	basePath: process.env.PREFIX,
 	paths: {},
 })
 export class ManyToMany {
+	constructor(
+		@inject(AuthenticationBindings.CURRENT_USER, {optional: true})
+		private user: UserProfile,
+		@inject(RestBindings.Http.RESPONSE, {optional: true})
+		private response: Response,
+	  ) {}
+
 	@authenticate('GET.entities.signatures')
 	@get('/entities/{id}/signatures', {
 		tags: ["Entity"],
@@ -47,7 +67,8 @@ export class ManyToMany {
 		}
 	})
 	async getEntitySignatures(
-	  @inject('controllers.Signature') signatureController: SignatureController,
+	  @repository(SignatureRepository)
+		signatureRepository: SignatureRepository,
 	  @param.path.string('id') id: string,
 	  @param.query.object('filter', getFilterSchemaFor(Signature))
 	  filter?: Filter<Signature>,
@@ -55,20 +76,39 @@ export class ManyToMany {
 	  @param.query.boolean('contentRange') contentRange = true,    
 	): Promise<Signature[]> {
 	  if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
-	  const signatures = await signatureController.find({
-		filter: {
-		  ...(filter ?? {}),
-		  where: {
-			...((filter ?? {}).where ?? {})
-		  }
-		},
-		contentRange,
-		join: {
-		  id
+	  const results = await signatureRepository.find_through(
+		id, 
+		{
+		...(filter ?? {}),
+		where: {
+		  ...((filter ?? {}).where ?? {})
 		}
 	  });
-  
-	  return signatures;
+	  if (contentRange !== false && this.response !== undefined) {
+		if (filter === undefined) filter = {};
+		let count: number;
+		if (filter.limit === undefined)
+		  count = results.length + (filter.skip ?? filter.offset ?? 0);
+		else count = (await signatureRepository.count_through(id, filter.where)).count;
+
+		const start: number = filter.skip ?? filter.offset ?? 0;
+		const end = Math.min(start + (filter.limit ?? Infinity), count);
+
+		this.response.setHeader(
+		  'Access-Control-Expose-Headers',
+		  [...this.response.getHeaderNames(), 'Content-Range'].join(','),
+		);
+		this.response.setHeader('Content-Range', `${start}-${end}/${count}`);
+	  }
+	  return results.map(obj =>
+        applyFieldsFilter(
+          {
+            $validator: '/dcic/signature-commons-schema/v5/core/signature.json',
+            ...(<any>prune(obj)),
+          },
+          (filter ?? {}).fields ?? [],
+        ),
+      );
 	}
 
 	@authenticate('GET.signatures.entities')
@@ -89,8 +129,9 @@ export class ManyToMany {
 			}
 		}
 	})
-	async getEntities(
-		@inject('controllers.Entity') entityController: EntityController,
+	async getSignatureEntities(
+		@repository(EntityRepository)
+			entityRepository: EntityRepository,
 		@param.path.string('id') id: string,
 		@param.query.object('filter', getFilterSchemaFor(Entity))
 		filter?: Filter<Entity>,
@@ -98,20 +139,39 @@ export class ManyToMany {
 		@param.query.boolean('contentRange') contentRange = true,
 	  ): Promise<Entity[]> {
 		if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
-		const entities = await entityController.find({
-		  filter: {
-			...(filter ?? {}),
-			where: {
-			  ...((filter ?? {}).where ?? {})
-			}
-		  },
-		  contentRange,
-		  join: {
-			id
-		  }
-		});
-	
-		return entities;
+	  const results = await entityRepository.find_through(
+		  id, 
+		{
+		...(filter ?? {}),
+		where: {
+		  ...((filter ?? {}).where ?? {})
+		}
+	  });
+	  if (contentRange !== false && this.response !== undefined) {
+		if (filter === undefined) filter = {};
+		let count: number;
+		if (filter.limit === undefined)
+		  count = results.length + (filter.skip ?? filter.offset ?? 0);
+		else count = (await entityRepository.count_through(id, filter.where)).count;
+
+		const start: number = filter.skip ?? filter.offset ?? 0;
+		const end = Math.min(start + (filter.limit ?? Infinity), count);
+
+		this.response.setHeader(
+		  'Access-Control-Expose-Headers',
+		  [...this.response.getHeaderNames(), 'Content-Range'].join(','),
+		);
+		this.response.setHeader('Content-Range', `${start}-${end}/${count}`);
+	  }
+	  return results.map(obj =>
+        applyFieldsFilter(
+          {
+            $validator: '/dcic/signature-commons-schema/v5/core/entity.json',
+            ...(<any>prune(obj)),
+          },
+          (filter ?? {}).fields ?? [],
+        ),
+      );
 	  }
 
 	//   Count
@@ -131,19 +191,17 @@ export class ManyToMany {
 		},
 	  })
 	async getEntitySignaturesCount(
-	  @inject('controllers.Signature') signatureController: SignatureController,
+	  @repository(SignatureRepository)
+		signatureRepository: SignatureRepository,
 	  @param.path.string('id') id: string, 
 	  @param.query.object('where', getWhereSchemaFor(Signature))
       where?: Where<Signature>,
       @param.query.string('where_str') where_str = '',
 	): Promise<Count> {
 		if (where_str !== '' && where === {}) where = JSON.parse(where_str);
-	  	const count = await signatureController.count(
-			where,
-			'',
-			{
-				id
-			}
+	  	const count = await signatureRepository.count_through(
+			id,
+			where
 		);
   
 	  return count;
@@ -165,19 +223,17 @@ export class ManyToMany {
 		},
 	  })
 	async getSignatureEntitiesCount(
-	  @inject('controllers.Entity') entityController: EntityController,
+	  @repository(EntityRepository)
+		entityRepository: EntityRepository,
 	  @param.path.string('id') id: string, 
 	  @param.query.object('where', getWhereSchemaFor(Entity))
       where?: Where<Entity>,
       @param.query.string('where_str') where_str = '',
 	): Promise<Count> {
 		if (where_str !== '' && where === {}) where = JSON.parse(where_str);
-	  	const count = await entityController.count(
+	  	const count = await entityRepository.count_through(
+			id,
 			where,
-			'',
-			{
-				id
-			}
 		);
   
 	  return count;
@@ -207,23 +263,21 @@ export class ManyToMany {
 		},
 	  })
 	async getEntitySignaturesValueCount(
-	  @inject('controllers.Signature') signatureController: SignatureController,
+	  @repository(SignatureRepository)
+		signatureRepository: SignatureRepository,
 	  @param.path.string('id') id: string, 
 	  @param.query.object('filter', getFilterSchemaFor(Signature))
       filter?: Filter<Signature>,
       @param.query.string('filter_str') filter_str = '',
 	): Promise<{[key: string]: {[key: string]: number}}> {
 		if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
-	  	const value_count = await signatureController.value_count(
+	  	const value_count = await signatureRepository.value_counts_through(
+			id,
 			{
 				...(filter ?? {}),
 				where: {
 					...((filter ?? {}).where ?? {})
 				}
-			},
-			'',
-			{
-				id
 			}
 		);
   
@@ -253,23 +307,21 @@ export class ManyToMany {
 		},
 	  })
 	async getSignatureEntitiesValueCount(
-	  @inject('controllers.Entity') entityController: EntityController,
+	  @repository(EntityRepository)
+		entityRepository: EntityRepository,
 	  @param.path.string('id') id: string, 
 	  @param.query.object('filter', getFilterSchemaFor(Entity))
       filter?: Filter<Entity>,
       @param.query.string('filter_str') filter_str = '',
 	): Promise<{[key: string]: {[key: string]: number}}> {
 		if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
-	  	const value_count = await entityController.value_count(
+	  	const value_count = await entityRepository.value_counts_through(
+			id,
 			{
 				...(filter ?? {}),
 				where: {
 					...((filter ?? {}).where ?? {})
 				}
-			},
-			'',
-			{
-				id
 			}
 		);
   
@@ -300,7 +352,8 @@ export class ManyToMany {
 		},
 	  })
 	async getEntitySignaturesDistinctValueCount(
-	  @inject('controllers.Signature') signatureController: SignatureController,
+	  @repository(SignatureRepository)
+		signatureRepository: SignatureRepository,
 	  @param.path.string('id') id: string, 
 	  @param.query.object('filter', getFilterSchemaFor(Signature))
       filter?: Filter<Signature>,
@@ -308,17 +361,14 @@ export class ManyToMany {
 	): Promise<{[key: string]: number}> {
 		if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
 
-		const distinct_value_count = await signatureController.distinct_value_count(
+		const distinct_value_count = await signatureRepository.distinct_value_counts_through(
+			id,
 			{
 				...(filter ?? {}),
 				where: {
 					...((filter ?? {}).where ?? {})
 				}
-			},
-			'',
-			{
-				id
-			}  
+			}
 		);
   
 	  return distinct_value_count;
@@ -347,23 +397,21 @@ export class ManyToMany {
 		},
 	  })
 	async getSignatureEntitiesDistinctValueCount(
-	  @inject('controllers.Entity') entityController: EntityController,
+	  @repository(EntityRepository)
+		entityRepository: EntityRepository,
 	  @param.path.string('id') id: string, 
 	  @param.query.object('filter', getFilterSchemaFor(Entity))
       filter?: Filter<Entity>,
       @param.query.string('filter_str') filter_str = '',
 	): Promise<{[key: string]: number}> {
 		if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
-	  	const distinct_value_count = await entityController.distinct_value_count(
+	  	const distinct_value_count = await entityRepository.distinct_value_counts_through(
+			id,
 			{
 				...(filter ?? {}),
 				where: {
 					...((filter ?? {}).where ?? {})
 				}
-			},
-			'',
-			{
-				id
 			}
 		);
   
@@ -394,7 +442,8 @@ export class ManyToMany {
 		},
 	  })
 	async getEntitySignaturesKeyCount(
-	  @inject('controllers.Signature') signatureController: SignatureController,
+	  @repository(SignatureRepository)
+		signatureRepository: SignatureRepository,
 	  @param.path.string('id') id: string, 
 	  @param.query.object('filter', getFilterSchemaFor(Signature))
       filter?: Filter<Signature>,
@@ -402,17 +451,14 @@ export class ManyToMany {
 	): Promise<{[key: string]: number}> {
 		if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
 
-		const key_count = await signatureController.key_count(
+		const key_count = await signatureRepository.key_counts_through(
+			id,
 			{
 				...(filter ?? {}),
 				where: {
 					...((filter ?? {}).where ?? {})
 				}
-			},
-			'',
-			{
-				id
-			}  
+			}
 		);
   
 	  return key_count;
@@ -441,23 +487,21 @@ export class ManyToMany {
 		},
 	  })
 	async getSignatureEntitiesKeyCount(
-	  @inject('controllers.Entity') entityController: EntityController,
+	  @repository(EntityRepository)
+		entityRepository: EntityRepository,
 	  @param.path.string('id') id: string, 
 	  @param.query.object('filter', getFilterSchemaFor(Entity))
       filter?: Filter<Entity>,
       @param.query.string('filter_str') filter_str = '',
 	): Promise<{[key: string]: number}> {
 		if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
-	  	const key_count = await entityController.key_count(
+	  	const key_count = await entityRepository.key_counts_through(
+			id,
 			{
 				...(filter ?? {}),
 				where: {
 					...((filter ?? {}).where ?? {})
 				}
-			},
-			'',
-			{
-				id
 			}
 		);
   

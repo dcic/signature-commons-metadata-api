@@ -49,15 +49,12 @@ export interface IGenericRepository<T extends IGenericEntity>
   ensureIndex(field: string, method?: string): Promise<void>;
   key_counts(
     filter?: Filter<T>,
-    options?: object,
     ): Promise<{[key: string]: number}>;
   value_counts(
     filter?: Filter<T>,
-    options?: object,
   ): Promise<{[key: string]: {[key: string]: number}}>;
   distinct_value_counts(
     filter?: Filter<T>,
-    options?: object,
     ): Promise<{[key: string]: number}>;
 }
 
@@ -71,39 +68,26 @@ export interface GenericController<
     filter?: Filter<GenericEntity>;
     contentRange?: boolean;
     results: GenericEntity[];
-    options?: object,
   }): Promise<void>;
   create(obj: GenericEntity): Promise<GenericEntity>;
   count(where?: Where<GenericEntity>,
     where_str?: string,
-    join?: {
-      id: string,
-    },
     ): Promise<Count>;
   key_count(
     filter?: Filter<GenericEntity>,
     filter_str?: string,
-    join?: {
-      id: string,
-    },
     depth?: number,
     contentRange?: boolean,
   ): Promise<{[key: string]: number}>;
   value_count(
     filter?: Filter<GenericEntity>,
     filter_str?: string,
-    join?: {
-      id: string,
-    },
     depth?: number,
     contentRange?: boolean,
   ): Promise<{[key: string]: {[value: string]: number}}>;
   distinct_value_count(
     filter?: Filter<GenericEntity>,
     filter_str?: string,
-    join?: {
-      id: string,
-    },
     depth?: number,
     contentRange?: boolean,
   ): Promise<{[key: string]: number}>;
@@ -116,16 +100,10 @@ export interface GenericController<
     filter?: Filter<GenericEntity>,
     filter_str?: string,
     contentRange?: boolean,
-    join?: {
-      id: string,
-    }
   ): Promise<GenericEntity[]>;
   find(props: {
     filter?: Filter<GenericEntity>;
     contentRange?: boolean;
-    join?: {
-      id: string,
-    };
   }): Promise<GenericEntity[]>;
   updateAll(
     body: DataObject<GenericEntity>,
@@ -137,7 +115,7 @@ export interface GenericController<
   deleteById(id: string): Promise<void>;
 }
 
-function prune(obj: {[key: string]: any | undefined}): {[key: string]: any} {
+export function prune(obj: {[key: string]: any | undefined}): {[key: string]: any} {
   for (const key in obj) {
     if (obj[key] === null || obj[key] === undefined) {
       delete obj[key];
@@ -183,20 +161,18 @@ export function GenericControllerFactory<
     async set_content_range({
       filter,
       results,
-      contentRange,
-      options
+      contentRange
     }: {
       filter?: Filter<GenericEntity>;
       contentRange?: boolean;
       results: GenericEntity[];
-      options: {}
     }) {
       if (contentRange !== false && this.response !== undefined) {
         if (filter === undefined) filter = {};
         let count: number;
         if (filter.limit === undefined)
           count = results.length + (filter.skip ?? filter.offset ?? 0);
-        else count = (await this.genericRepository.count(filter.where, options)).count;
+        else count = (await this.genericRepository.count(filter.where)).count;
 
         const start: number = filter.skip ?? filter.offset ?? 0;
         const end = Math.min(start + (filter.limit ?? Infinity), count);
@@ -294,14 +270,11 @@ export function GenericControllerFactory<
       @param.query.object('where', getWhereSchemaFor(props.GenericEntity))
       where?: Where<GenericEntity>,
       @param.query.string('where_str') where_str = '',
-      @param.query.object('join') join?: {
-        id: string,
-      }
 
     ): Promise<Count> {
       if (where_str !== '' && where === {}) where = JSON.parse(where_str);
 
-      return this.genericRepository.count(where, {join});
+      return this.genericRepository.count(where);
     }
 
     @authenticate('GET.' + props.modelName + '.key_count')
@@ -335,27 +308,18 @@ export function GenericControllerFactory<
       @param.query.object('filter', getFilterSchemaFor(props.GenericEntity))
       filter?: Filter<GenericEntity>,
       @param.query.string('filter_str') filter_str = '',
-      @param.query.object('join') join?: {
-        id: string,
-      },
       @param.query.number('depth') depth = 0,
       @param.query.boolean('contentRange') contentRange = true,
     ): Promise<{[key: string]: number}> {
       if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
       if (filter === undefined) filter = {};
-      let options
-      if (join === undefined){
-        options = {}
-      }else {
-        options = {join}
-      }
-      if (!filter.where && !join) {
+      if (!filter.where) {
         return this.genericRepository.dataSource.key_counts(
           props.GenericEntity,
           filter,
         );
       } else {
-        return this.genericRepository.key_counts(filter, options);
+        return this.genericRepository.key_counts(filter);
       }
     }
 
@@ -390,28 +354,19 @@ export function GenericControllerFactory<
       @param.query.object('filter', getFilterSchemaFor(props.GenericEntity))
       filter?: Filter<GenericEntity>,
       @param.query.string('filter_str') filter_str = '',
-      @param.query.object('join') join?: {
-        id: string,
-      },
       @param.query.number('depth') depth = 0,
       @param.query.boolean('contentRange') contentRange = true,
     ): Promise<{[key: string]: {[key: string]: number}}> {
       if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
 
       if (filter === undefined) filter = {};
-      let options
-      if (join === undefined){
-        options = {}
-      }else {
-        options = {join}
-      }
-      if (!filter.where && !join) {
+      if (!filter.where) {
         return this.genericRepository.dataSource.value_counts(
           props.GenericEntity,
           filter
         );
       } else {
-        return this.genericRepository.value_counts(filter, options);
+        return this.genericRepository.value_counts(filter);
       }
     }
 
@@ -446,28 +401,19 @@ export function GenericControllerFactory<
       @param.query.object('filter', getFilterSchemaFor(props.GenericEntity))
       filter?: Filter<GenericEntity>,
       @param.query.string('filter_str') filter_str = '',
-      @param.query.object('join') join?: {
-        id: string,
-      },
       @param.query.number('depth') depth = 0,
       @param.query.boolean('contentRange') contentRange = true,
     ): Promise<{[key: string]: number}> {
       if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
 
       if (filter === undefined) filter = {};
-      let options
-      if (join === undefined){
-        options = {}
-      }else {
-        options = {join}
-      }
-      if (!filter.where && !join) {
+      if (!filter.where) {
         return this.genericRepository.dataSource.distinct_value_counts(
           props.GenericEntity,
           filter,
         );
       } else {
-        return this.genericRepository.distinct_value_counts(filter, options);
+        return this.genericRepository.distinct_value_counts(filter);
       }
     }
 
@@ -512,7 +458,7 @@ export function GenericControllerFactory<
         limit: undefined,
       });
 
-      await this.set_content_range({filter, results, contentRange, options:{}});
+      await this.set_content_range({filter, results, contentRange});
 
       let objs: Array<object> = [];
       let n = 0;
@@ -699,23 +645,18 @@ export function GenericControllerFactory<
       })
       {
         filter,
-        contentRange,
-        join
+        contentRange
       }: {
         filter?: Filter<GenericEntity>;
         contentRange?: boolean;
-        join?: {
-          id: string,
-        };
       },
     ): Promise<GenericEntity[]> {
       if (filter === undefined) filter = {};
-      const options = {join}
       const results = await this.genericRepository.find({
         ...filter,
-      }, options);
+      });
 
-      await this.set_content_range({filter, results, contentRange, options});
+      await this.set_content_range({filter, results, contentRange});
       return results.map(obj =>
         applyFieldsFilter(
           {
