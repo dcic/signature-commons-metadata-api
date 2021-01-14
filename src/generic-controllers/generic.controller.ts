@@ -47,15 +47,11 @@ export interface IGenericRepository<T extends IGenericEntity>
   extends EntityCrudRepository<T, string> {
   dataSource: TypeORMDataSource;
   ensureIndex(field: string, method?: string): Promise<void>;
-  key_counts(
-    filter?: Filter<T>,
-    ): Promise<{[key: string]: number}>;
+  key_counts(filter?: Filter<T>): Promise<{[key: string]: number}>;
   value_counts(
     filter?: Filter<T>,
   ): Promise<{[key: string]: {[key: string]: number}}>;
-  distinct_value_counts(
-    filter?: Filter<T>,
-    ): Promise<{[key: string]: number}>;
+  distinct_value_counts(filter?: Filter<T>): Promise<{[key: string]: number}>;
 }
 
 export interface GenericController<
@@ -70,9 +66,7 @@ export interface GenericController<
     results: GenericEntity[];
   }): Promise<void>;
   create(obj: GenericEntity): Promise<GenericEntity>;
-  count(where?: Where<GenericEntity>,
-    where_str?: string,
-    ): Promise<Count>;
+  count(where?: Where<GenericEntity>, where_str?: string): Promise<Count>;
   key_count(
     filter?: Filter<GenericEntity>,
     filter_str?: string,
@@ -115,7 +109,9 @@ export interface GenericController<
   deleteById(id: string): Promise<void>;
 }
 
-export function prune(obj: {[key: string]: any | undefined}): {[key: string]: any} {
+export function prune(obj: {
+  [key: string]: any | undefined;
+}): {[key: string]: any} {
   for (const key in obj) {
     if (obj[key] === null || obj[key] === undefined) {
       delete obj[key];
@@ -161,7 +157,7 @@ export function GenericControllerFactory<
     async set_content_range({
       filter,
       results,
-      contentRange
+      contentRange,
     }: {
       filter?: Filter<GenericEntity>;
       contentRange?: boolean;
@@ -270,7 +266,6 @@ export function GenericControllerFactory<
       @param.query.object('where', getWhereSchemaFor(props.GenericEntity))
       where?: Where<GenericEntity>,
       @param.query.string('where_str') where_str = '',
-
     ): Promise<Count> {
       if (where_str !== '' && where === {}) where = JSON.parse(where_str);
 
@@ -363,7 +358,7 @@ export function GenericControllerFactory<
       if (!filter.where) {
         return this.genericRepository.dataSource.value_counts(
           props.GenericEntity,
-          filter
+          filter,
         );
       } else {
         return this.genericRepository.value_counts(filter);
@@ -645,7 +640,7 @@ export function GenericControllerFactory<
       })
       {
         filter,
-        contentRange
+        contentRange,
       }: {
         filter?: Filter<GenericEntity>;
         contentRange?: boolean;

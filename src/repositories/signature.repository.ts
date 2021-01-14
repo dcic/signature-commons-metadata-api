@@ -1,9 +1,4 @@
-import {
-  Options,
-  Filter,
-  Where,
-  Count,
-} from '@loopback/repository';
+import {Filter, Where, Count} from '@loopback/repository';
 import {Signature} from '../entities';
 import {TypeORMDataSource} from '../datasources';
 import {inject} from '@loopback/core';
@@ -14,7 +9,7 @@ export class SignatureRepository extends TypeORMRepository<
   typeof Signature.prototype.id
 > {
   dataSource: TypeORMDataSource;
-  _select: "signatures.uuid as id, signatures.libid as library, signatures.meta as meta"
+  _select: 'signatures.uuid as id, signatures.libid as library, signatures.meta as meta';
   relation: string;
   inverseTable: string;
 
@@ -23,56 +18,58 @@ export class SignatureRepository extends TypeORMRepository<
   }
 
   async initialize() {
-    await this.init()
-    if (this.relation !== null && this.relation!== undefined) return
-    
-    const relations = this.typeOrmRepo.metadata.relations.filter(i=>i.isManyToMany)
-    this.relation = relations[0].propertyName
-    this.inverseTable = relations[0].inverseEntityMetadata.tableName
+    await this.init();
+    if (this.relation !== null && this.relation !== undefined) return;
+
+    const relations = this.typeOrmRepo.metadata.relations.filter(
+      i => i.isManyToMany,
+    );
+    this.relation = relations[0].propertyName;
+    this.inverseTable = relations[0].inverseEntityMetadata.tableName;
   }
 
   async find_through(
-    id?:string,
-    filter?: Filter<Signature>
+    id?: string,
+    filter?: Filter<Signature>,
   ): Promise<Signature[]> {
     await this.initialize();
     if (filter === undefined) filter = {};
     let query = this.typeOrmRepo
       .createQueryBuilder(this.tableName)
       .select(this._select)
-      .innerJoin(this.tableName+'.'+this.relation, this.inverseTable)
-      .where(this.inverseTable+ ".uuid = :id", { id })
+      .innerJoin(this.tableName + '.' + this.relation, this.inverseTable)
+      .where(this.inverseTable + '.uuid = :id', {id})
       .orderBy(this._typeormOrder(filter.order) as any)
       .offset(filter.skip)
-      .limit(filter.limit)
-    if (filter.where!==undefined && Object.keys(filter.where || {}).length > 0){
-      query = query.andWhere(this._typeormWhere(filter.where))
+      .limit(filter.limit);
+    if (
+      filter.where !== undefined &&
+      Object.keys(filter.where || {}).length > 0
+    ) {
+      query = query.andWhere(this._typeormWhere(filter.where));
     }
-    const result = await query.getRawMany()
+    const result = await query.getRawMany();
     return result as Signature[];
   }
 
-  async count_through(
-    id?: string,
-    where?: Where
-  ): Promise<Count> {
+  async count_through(id?: string, where?: Where): Promise<Count> {
     await this.initialize();
     let query = this.typeOrmRepo
       .createQueryBuilder(this.tableName)
       .select(this._select)
-      .innerJoin(this.tableName+'.'+this.relation, this.inverseTable)
-      .where(this.inverseTable + ".uuid = :id", { id })
-    if (Object.keys(where || {}).length > 0){
-      query = query.andWhere(this._typeormWhere(where as any))
+      .innerJoin(this.tableName + '.' + this.relation, this.inverseTable)
+      .where(this.inverseTable + '.uuid = :id', {id});
+    if (Object.keys(where || {}).length > 0) {
+      query = query.andWhere(this._typeormWhere(where as any));
     }
     const result = await query.getCount();
-    
+
     return {count: result.valueOf()};
   }
 
   async key_counts_through(
     id?: string,
-    filter?: Filter<Signature>
+    filter?: Filter<Signature>,
   ): Promise<{[key: string]: number}> {
     await this.initialize();
 
@@ -80,13 +77,16 @@ export class SignatureRepository extends TypeORMRepository<
     let queryset = this.typeOrmRepo
       .createQueryBuilder(this.tableName)
       .select(this._typeormSelect(filter.fields) as any)
-      .innerJoin(this.tableName+'.'+this.relation, this.inverseTable)
-      .where(this.inverseTable + ".uuid = :id", { id })
-      .orderBy(this._typeormOrder(filter.order) as any)
-    if (filter.where!==undefined && Object.keys(filter.where || {}).length > 0){
-      queryset = queryset.andWhere(this._typeormWhere(filter.where))
+      .innerJoin(this.tableName + '.' + this.relation, this.inverseTable)
+      .where(this.inverseTable + '.uuid = :id', {id})
+      .orderBy(this._typeormOrder(filter.order) as any);
+    if (
+      filter.where !== undefined &&
+      Object.keys(filter.where || {}).length > 0
+    ) {
+      queryset = queryset.andWhere(this._typeormWhere(filter.where));
     }
-    
+
     const [queryset_query, queryset_params] = queryset.getQueryAndParameters();
     const params = [
       ...queryset_params,
@@ -132,11 +132,14 @@ export class SignatureRepository extends TypeORMRepository<
     let queryset = this.typeOrmRepo
       .createQueryBuilder(this.tableName)
       .select(this._typeormSelect(filter.fields) as any)
-      .innerJoin(this.tableName+'.'+this.relation, this.inverseTable)
-      .where(this.inverseTable + ".uuid = :id", { id })
-      .orderBy(this._typeormOrder(filter.order) as any)
-    if (filter.where!==undefined && Object.keys(filter.where || {}).length > 0){
-      queryset = queryset.andWhere(this._typeormWhere(filter.where))
+      .innerJoin(this.tableName + '.' + this.relation, this.inverseTable)
+      .where(this.inverseTable + '.uuid = :id', {id})
+      .orderBy(this._typeormOrder(filter.order) as any);
+    if (
+      filter.where !== undefined &&
+      Object.keys(filter.where || {}).length > 0
+    ) {
+      queryset = queryset.andWhere(this._typeormWhere(filter.where));
     }
 
     const [queryset_query, queryset_params] = queryset.getQueryAndParameters();
@@ -186,11 +189,14 @@ export class SignatureRepository extends TypeORMRepository<
     let queryset = this.typeOrmRepo
       .createQueryBuilder(this.tableName)
       .select(this._typeormSelect(filter.fields) as any)
-      .innerJoin(this.tableName+'.'+this.relation, this.inverseTable)
-      .where(this.inverseTable + ".uuid = :id", { id })
-      .orderBy(this._typeormOrder(filter.order) as any)
-    if (filter.where!==undefined && Object.keys(filter.where || {}).length > 0){
-      queryset = queryset.andWhere(this._typeormWhere(filter.where))
+      .innerJoin(this.tableName + '.' + this.relation, this.inverseTable)
+      .where(this.inverseTable + '.uuid = :id', {id})
+      .orderBy(this._typeormOrder(filter.order) as any);
+    if (
+      filter.where !== undefined &&
+      Object.keys(filter.where || {}).length > 0
+    ) {
+      queryset = queryset.andWhere(this._typeormWhere(filter.where));
     }
     const [queryset_query, queryset_params] = queryset.getQueryAndParameters();
 
@@ -227,5 +233,4 @@ export class SignatureRepository extends TypeORMRepository<
     }
     return counts;
   }
-
 }

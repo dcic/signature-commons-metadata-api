@@ -27,18 +27,6 @@ import {TypeORMDataSource} from '../datasources';
 import {QueryDeepPartialEntity} from 'typeorm/query-builder/QueryPartialEntity';
 import {UniqueIDGenerator} from '../util/unique_id_generator';
 
-const manyToManyJoin = {
-  "signatures": {
-    select: "signatures.uuid as id, signatures.libid as library, signatures.meta as meta",
-    relation: "_entityset",
-    alias: "entity",
-  }, 
-  "entities": {
-      select: "entities.uuid as id,  entities.meta as meta",
-			relation: "_signatureset",
-			alias: "signature",
-  }
-}
 /**
  * An implementation of EntityCrudRepository using TypeORM
  */
@@ -53,7 +41,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
   constructor(
     public entityClass: typeof Entity & {prototype: T},
-    public dataSource: TypeORMDataSource
+    public dataSource: TypeORMDataSource,
   ) {
     this.id_generator = new UniqueIDGenerator();
   }
@@ -175,7 +163,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
   async find(filter?: Filter<T>, options?: Options): Promise<T[]> {
     await this.init();
-    
+
     if (filter === undefined) filter = {};
     const result = await this.typeOrmRepo
       .createQueryBuilder(this.tableName)
@@ -188,7 +176,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
     return result as T[];
   }
-  
+
   async key_counts(filter?: Filter<T>): Promise<{[key: string]: number}> {
     await this.init();
 
@@ -199,7 +187,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       .select(this._typeormSelect(filter.fields) as any)
       .where(this._typeormWhere(filter.where))
       .orderBy(this._typeormOrder(filter.order) as any);
-    
+
     const [queryset_query, queryset_params] = queryset.getQueryAndParameters();
     const params = [
       ...queryset_params,
@@ -235,7 +223,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
   }
 
   async value_counts(
-    filter?: Filter<T>
+    filter?: Filter<T>,
   ): Promise<{[key: string]: {[value: string]: number}}> {
     await this.init();
 
@@ -284,7 +272,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
   }
 
   async distinct_value_counts(
-    filter?: Filter<T>
+    filter?: Filter<T>,
   ): Promise<{[key: string]: number}> {
     await this.init();
 
@@ -363,9 +351,9 @@ export class TypeORMRepository<T extends Entity, ID extends string>
   async count(where?: Where, options?: Options): Promise<Count> {
     await this.init();
     const result = await this.typeOrmRepo
-    .createQueryBuilder(this.tableName)
-    .where(this._typeormWhere(where as any))
-    .getCount();
+      .createQueryBuilder(this.tableName)
+      .where(this._typeormWhere(where as any))
+      .getCount();
 
     return {count: result.valueOf()};
   }

@@ -6,7 +6,7 @@ import {
   JoinColumn,
   Index,
   ManyToMany,
-  JoinTable
+  JoinTable,
 } from 'typeorm';
 import {Entity as LBEntity, model, property} from '@loopback/repository';
 import {getJsonSchema} from '@loopback/rest';
@@ -81,20 +81,22 @@ export class Signature extends LBEntity {
   })
   _library: Promise<Library>;
 
-  @ManyToMany(() => SigcomEntity, entity => entity._signatureset)
+  @ManyToMany(
+    () => SigcomEntity,
+    entity => entity._signatureset,
+  )
   @JoinTable({
-    name: "signatures_entities",
+    name: 'signatures_entities',
     joinColumn: {
-      name: "signature",
-      referencedColumnName: "id"
+      name: 'signature',
+      referencedColumnName: 'id',
     },
     inverseJoinColumn: {
-        name: "entity",
-        referencedColumnName: "id"
-    }
+      name: 'entity',
+      referencedColumnName: 'id',
+    },
   })
-  _entityset:  Promise<SigcomEntity[]>;
-
+  _entityset: Promise<SigcomEntity[]>;
 
   constructor(data?: Partial<Signature>) {
     super(data);
