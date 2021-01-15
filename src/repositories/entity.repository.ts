@@ -9,7 +9,7 @@ export class EntityRepository extends TypeORMRepository<
   typeof Entity.prototype.id
 > {
   dataSource: TypeORMDataSource;
-  _select: 'entities.uuid as id,  entities.meta as meta';
+  _select: string;
   relation: string;
   inverseTable: string;
 
@@ -24,6 +24,7 @@ export class EntityRepository extends TypeORMRepository<
     const relations = this.typeOrmRepo.metadata.relations.filter(
       i => i.isManyToMany,
     );
+    this._select = 'entities.uuid as id,  entities.meta as meta';
     this.relation = relations[0].propertyName;
     this.inverseTable = relations[0].inverseEntityMetadata.tableName;
   }
