@@ -14,47 +14,6 @@ export class ManyToMany1610659425200 implements MigrationInterface {
     );
 
     await queryRunner.query(
-      `ALTER TABLE "resources" DROP CONSTRAINT IF EXISTS "UQ_632484ab9dff41bba94f9b7c85e"`,
-      undefined,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "libraries" DROP CONSTRAINT IF EXISTS "UQ_505fedfcad00a09b3734b4223de"`,
-      undefined,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "signatures" DROP CONSTRAINT IF EXISTS "UQ_f56eb3cd344ce7f9ae28ce814eb"`,
-      undefined,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "entities" DROP CONSTRAINT IF EXISTS "UQ_8640855ae82083455cbb806173d"`,
-      undefined,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "schemas" DROP CONSTRAINT IF EXISTS "UQ_15ef0261cc6714f7bacfed7acfb"`,
-      undefined,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "resources" ADD CONSTRAINT "UQ_632484ab9dff41bba94f9b7c85e" UNIQUE ("id")`,
-      undefined,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "libraries" ADD CONSTRAINT "UQ_505fedfcad00a09b3734b4223de" UNIQUE ("id")`,
-      undefined,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "signatures" ADD CONSTRAINT "UQ_f56eb3cd344ce7f9ae28ce814eb" UNIQUE ("id")`,
-      undefined,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "entities" ADD CONSTRAINT "UQ_8640855ae82083455cbb806173d" UNIQUE ("id")`,
-      undefined,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "schemas" ADD CONSTRAINT "UQ_15ef0261cc6714f7bacfed7acfb" UNIQUE ("id")`,
-      undefined,
-    );
-
-    await queryRunner.query(
       `DROP INDEX IF EXISTS "IDX_72f2346034a28ab699c6bd5d7c"`,
       undefined,
     );
@@ -76,11 +35,11 @@ export class ManyToMany1610659425200 implements MigrationInterface {
       undefined,
     );
     await queryRunner.query(
-      `ALTER TABLE "signatures_entities" DROP CONSTRAINT IF EXISTS "FK_418dd25fac2c791f3d34b5b3c4c"`,
+      `ALTER TABLE "signatures_entities" ADD CONSTRAINT "FK_72f2346034a28ab699c6bd5d7cc" FOREIGN KEY ("signature") REFERENCES "signatures"("uuid") ON DELETE CASCADE ON UPDATE NO ACTION`,
       undefined,
     );
     await queryRunner.query(
-      `ALTER TABLE "signatures_entities" ADD CONSTRAINT "FK_72f2346034a28ab699c6bd5d7cc" FOREIGN KEY ("signature") REFERENCES "signatures"("uuid") ON DELETE CASCADE ON UPDATE NO ACTION`,
+      `ALTER TABLE "signatures_entities" DROP CONSTRAINT IF EXISTS "FK_418dd25fac2c791f3d34b5b3c4c"`,
       undefined,
     );
     await queryRunner.query(
