@@ -20,7 +20,7 @@ import {
 } from './generic.controller';
 import {Signature as SignatureController} from './signature.controller';
 import {AnyObject, Count} from 'loopback-datasource-juggler';
-import {escapeLiteral, buildLimit} from '../util/sql_building';
+import {safe_filter_limit, safe_filter_offset, safe_query_helper} from '../util/sql_building';
 import debug from '../util/debug';
 
 const GenericLibraryController = GenericControllerFactory<
@@ -104,49 +104,46 @@ export class Library extends GenericLibraryController {
     if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
 
     const filter_fields = ((filter ?? {}).fields ?? []) as string[];
-    const where_meta_clause =
-      filter_fields.length <= 0
-        ? ''
-        : filter_fields
-            .map(
-              field =>
-                `r.key = ${escapeLiteral(field)} or r.key like ${escapeLiteral(
-                  field,
-                )} || '.%'`,
-            )
-            .join(' or ');
-    const pagination_clause = buildLimit(
-      (filter ?? {}).limit,
-      (filter ?? {}).offset ?? (filter ?? {}).skip,
-    );
-
-    const query = `
-      select
-        r.key, sum(r.count) as count
-      from
-        "libraries_signatures_key_value_counts" as r
-      where
-        r.library = ${escapeLiteral(id)}
-      group by
-        r.key
-      ${
-        where_meta_clause
-          ? `
-        having
-          ${where_meta_clause}
+    const { query, literals } = safe_query_helper(safe => {
+      const where_meta_clause = () =>
+        filter_fields.length <= 0
+            ? ''
+            : filter_fields
+                .map(
+                  field =>
+                    `r.key = ${safe(field)} or r.key like ${safe(
+                      field,
+                    )} || '.%'`,
+                )
+                .join(' or ');
+      return `
+        select
+          r.key, sum(r.count) as count
+        from
+          "libraries_signatures_key_value_counts" as r
+        where
+          r.library = ${safe(id)}
+        group by
+          r.key
+        ${
+          where_meta_clause()
+            ? `
+          having
+            ${where_meta_clause()}
+        `
+            : ''
+        }
+        order by
+          count desc
+        ${safe_filter_limit(safe, filter)}
+        ${safe_filter_offset(safe, filter)}
       `
-          : ''
-      }
-      order by
-        count desc
-      ${pagination_clause}
-      ;
-    `;
+    })
     debug(query);
 
     const results = await (
       await this.genericRepository.dataSource.getConnection()
-    ).query(query, []);
+    ).query(query, literals);
 
     return (results as AnyObject[]).reduce<AnyObject>(
       (grouped: any, {key, count}: any) => ({
@@ -168,47 +165,44 @@ export class Library extends GenericLibraryController {
     if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
 
     const filter_fields = ((filter ?? {}).fields ?? []) as string[];
-    const where_meta_clause =
-      filter_fields.length <= 0
-        ? ''
-        : filter_fields
-            .map(
-              field =>
-                `r.key = ${escapeLiteral(field)} or r.key like ${escapeLiteral(
-                  field,
-                )} || '.%'`,
-            )
-            .join(' or ');
-    const pagination_clause = buildLimit(
-      (filter ?? {}).limit,
-      (filter ?? {}).offset ?? (filter ?? {}).skip,
-    );
-
-    const query = `
-      select
-        r.key, r.value, r.count
-      from
-        "libraries_signatures_key_value_counts" as r
-      where
-        r.library = ${escapeLiteral(id)}
-        ${
-          where_meta_clause
-            ? `
-          and
-            ${where_meta_clause}
-        `
-            : ''
-        }
-      order by
-        count desc
-      ${pagination_clause}
-      ;
-    `;
+    const { query, literals } = safe_query_helper(safe => {
+      const where_meta_clause = () =>
+        filter_fields.length <= 0
+          ? ''
+          : filter_fields
+              .map(
+                field =>
+                  `r.key = ${safe(field)} or r.key like ${safe(
+                    field,
+                  )} || '.%'`,
+              )
+              .join(' or ');
+      return `
+        select
+          r.key, r.value, r.count
+        from
+          "libraries_signatures_key_value_counts" as r
+        where
+          r.library = ${safe(id)}
+          ${
+            where_meta_clause()
+              ? `
+            and
+              ${where_meta_clause()}
+          `
+              : ''
+          }
+        order by
+          count desc
+        ${safe_filter_limit(safe, filter)}
+        ${safe_filter_offset(safe, filter)}
+      `
+    })
     debug(query);
 
     const results = await (
       await this.genericRepository.dataSource.getConnection()
-    ).query(query, []);
+    ).query(query, literals);
 
     return (results as AnyObject[]).reduce<AnyObject>(
       (grouped: any, {key, value, count}: any) => ({

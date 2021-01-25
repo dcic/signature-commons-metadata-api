@@ -26,6 +26,7 @@ import {HttpErrors} from '@loopback/rest';
 import {TypeORMDataSource} from '../datasources';
 import {QueryDeepPartialEntity} from 'typeorm/query-builder/QueryPartialEntity';
 import {UniqueIDGenerator} from '../util/unique_id_generator';
+import { safe_filter_limit, safe_filter_offset, safe_query_helper } from '../util/sql_building';
 
 /**
  * An implementation of EntityCrudRepository using TypeORM
@@ -189,32 +190,23 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       .where(this._typeormWhere(filter.where))
       .orderBy(this._typeormOrder(filter.order) as any);
     const [queryset_query, queryset_params] = queryset.getQueryAndParameters();
-    const params = [
-      ...queryset_params,
-      ...(filter.skip ? [filter.skip] : []),
-      ...(filter.limit ? [filter.limit] : []),
-    ];
-    const results = await this.typeOrmRepo.query(
+    const { query, literals } = safe_query_helper((safe) => {
+      return `
+        select
+          key,
+          count(*) as count
+        from
+          (
+            ${queryset_query}
+          ) qs inner join lateral jsonb_deep_key_value(row_to_json(qs)::jsonb) on true
+        where value != 'null'::jsonb
+        group by key
+        order by count
+        ${safe_filter_limit(safe, filter)}
+        ${safe_filter_offset(safe, filter)}
       `
-      select
-        key,
-        count(*) as count
-      from
-        (
-          ${queryset_query}
-        ) qs inner join lateral jsonb_deep_key_value(row_to_json(qs)::jsonb) on true
-      where value != 'null'::jsonb
-      group by key
-      order by count desc
-      ${filter.skip ? `offset $${1 + queryset_params.length}` : ''}
-      ${
-        filter.limit
-          ? `limit $${1 + queryset_params.length + (filter.skip ? 1 : 0)}`
-          : ''
-      }
-    `,
-      params,
-    );
+    }, queryset_params)
+    const results = await this.typeOrmRepo.query(query, literals)
     const counts: {[key: string]: number} = {};
     for (const {key, count} of results) {
       counts[key] = Number(count);
@@ -235,33 +227,24 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       .where(this._typeormWhere(filter.where))
       .orderBy(this._typeormOrder(filter.order) as any);
     const [queryset_query, queryset_params] = queryset.getQueryAndParameters();
-    const params = [
-      ...queryset_params,
-      ...(filter.skip ? [filter.skip] : []),
-      ...(filter.limit ? [filter.limit] : []),
-    ];
-    const results = await this.typeOrmRepo.query(
+    const { query, literals } = safe_query_helper((safe) => {
+      return `
+        select
+          key,
+          value,
+          count(*) as count
+        from
+          (
+            ${queryset_query}
+          ) qs inner join lateral jsonb_deep_key_value(row_to_json(qs)::jsonb) on true
+        where value != 'null'::jsonb
+        group by key, value
+        order by count desc
+        ${safe_filter_limit(safe, filter)}
+        ${safe_filter_offset(safe, filter)}
       `
-      select
-        key,
-        value,
-        count(*) as count
-      from
-        (
-          ${queryset_query}
-        ) qs inner join lateral jsonb_deep_key_value(row_to_json(qs)::jsonb) on true
-      where value != 'null'::jsonb
-      group by key, value
-      order by count desc
-      ${filter.skip ? `offset $${1 + queryset_params.length}` : ''}
-      ${
-        filter.limit
-          ? `limit $${1 + queryset_params.length + (filter.skip ? 1 : 0)}`
-          : ''
-      }
-    `,
-      params,
-    );
+    }, queryset_params)
+    const results = await this.typeOrmRepo.query(query, literals)
     const counts: {[key: string]: {[value: string]: number}} = {};
     for (const {key, value, count} of results) {
       if (counts[key] === undefined) counts[key] = {};
@@ -283,34 +266,23 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       .where(this._typeormWhere(filter.where))
       .orderBy(this._typeormOrder(filter.order) as any);
     const [queryset_query, queryset_params] = queryset.getQueryAndParameters();
-
-    const params = [
-      ...queryset_params,
-      ...(filter.skip ? [filter.skip] : []),
-      ...(filter.limit ? [filter.limit] : []),
-    ];
-    const results = await this.typeOrmRepo.query(
+    const { query, literals } = safe_query_helper((safe) => {
+      return `
+        select distinct
+          key,
+          count(*) as count
+        from
+          (
+            ${queryset_query}
+          ) qs inner join lateral jsonb_deep_key_value(row_to_json(qs)::jsonb) on true
+        where value != 'null'::jsonb
+        group by key, value
+        order by count desc
+        ${safe_filter_limit(safe, filter)}
+        ${safe_filter_offset(safe, filter)}
       `
-      select distinct
-        key,
-        count(*) as count
-      from
-        (
-          ${queryset_query}
-        ) qs inner join lateral jsonb_deep_key_value(row_to_json(qs)::jsonb) on true
-      where value != 'null'::jsonb
-      group by key, value
-      order by count desc
-      ${filter.skip ? `offset $${1 + queryset_params.length}` : ''}
-      ${
-        filter.limit
-          ? `limit $${1 + queryset_params.length + (filter.skip ? 1 : 0)}`
-          : ''
-      }
-    `,
-      params,
-    );
-
+    }, queryset_params)
+    const results = await this.typeOrmRepo.query(query, literals)
     const counts: {[key: string]: number} = {};
     for (const {key, count} of results) {
       counts[key] = Number(count);

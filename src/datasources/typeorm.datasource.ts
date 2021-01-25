@@ -16,7 +16,7 @@ import {DataSource} from 'loopback-datasource-juggler';
 import {Filter, Entity} from '@loopback/repository';
 import {AnyObject} from 'loopback-datasource-juggler';
 import debug from '../util/debug';
-import {escapeLiteral, buildLimit} from '../util/sql_building';
+import {safe_filter_limit, safe_filter_offset, safe_query_helper} from '../util/sql_building';
 import * as ConnectionStringParser from 'pg-connection-string';
 
 const tables = ['resources', 'libraries', 'signatures', 'entities', 'schemas'];
@@ -120,49 +120,43 @@ export class TypeORMDataSource extends DataSource {
     model: TE,
     filter?: Filter<E>,
   ): Promise<{[key: string]: number}> {
-    const table_escaped = (await this.getConnection()).getMetadata(
+    const table_resolved = (await this.getConnection()).getMetadata(
       model.modelName,
     ).tableName;
     const filter_fields = ((filter ?? {}).fields ?? []) as string[];
-    const where_meta_clause =
-      filter_fields.length <= 0
-        ? ''
-        : filter_fields
-            .map(
-              field =>
-                `r.key = ${escapeLiteral(field)} or r.key like ${escapeLiteral(
-                  field,
-                )} || '.%'`,
-            )
-            .join(' or ');
-    const pagination_clause = buildLimit(
-      (filter ?? {}).limit,
-      (filter ?? {}).offset ?? (filter ?? {}).skip,
-    );
-
-    const query = `
-      select
-        r.key, sum(r.count) as count
-      from
-        "${table_escaped}_key_value_counts" as r
-      group by
-        r.key
-      ${
-        where_meta_clause
-          ? `
-        having
-          ${where_meta_clause}
-      `
-          : ''
-      }
-      order by
-        count desc
-      ${pagination_clause}
-      ;
-    `;
+    const {query, literals} = safe_query_helper(safe => {
+      const where_meta_clause = () =>
+        filter_fields.length <= 0
+          ? ''
+          : filter_fields
+              .map(
+                field =>
+                  `r.key = ${safe(field)} or r.key like ${safe(field)} || '.%'`,
+              )
+              .join(' or ');
+      return `
+        select
+          r.key, sum(r.count) as count
+        from
+          "${table_resolved}_key_value_counts" as r
+        group by
+          r.key
+        ${
+          where_meta_clause()
+            ? `
+          having
+            ${where_meta_clause()}
+        `
+            : ''
+        }
+        order by count desc
+        ${safe_filter_limit(safe, filter)}
+        ${safe_filter_offset(safe, filter)}
+      `;
+    });
     debug(query);
 
-    const results = await (await this.getConnection()).query(query, []);
+    const results = await (await this.getConnection()).query(query, literals);
 
     return (results as AnyObject[]).reduce<{[key: string]: number}>(
       (grouped: any, {key, count}: any) => ({
@@ -177,49 +171,44 @@ export class TypeORMDataSource extends DataSource {
     model: TE,
     filter?: Filter<E>,
   ): Promise<{[key: string]: {[key: string]: number}}> {
-    const table_escaped = (await this.getConnection()).getMetadata(
+    const table_resolved = (await this.getConnection()).getMetadata(
       model.modelName,
     ).tableName;
     const filter_fields = ((filter ?? {}).fields ?? []) as string[];
-    const where_meta_clause =
-      filter_fields.length <= 0
-        ? ''
-        : filter_fields
-            .map(
-              field =>
-                `r.key = ${escapeLiteral(
-                  field === 'library' ? 'libid' : field,
-                )} or r.key like ${escapeLiteral(
-                  field === 'library' ? 'libid' : field,
-                )} || '.%'`,
-            )
-            .join(' or ');
-    const pagination_clause = buildLimit(
-      (filter ?? {}).limit,
-      (filter ?? {}).offset ?? (filter ?? {}).skip,
-    );
-
-    const query = `
-      select
-        r.key, r.value, r.count
-      from
-        "${table_escaped}_key_value_counts" as r
-      ${
-        where_meta_clause
-          ? `
-        where
-          ${where_meta_clause}
-      `
-          : ''
-      }
-      order by
-        r.count desc
-      ${pagination_clause}
-      ;
-    `;
+    const {query, literals} = safe_query_helper(safe => {
+      const where_meta_clause = () =>
+        filter_fields.length <= 0
+          ? ''
+          : filter_fields
+              .map(
+                field =>
+                  `r.key = ${safe(field === 'library' ? 'libid' : field)}
+                 or r.key like ${safe(
+                   field === 'library' ? 'libid' : field,
+                 )} || '.%'`,
+              )
+              .join(' or ');
+      return `
+        select
+          r.key, r.value, r.count
+        from
+          "${table_resolved}_key_value_counts" as r
+        ${
+          where_meta_clause()
+            ? `
+          having
+            ${where_meta_clause()}
+        `
+            : ''
+        }
+        order by count desc
+        ${safe_filter_limit(safe, filter)}
+        ${safe_filter_offset(safe, filter)}
+      `;
+    });
     debug(query);
 
-    const results = await (await this.getConnection()).query(query, []);
+    const results = await (await this.getConnection()).query(query, literals);
 
     return (results as AnyObject[]).reduce<{
       [key: string]: {[key: string]: number};
@@ -239,49 +228,46 @@ export class TypeORMDataSource extends DataSource {
     model: TE,
     filter?: Filter<E>,
   ): Promise<{[key: string]: number}> {
-    const table_escaped = (await this.getConnection()).getMetadata(
+    const table_resolved = (await this.getConnection()).getMetadata(
       model.modelName,
     ).tableName;
     const filter_fields = ((filter ?? {}).fields ?? []) as string[];
-    const where_meta_clause =
-      filter_fields.length <= 0
-        ? ''
-        : filter_fields
-            .map(
-              field =>
-                `r.key = ${escapeLiteral(field)} or r.key like ${escapeLiteral(
-                  field,
-                )} || '.%'`,
-            )
-            .join(' or ');
-    const pagination_clause = buildLimit(
-      (filter ?? {}).limit,
-      (filter ?? {}).offset ?? (filter ?? {}).skip,
-    );
-
-    const query = `
-      select distinct
-        r.key, count(*) as count
-      from
-        "${table_escaped}_key_value_counts" as r
-      group by
-        r.key
-      ${
-        where_meta_clause
-          ? `
-        having
-          ${where_meta_clause}
-      `
-          : ''
-      }
-      order by
-        count desc
-      ${pagination_clause}
-      ;
-    `;
+    const {query, literals} = safe_query_helper(safe => {
+      const where_meta_clause = () =>
+        filter_fields.length <= 0
+          ? ''
+          : filter_fields
+              .map(
+                field =>
+                  `r.key = ${safe(field)} or r.key like ${safe(field)} || '.%'`,
+              )
+              .join(' or ');
+      return `
+        select distinct
+          r.key, count(*) as count
+        from
+          "${table_resolved}_key_value_counts" as r
+        group by
+          r.key
+        ${
+          where_meta_clause()
+            ? `
+          having
+            ${where_meta_clause()}
+        `
+            : ''
+        }
+        order by count desc
+        ${safe_filter_limit(safe, filter)}
+        ${safe_filter_offset(safe, filter)}
+      `;
+    });
     debug(query);
 
-    const results = await await (await this.getConnection()).query(query, []);
+    const results = await await (await this.getConnection()).query(
+      query,
+      literals,
+    );
 
     return (results as AnyObject[]).reduce<{[key: string]: number}>(
       (grouped: any, {key, count}: any) => ({

@@ -1,39 +1,31 @@
-export function escapeLiteral(str: string, escape_val = "'") {
-  let hasBackslash = false;
-  let escaped = escape_val;
-  for (const c of str) {
-    if (c === escape_val) {
-      escaped += c + c;
-    } else if (c === '\\') {
-      escaped += c + c;
-      hasBackslash = true;
-    } else {
-      escaped += c;
-    }
-  }
-  escaped += escape_val;
-  if (hasBackslash === true) {
-    escaped = ' E' + escaped;
-  }
-  return escaped;
+export function safe_query_helper(
+  callback: (safe: (literal: string | number) => string) => string,
+  existing_params?: any[],
+): {query: string; literals: (string | number)[]} {
+  let id = 0;
+  const literals: (string | number)[] = existing_params ?? [];
+  const safe = (literal: string | number) => {
+    literals.push(literal)
+    return '$' + id++;
+  };
+  return {
+    query: callback(safe),
+    literals,
+  };
 }
 
-export function buildLimit(limit?: number, offset?: number) {
-  const clause = [];
-  if (limit === undefined || isNaN(limit)) {
-    limit = 0;
-  }
-  if (offset === undefined || isNaN(offset)) {
-    offset = 0;
-  }
-  if (!limit && !offset) {
-    return '';
-  }
-  if (limit) {
-    clause.push('LIMIT ' + limit);
-  }
-  if (offset) {
-    clause.push('OFFSET ' + offset);
-  }
-  return clause.join(' ');
+export function safe_filter_limit(
+  safe: (limit: string|number) => string,
+  filter?: { limit?: number }
+): string {
+  const limit = (filter ?? {}).limit
+  return limit ? `limit ${safe(limit)}` : ``
+}
+
+export function safe_filter_offset(
+  safe: (limit: string | number) => string,
+  filter?: { offset?: number, skip?: number }
+): string {
+  const offset = (filter ?? {}).offset ?? (filter ?? {}).skip
+  return offset ? `offset ${safe(offset)}` : ``
 }
