@@ -51,8 +51,8 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     this.typeOrmRepo = <Repository<T>>(
       await this.dataSource.getRepository(this.entityClass as any)
     );
-    this.tableName = this.typeOrmRepo.metadata.tableName;
-    this.columns = this.typeOrmRepo.metadata.columns.reduce(
+    this.tableName = this.typeOrmRepo.getMetadata().tableName;
+    this.columns = this.typeOrmRepo.getMetadata().columns.reduce(
       (columns, col) =>
         col.propertyName.startsWith('_')
           ? columns

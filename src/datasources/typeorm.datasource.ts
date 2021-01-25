@@ -17,6 +17,7 @@ import {Filter, Entity} from '@loopback/repository';
 import {AnyObject} from 'loopback-datasource-juggler';
 import debug from '../util/debug';
 import {escapeLiteral, buildLimit} from '../util/sql_building';
+import * as ConnectionStringParser from 'pg-connection-string';
 
 const tables = ['resources', 'libraries', 'signatures', 'entities', 'schemas'];
 const relationships = [
@@ -46,7 +47,17 @@ export class TypeORMDataSource extends DataSource {
     const connectionOptions = {
       ...(await getConnectionOptions()),
       ...this.settings,
-    } as ConnectionOptions;
+    } as ConnectionOptions & {url?: string};
+    if (connectionOptions.url !== undefined) {
+      const parsed = ConnectionStringParser.parse(connectionOptions.url);
+      Object.assign(connectionOptions, {
+        host: parsed.host,
+        port: parsed.port,
+        username: parsed.user,
+        password: parsed.password,
+        database: parsed.database,
+      });
+    }
     this._connection = await createConnection({
       ...connectionOptions,
       synchronize: false,
