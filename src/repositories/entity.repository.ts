@@ -70,7 +70,6 @@ export class EntityRepository extends TypeORMRepository<
     filter?: Filter<Entity>,
   ): Promise<{[key: string]: number}> {
     await this.initialize();
-
     if (filter === undefined) filter = {};
     let queryset = this.typeOrmRepo
       .createQueryBuilder(this.tableName)
@@ -123,10 +122,8 @@ export class EntityRepository extends TypeORMRepository<
     id?: string,
     filter?: Filter<Entity>,
   ): Promise<{[key: string]: {[value: string]: number}}> {
-    await this.init();
-
+    await this.initialize();
     if (filter === undefined) filter = {};
-
     let queryset = this.typeOrmRepo
       .createQueryBuilder(this.tableName)
       .select(this._typeormSelect(filter.fields) as any)
@@ -139,7 +136,7 @@ export class EntityRepository extends TypeORMRepository<
     ) {
       queryset = queryset.andWhere(this._typeormWhere(filter.where));
     }
-
+    
     const [queryset_query, queryset_params] = queryset.getQueryAndParameters();
     const params = [
       ...queryset_params,
@@ -180,7 +177,7 @@ export class EntityRepository extends TypeORMRepository<
     id?: string,
     filter?: Filter<Entity>,
   ): Promise<{[key: string]: number}> {
-    await this.init();
+    await this.initialize();
 
     if (filter === undefined) filter = {};
 

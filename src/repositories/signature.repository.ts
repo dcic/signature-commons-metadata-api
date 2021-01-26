@@ -127,7 +127,7 @@ export class SignatureRepository extends TypeORMRepository<
     id?: string,
     filter?: Filter<Signature>,
   ): Promise<{[key: string]: {[value: string]: number}}> {
-    await this.init();
+    await this.initialize();
 
     if (filter === undefined) filter = {};
 
@@ -184,7 +184,7 @@ export class SignatureRepository extends TypeORMRepository<
     id?: string,
     filter?: Filter<Signature>,
   ): Promise<{[key: string]: number}> {
-    await this.init();
+    await this.initialize();
 
     if (filter === undefined) filter = {};
 
