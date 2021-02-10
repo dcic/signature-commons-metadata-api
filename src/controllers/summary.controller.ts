@@ -155,7 +155,7 @@ class SummaryController {
 
   async get_counting_fields(additionalWhere: {
     [key: string]: any;
-  }): Promise<Array<Schema & {meta: CountingSchema}>> {
+  }): Promise<Array<Schema & {meta: any}>> {
     return (await this.schemaRepo.find({
       where: ({
         'meta.$validator': {
@@ -163,326 +163,169 @@ class SummaryController {
         },
         ...additionalWhere,
       } as unknown) as Where<Schema>,
-    })) as Array<Schema & {meta: CountingSchema}>;
+    })) as Array<Schema & {meta: any}>;
   }
 
-  async get_counts(resource_count: any, ui_values: any) {
+  async get_counts(ui_values: any) {
     const counting_fields = await this.get_counting_fields({
-      'meta.Table_Count': true,
+      'meta.type': 'table',
     });
-    let table_counts;
     if (counting_fields.length > 0) {
       if (ui_values.preferred_name === undefined) {
         ui_values.preferred_name = {};
       }
       const count_promise = counting_fields
-        .filter(item => item.meta.Field_Name !== 'resources')
         .map(async item => {
-          const count_stats = await this.fetch_count(item.meta.Field_Name);
-          ui_values.preferred_name[item.meta.Field_Name] =
-            item.meta.Preferred_Name;
+          const count_stats = await this.fetch_count(item.meta.model);
+          // modify ui values preferred name id it does not exist
+          if (ui_values.preferred_name[item.meta.model] === undefined){
+            ui_values.preferred_name[item.meta.model] = item.meta.text;
+          } 
           return {
-            table: item.meta.Field_Name,
-            preferred_name: item.meta.Preferred_Name,
-            icon: item.meta.MDI_Icon,
-            Visible_On_Landing: item.meta.Visible_On_Landing,
-            counts: count_stats,
+            model: item.meta.model,
+            name: item.meta.text,
+            icon: item.meta.icon,
+            group: item.meta.group,
+            count: count_stats,
           };
         });
-      table_counts = await Promise.all(count_promise);
-      const resource_field = counting_fields.filter(
-        item => item.meta.Field_Name === 'resources',
-      );
-      if (resource_field.length > 0) {
-        table_counts = [
-          ...table_counts,
-          {
-            table: resource_field[0].meta.Field_Name,
-            preferred_name: resource_field[0].meta.Preferred_Name,
-            icon: resource_field[0].meta.MDI_Icon,
-            Visible_On_Landing: resource_field[0].meta.Visible_On_Landing,
-            counts: resource_count,
-          },
-        ];
-        ui_values.preferred_name[resource_field[0].meta.Field_Name] =
-          resource_field[0].meta.Preferred_Name;
-      }
-    } else {
-      if (ui_values.preferred_name !== undefined) {
-        const count_promise = Object.keys(ui_values.preferred_name)
-          .filter(key => key !== 'resources')
-          .map(async key => {
-            const count_stats = await this.fetch_count(key);
-            return {
-              table: key,
-              preferred_name: ui_values.preferred_name[key],
-              Visible_On_Landing: count_stats > 0,
-              icon: 'mdi-arrow-top-right-thick',
-              counts: count_stats,
-            };
-          });
-        table_counts = await Promise.all(count_promise);
-        if ('resources' in ui_values.preferred_name) {
-          table_counts = [
-            ...table_counts,
-            {
-              table: 'resources',
-              preferred_name: ui_values.preferred_name['resources'],
-              Visible_On_Landing: resource_count > 0,
-              icon: 'mdi-arrow-top-right-thick',
-              counts: resource_count,
-            },
-          ];
-        }
-      }
-    }
-    return {table_counts, ui_values};
+
+      const counts = await Promise.all(count_promise);
+      return {counts, ui_values};
+    } 
+    return { counts: {}, ui_values };
   }
 
   async get_metacounts() {
     const counting_fields = await this.get_counting_fields({
-      'meta.Meta_Count': true,
+      'meta.type': 'meta-count',
     });
     if (counting_fields.length === 0) {
-      return {meta_counts: {}};
+      return {counts: {}};
     }
 
     // const meta_stats = {}
-    const meta_counts = [];
+    const counts = [];
     for (const entry of counting_fields) {
-      const k = entry.meta.Field_Name;
-      const model = this.tbl_to_repo(entry.meta.Table).entityClass;
+      const k = entry.meta.field;
+      const model = this.tbl_to_repo(entry.meta.model).entityClass;
       const count = await this.tbl_to_repo(
-        entry.meta.Table,
+        entry.meta.model,
       ).dataSource.distinct_value_counts(model, {
-        fields: [entry.meta.Field_Name] as Fields<IGenericEntity>,
+        fields: [entry.meta.field] as Fields<IGenericEntity>,
       });
-      meta_counts.push({
-        name: entry.meta.Preferred_Name ?? k,
-        counts: count[k],
-        icon: entry.meta.MDI_Icon,
-        Preferred_Name: entry.meta.Preferred_Name ?? entry.meta.Field_Name,
+      counts.push({
+        model: entry.meta.model,
+        name: entry.meta.text ?? k,
+        count: count[k],
+        icon: entry.meta.icon,
+        group: entry.meta.group,
       });
     }
-    meta_counts.sort((a, b) => b.counts - a.counts);
-    return {meta_counts};
+    counts.sort((a, b) => b.count - a.count);
+    return {counts};
   }
-
-  async get_pie_stats(ui_values: any) {
-    const piefields = await this.get_counting_fields({
-      'meta.Pie_Count': true,
+  
+  async get_visualization_count(type: string) {
+    const fields = await this.get_counting_fields({
+      'meta.type': type,
     });
 
-    const piecounts: {
+    const counts: {
       [key: string]: {
-        Preferred_Name: string;
-        Field_Name: string;
-        table: string;
+        name: string;
+        field: string;
+        model: string;
         stats: Array<{
-          counts: number;
+          count: number;
           name: string;
         }>;
-        slice: number;
-        priority: number;
+        group: any;
+        type: string;
       };
     } = {};
-    for (const entry of piefields) {
-      const model = this.tbl_to_repo(entry.meta.Table).entityClass;
-      const meta_stats = await this.tbl_to_repo(
-        entry.meta.Table,
-      ).dataSource.value_counts(model, {
-        fields: [entry.meta.Field_Name],
-      } as Filter<Entity>);
-      // await this.entityRepo.dataSource.connection.query('select blah from signatures where blah = :param', {param: ''})
-      piecounts[entry.meta.Preferred_Name ?? entry.meta.Field_Name] = {
-        Preferred_Name:
-          entry.meta.Preferred_Name_Singular ||
-          entry.meta.Preferred_Name ||
-          entry.meta.Field_Name,
-        Field_Name: entry.meta.Filter_Field || entry.meta.Field_Name,
-        table: entry.meta.Table,
-        stats: Object.entries(
-          meta_stats[entry.meta.Field_Name] || {},
-        ).map(([key, val]) => ({counts: val, name: key})),
-        slice: entry.meta.Slice || 14,
-        priority: entry.meta.Priority ?? 1,
-      };
-    }
-    return {piecounts};
-  }
 
-  async get_barcounts() {
-    const counting_fields = await this.get_counting_fields({
-      'meta.Bar_Count': true,
-    });
-    const barcounts: any = {};
-    for (const entry of counting_fields) {
-      const model = this.tbl_to_repo(entry.meta.Table).entityClass;
-      const meta_stats = await this.tbl_to_repo(
-        entry.meta.Table,
-      ).dataSource.value_counts(model, {
-        fields: [entry.meta.Field_Name] as Fields<IGenericEntity>,
-        limit: 25,
-      });
-      // await this.entityRepo.dataSource.connection.query('select blah from signatures where blah = :param', {param: ''})
-      barcounts[entry.meta.Preferred_Name ?? entry.meta.Field_Name] = {
-        Preferred_Name:
-          entry.meta.Preferred_Name_Singular ||
-          entry.meta.Preferred_Name ||
-          entry.meta.Field_Name,
-        Field_Name: entry.meta.Filter_Field || entry.meta.Field_Name,
-        key:
-          entry.meta.Preferred_Name_Singular ||
-          entry.meta.Preferred_Name ||
-          entry.meta.Field_Name,
-        table: entry.meta.Table,
-        stats: Object.entries(
-          meta_stats[entry.meta.Field_Name] || {},
-        ).map(([key, val]) => ({counts: val, name: key})),
-        priority: entry.meta.Priority ?? 1,
-      };
+    for (const entry of fields) {
+      const model = this.tbl_to_repo(entry.meta.model).entityClass;
+      if (entry.meta.field !== "resource"){
+        const meta_stats = await this.tbl_to_repo(
+          entry.meta.model,
+        ).dataSource.value_counts(model, {
+          fields: [entry.meta.field],
+          limit: entry.meta.limit,
+        } as Filter<Entity>);
+        // await this.entityRepo.dataSource.connection.query('select blah from signatures where blah = :param', {param: ''})
+        counts[entry.meta.text ?? entry.meta.field] = {
+          name: entry.meta.text || entry.meta.field,
+          field: entry.meta.search_field || entry.meta.field,
+          model: entry.meta.model,
+          stats: Object.entries(
+            meta_stats[entry.meta.field] || {},
+          ).map(([key, val]) => ({count: val, name: key})),
+          group: entry.meta.group,
+          type: entry.meta.type,
+        };
+      } else {
+        const stats = await this.get_resource_signatures_count(entry.meta.search_field)
+        counts[entry.meta.text ?? entry.meta.field] = {
+          name: entry.meta.text || entry.meta.field,
+          field: entry.meta.field,
+          model: entry.meta.model,
+          stats,
+          group: entry.meta.group,
+          type: entry.meta.type,
+        };
+      }     
     }
-    return {barcounts};
+    return {counts};
   }
-
-  async get_wordcounts() {
-    const counting_fields = await this.get_counting_fields({
-      'meta.Word_Count': true,
+  
+  async get_visualization_scores() {
+    const fields = await this.get_counting_fields({
+      'meta.type': "score",
     });
-    const wordcounts: any = {};
-    for (const entry of counting_fields) {
-      const model = this.tbl_to_repo(entry.meta.Table).entityClass;
-      const meta_stats = await this.tbl_to_repo(
-        entry.meta.Table,
-      ).dataSource.value_counts(model, {
-        fields: [entry.meta.Field_Name] as Fields<IGenericEntity>,
-        limit: 100,
-      });
-      // await this.entityRepo.dataSource.connection.query('select blah from signatures where blah = :param', {param: ''})
-      wordcounts[entry.meta.Preferred_Name ?? entry.meta.Field_Name] = {
-        Preferred_Name:
-          entry.meta.Preferred_Name_Singular ||
-          entry.meta.Preferred_Name ||
-          entry.meta.Field_Name,
-        Field_Name: entry.meta.Filter_Field || entry.meta.Field_Name,
-        key:
-          entry.meta.Preferred_Name_Singular ||
-          entry.meta.Preferred_Name ||
-          entry.meta.Field_Name,
-        table: entry.meta.Table,
-        stats: Object.entries(
-          meta_stats[entry.meta.Field_Name] || {},
-        ).map(([key, val]) => ({counts: val, name: key})),
-        priority: entry.meta.Priority ?? 1,
+
+    const scores: {
+      [key: string]: {
+        name: string;
+        field: string;
+        model: string;
+        stats: Array<{
+          count: number;
+          name: string;
+        }>;
+        group: any;
       };
-    }
-    return {wordcounts};
-  }
+    } = {};
 
-  async get_histograms() {
-    const counting_fields = await this.get_counting_fields({
-      'meta.Histogram': true,
-    });
-    const histograms: any = {};
-    for (const entry of counting_fields) {
-      const model = this.tbl_to_repo(entry.meta.Table).entityClass;
-      const meta_stats = await this.tbl_to_repo(
-        entry.meta.Table,
-      ).dataSource.value_counts(model, {
-        fields: [entry.meta.Field_Name] as Fields<IGenericEntity>,
-      });
-      // await this.entityRepo.dataSource.connection.query('select blah from signatures where blah = :param', {param: ''})
-      histograms[entry.meta.Preferred_Name ?? entry.meta.Field_Name] = {
-        Preferred_Name:
-          entry.meta.Preferred_Name_Singular ||
-          entry.meta.Preferred_Name ||
-          entry.meta.Field_Name,
-        Field_Name: entry.meta.Filter_Field || entry.meta.Field_Name,
-        key:
-          entry.meta.Preferred_Name_Singular ||
-          entry.meta.Preferred_Name ||
-          entry.meta.Field_Name,
-        table: entry.meta.Table,
-        stats: Object.entries(
-          meta_stats[entry.meta.Field_Name] || {},
-        ).map(([key, val]) => ({counts: val, name: key})),
-        priority: entry.meta.Priority ?? 1,
-      };
-    }
-    return {histograms};
-  }
-
-  async get_barscores() {
-    const counting_fields = await this.get_counting_fields({
-      'meta.Bar_Score': true,
-    });
-    const barscores: any = {};
-    for (const entry of counting_fields) {
-      const order = [entry.meta.Order_By + ' DESC'];
+    for (const entry of fields) {
+      const order = [`${entry.meta.order_by} ${entry.meta.order}`];
       const meta_scores = await this.tbl_to_repo(entry.meta.Table).find({
         where: {
-          [entry.meta.Order_By]: {
+          [entry.meta.order_by]: {
             neq: null,
           },
         },
         order,
-        limit: 25,
+        limit: entry.meta.limit,
       });
       const stats: Array<any> = [];
       for (const value of meta_scores) {
-        const name = makeTemplate('${' + entry.meta.Field_Name + '}', value);
-        const counts = makeTemplate('${' + entry.meta.Order_By + '}', value);
-        stats.push({name, counts: Number(counts)});
+        const name = makeTemplate('${' + entry.meta.search_field || entry.meta.field + '}', value);
+        const count = makeTemplate('${' + entry.meta.order_by + '}', value);
+        stats.push({name, count: Number(count)});
       }
       // await this.entityRepo.dataSource.connection.query('select blah from signatures where blah = :param', {param: ''})
-      barscores[entry.meta.Preferred_Name ?? entry.meta.Field_Name] = {
-        Preferred_Name:
-          entry.meta.Preferred_Name_Singular ||
-          entry.meta.Preferred_Name ||
-          entry.meta.Field_Name,
-        Field_Name: entry.meta.Filter_Field || entry.meta.Field_Name,
-        key:
-          entry.meta.Preferred_Name_Singular ||
-          entry.meta.Preferred_Name ||
-          entry.meta.Field_Name,
-        table: entry.meta.Table,
+      scores[entry.meta.text ?? entry.meta.field] = {
+        name: entry.meta.text,
+        field: entry.meta.search_field || entry.meta.field,
+        model: entry.meta.model,
         stats: stats,
-        priority: entry.meta.Priority ?? 1,
+        group: entry.meta.group,
       };
     }
-    return {barscores};
+    return {scores};
   }
-
-  // async get_barscores() {
-  //   const counting_fields = await this.schemaRepo.find({
-  //     where: {
-  //       'meta.$validator': '/dcic/signature-commons-schema/v5/meta/schema/counting.json',
-  //       'meta.Bar_Score': true,
-  //     },
-  //   })
-  //   const barscores: any = {}
-  //   for (const entry of counting_fields) {
-  //     const meta_stats = (await (this.tbl_to_repo(entry.meta.Table)).find({
-  //       where: {
-  //         [entry.meta.Order_By]: {
-  //           neq: null
-  //         }
-  //       },
-  //       order: `${entry.meta.Order_By} DESC`,
-  //       limit: 25,
-  //     }))
-
-  //     const stats: any = {}
-  //     for (const bar_meta of meta_stats) {
-  //       const count = Number(makeTemplate('${' + entry.meta.Order_By + '}', bar_meta))
-  //       const name = makeTemplate('${' + entry.meta.Field_Name + '}', bar_meta)
-  //       stats[name] =
-  //       //const count = (meta_stats)[entry.meta.Field_Name][bar]
-  //     }
-  //     barscores[entry.meta.Field_Name] = Object.keys(stats).map((key) => ({ name: key, counts: stats[key] }))
-  //   }
-  //   return barscores
-  // }
 
   async get_schemas() {
     return (
@@ -511,15 +354,20 @@ class SummaryController {
     return {ui_values};
   }
 
-  async get_resource_signatures_count(schemas: any) {
-    const resource_signature_count: any = [];
+  async get_resource_signatures_count(search_field: string) {
+    const resource_signature_count: Array<{
+      count: number,
+      name: string,
+      id: string,
+    }> = [];
     for (const resource of await this.resourceRepo.find()) {
       const {count} = await this.resourceController.signatures_count(
         this.libraryController,
         this.signatureController,
         resource.id,
       );
-      resource_signature_count.push({count, id: resource.id});
+      const name = makeTemplate('${' + search_field + '}', resource);
+      resource_signature_count.push({count, name, id: resource.id});
     }
     return resource_signature_count;
   }
@@ -540,37 +388,20 @@ class SummaryController {
       // Check if it has library_name and resource_from_library
       await this.bg.setStatus('get_schemas');
       const schemas = await this.get_schemas();
-      // console.log(schemas)
-      await this.bg.setStatus('get_resource_signatures_count');
-      const resource_signature_count = await this.get_resource_signatures_count(
-        schemas,
-      );
-      // console.log(resource_signature_count)
       await this.bg.setStatus('get_counts');
-      const {table_counts, ui_values: ui_val} = await this.get_counts(
-        Object.keys(resource_signature_count).length,
+      const {counts: models, ui_values: ui_val} = await this.get_counts(
         ui_values,
       );
-      // console.log(table_counts)
       await this.bg.setStatus('get_metacounts');
-      const {meta_counts} = await this.get_metacounts();
-      // console.log(meta_counts)
-      await this.bg.setStatus('get_pie_stats');
-      const {piecounts} = await this.get_pie_stats(ui_val);
-      // console.log(piecounts)
-      // let signature_keys: any = {}
-      // const { count } = await this.signatureRepo.count()
-      // if (count > 0){
-      //   signature_keys = await this.get_signature_keys()
-      // }
-      await this.bg.setStatus('get_barcounts');
-      const {barcounts} = await this.get_barcounts();
-      await this.bg.setStatus('get_histograms');
-      const {histograms} = await this.get_histograms();
-      await this.bg.setStatus('get_barscores');
-      const {barscores} = await this.get_barscores();
-      await this.bg.setStatus('get_wordcounts');
-      const {wordcounts} = await this.get_wordcounts();
+      const {counts: meta} = await this.get_metacounts();
+      const count_charts: {[key: string]: {}} = {}
+      for (const type of ["bar", "pie", "word"]){
+        await this.bg.setStatus(`get_${type}_stats`);
+        const {counts} = await this.get_visualization_count(type);
+        count_charts[type] = counts
+      }
+      await this.bg.setStatus(`get_scores`);
+      const {scores} = await this.get_visualization_scores();
       await this.bg.setStatus('Refreshing summary...');
       await this.summaryRepo.deleteAll();
       await this.summaryRepo.createAll([
@@ -579,37 +410,21 @@ class SummaryController {
           value: schemas,
         },
         {
-          id: 'resource_signature_count',
-          value: resource_signature_count,
-        },
-        {
-          id: 'table_counts',
-          value: table_counts,
+          id: 'model_counts',
+          value: models,
         },
         {
           id: 'meta_counts',
-          value: meta_counts,
+          value: meta,
         },
         {
-          id: 'piecounts',
-          value: piecounts,
+          id: 'count_charts',
+          value: count_charts,
         },
         {
-          id: 'wordcounts',
-          value: wordcounts,
-        },
-        {
-          id: 'barcounts',
-          value: barcounts,
-        },
-        {
-          id: 'barscores',
-          value: barscores,
-        },
-        {
-          id: 'histograms',
-          value: histograms,
-        },
+          id: 'scores',
+          value: scores,
+        }
       ]);
     });
   }
