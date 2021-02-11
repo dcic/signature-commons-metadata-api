@@ -1,6 +1,13 @@
-import {Entity as TypeORMEntity, Column, Generated, Index} from 'typeorm';
+import {
+  Entity as TypeORMEntity,
+  Column,
+  Generated,
+  Index,
+  ManyToMany,
+} from 'typeorm';
 import {Entity as LBEntity, model, property} from '@loopback/repository';
 import {getJsonSchema} from '@loopback/rest';
+import {Signature} from './signature.model';
 
 @model({
   name: 'Entity',
@@ -43,10 +50,23 @@ export class Entity extends LBEntity {
   })
   @Index('entities_meta_gin_index', {synchronize: false})
   @Index('entities_meta_gist_fts_index', {synchronize: false})
-  @Column('jsonb')
+  @Column({
+    name: 'meta',
+    type: 'jsonb',
+  })
   meta: {
     [key: string]: any;
   };
+
+  @ManyToMany(
+    type => Signature,
+    signature => signature._entities,
+    {
+      cascade: ['insert', 'update'],
+      deferrable: 'INITIALLY DEFERRED',
+    },
+  )
+  _signatures: Signature[];
 
   constructor(data?: Partial<Entity>) {
     super(data);

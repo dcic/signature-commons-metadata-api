@@ -5,10 +5,13 @@ import {
   Generated,
   JoinColumn,
   Index,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 import {Entity as LBEntity, model, property} from '@loopback/repository';
 import {getJsonSchema} from '@loopback/rest';
 import {Library} from './library.model';
+import {Entity} from './entity.model';
 
 @model({
   name: 'Signature',
@@ -62,6 +65,7 @@ export class Signature extends LBEntity {
   @Index('signatures_meta_gin_index', {synchronize: false})
   @Index('signatures_meta_gist_fts_index', {synchronize: false})
   @Column({
+    name: 'meta',
     type: 'jsonb',
   })
   meta: {
@@ -71,12 +75,37 @@ export class Signature extends LBEntity {
   @ManyToOne(
     type => Library,
     library => library._signatures,
+    {
+      cascade: ['insert', 'update'],
+      deferrable: 'INITIALLY DEFERRED',
+    },
   )
   @JoinColumn({
     name: 'libid',
     referencedColumnName: 'id',
   })
   _library: Promise<Library>;
+
+  @ManyToMany(
+    type => Entity,
+    entity => entity.signatures,
+    {
+      cascade: ['insert', 'update'],
+      deferrable: 'INITIALLY DEFERRED',
+    },
+  )
+  @JoinTable({
+    name: 'signature_entity',
+    joinColumn: {
+      name: 'signature_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'entity_id',
+      referencedColumnName: 'id',
+    },
+  })
+  _entities: Entity[];
 
   constructor(data?: Partial<Signature>) {
     super(data);

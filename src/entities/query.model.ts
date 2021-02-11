@@ -2,24 +2,25 @@ import {
   Entity as TypeORMEntity,
   Column,
   Generated,
-  OneToMany,
   Index,
+  CreateDateColumn,
+  OneToOne,
 } from 'typeorm';
 import {Entity as LBEntity, model, property} from '@loopback/repository';
 import {getJsonSchema} from '@loopback/rest';
-import {Library} from './library.model';
+import {QueryResult} from './query_result.model';
 
 @model({
-  name: 'Resource',
-  description: 'A table for storing validatable resources in the database',
+  name: 'Query',
+  description: 'A query to make against the signature commons knowledge-base',
   settings: {
     strict: false,
   },
 })
 @TypeORMEntity({
-  name: 'resources',
+  name: 'queries',
 })
-export class Resource extends LBEntity {
+export class Query extends LBEntity {
   @Column({
     name: 'id',
     primary: true,
@@ -42,13 +43,17 @@ export class Resource extends LBEntity {
   })
   id: string;
 
+  @CreateDateColumn({
+    name: 'created',
+  })
+  created: Date;
+
   @property({
     type: 'object',
     required: true,
     default: {},
   })
-  @Index('resources_meta_gin_index', {synchronize: false})
-  @Index('resources_meta_gist_fts_index', {synchronize: false})
+  @Index('queries_meta_gin_index', {synchronize: false})
   @Column({
     name: 'meta',
     type: 'jsonb',
@@ -57,18 +62,19 @@ export class Resource extends LBEntity {
     [key: string]: any;
   };
 
-  @OneToMany(
-    type => Library,
-    library => library.resource,
+  @OneToOne(
+    type => QueryResult,
+    query_result => query_result._query,
     {
-      cascade: ['insert', 'update'],
+      cascade: ['insert', 'update', 'remove'],
       deferrable: 'INITIALLY DEFERRED',
     },
   )
-  _libraries: Promise<Library[]>;
+  _query_result?: QueryResult;
 
-  constructor(data?: Partial<Resource>) {
+  constructor(data?: Partial<Query>) {
     super(data);
   }
 }
-export const ResourceSchema = getJsonSchema(Resource);
+
+export const QuerySchema = getJsonSchema(Query);

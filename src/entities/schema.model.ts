@@ -43,6 +43,7 @@ export class Schema extends LBEntity {
   @Index('schemas_meta_gin_index', {synchronize: false})
   @Index('schemas_meta_gist_fts_index', {synchronize: false})
   @Column({
+    name: 'meta',
     type: 'jsonb',
   })
   meta: {

@@ -103,6 +103,10 @@ export class Library extends LBEntity {
   @OneToMany(
     type => Signature,
     signature => signature._library,
+    {
+      cascade: ['insert', 'update'],
+      deferrable: 'INITIALLY DEFERRED',
+    },
   )
   _signatures: Promise<Signature[]>;
 

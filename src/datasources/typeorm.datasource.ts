@@ -16,7 +16,11 @@ import {DataSource} from 'loopback-datasource-juggler';
 import {Filter, Entity} from '@loopback/repository';
 import {AnyObject} from 'loopback-datasource-juggler';
 import debug from '../util/debug';
-import {safe_filter_limit, safe_filter_offset, safe_query_helper} from '../util/sql_building';
+import {
+  safe_filter_limit,
+  safe_filter_offset,
+  safe_query_helper,
+} from '../util/sql_building';
 import * as ConnectionStringParser from 'pg-connection-string';
 
 const tables = ['resources', 'libraries', 'signatures', 'entities', 'schemas'];
