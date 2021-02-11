@@ -20,7 +20,11 @@ import {
 } from './generic.controller';
 import {Signature as SignatureController} from './signature.controller';
 import {AnyObject, Count} from 'loopback-datasource-juggler';
-import {safe_filter_limit, safe_filter_offset, safe_query_helper} from '../util/sql_building';
+import {
+  safe_filter_limit,
+  safe_filter_offset,
+  safe_query_helper,
+} from '../util/sql_building';
 import debug from '../util/debug';
 
 const GenericLibraryController = GenericControllerFactory<
@@ -104,18 +108,16 @@ export class Library extends GenericLibraryController {
     if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
 
     const filter_fields = ((filter ?? {}).fields ?? []) as string[];
-    const { query, literals } = safe_query_helper(safe => {
+    const {query, literals} = safe_query_helper(safe => {
       const where_meta_clause = () =>
         filter_fields.length <= 0
-            ? ''
-            : filter_fields
-                .map(
-                  field =>
-                    `r.key = ${safe(field)} or r.key like ${safe(
-                      field,
-                    )} || '.%'`,
-                )
-                .join(' or ');
+          ? ''
+          : filter_fields
+              .map(
+                field =>
+                  `r.key = ${safe(field)} or r.key like ${safe(field)} || '.%'`,
+              )
+              .join(' or ');
       return `
         select
           r.key, sum(r.count) as count
@@ -137,8 +139,8 @@ export class Library extends GenericLibraryController {
           count desc
         ${safe_filter_limit(safe, filter)}
         ${safe_filter_offset(safe, filter)}
-      `
-    })
+      `;
+    });
     debug(query);
 
     const results = await (
@@ -165,16 +167,14 @@ export class Library extends GenericLibraryController {
     if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
 
     const filter_fields = ((filter ?? {}).fields ?? []) as string[];
-    const { query, literals } = safe_query_helper(safe => {
+    const {query, literals} = safe_query_helper(safe => {
       const where_meta_clause = () =>
         filter_fields.length <= 0
           ? ''
           : filter_fields
               .map(
                 field =>
-                  `r.key = ${safe(field)} or r.key like ${safe(
-                    field,
-                  )} || '.%'`,
+                  `r.key = ${safe(field)} or r.key like ${safe(field)} || '.%'`,
               )
               .join(' or ');
       return `
@@ -196,8 +196,8 @@ export class Library extends GenericLibraryController {
           count desc
         ${safe_filter_limit(safe, filter)}
         ${safe_filter_offset(safe, filter)}
-      `
-    })
+      `;
+    });
     debug(query);
 
     const results = await (

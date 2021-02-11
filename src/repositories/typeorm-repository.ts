@@ -26,7 +26,11 @@ import {HttpErrors} from '@loopback/rest';
 import {TypeORMDataSource} from '../datasources';
 import {QueryDeepPartialEntity} from 'typeorm/query-builder/QueryPartialEntity';
 import {UniqueIDGenerator} from '../util/unique_id_generator';
-import { safe_filter_limit, safe_filter_offset, safe_query_helper } from '../util/sql_building';
+import {
+  safe_filter_limit,
+  safe_filter_offset,
+  safe_query_helper,
+} from '../util/sql_building';
 
 /**
  * An implementation of EntityCrudRepository using TypeORM
@@ -190,7 +194,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       .where(this._typeormWhere(filter.where))
       .orderBy(this._typeormOrder(filter.order) as any);
     const [queryset_query, queryset_params] = queryset.getQueryAndParameters();
-    const { query, literals } = safe_query_helper((safe) => {
+    const {query, literals} = safe_query_helper(safe => {
       return `
         select
           key,
@@ -204,9 +208,9 @@ export class TypeORMRepository<T extends Entity, ID extends string>
         order by count
         ${safe_filter_limit(safe, filter)}
         ${safe_filter_offset(safe, filter)}
-      `
-    }, queryset_params)
-    const results = await this.typeOrmRepo.query(query, literals)
+      `;
+    }, queryset_params);
+    const results = await this.typeOrmRepo.query(query, literals);
     const counts: {[key: string]: number} = {};
     for (const {key, count} of results) {
       counts[key] = Number(count);
@@ -227,7 +231,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       .where(this._typeormWhere(filter.where))
       .orderBy(this._typeormOrder(filter.order) as any);
     const [queryset_query, queryset_params] = queryset.getQueryAndParameters();
-    const { query, literals } = safe_query_helper((safe) => {
+    const {query, literals} = safe_query_helper(safe => {
       return `
         select
           key,
@@ -242,9 +246,9 @@ export class TypeORMRepository<T extends Entity, ID extends string>
         order by count desc
         ${safe_filter_limit(safe, filter)}
         ${safe_filter_offset(safe, filter)}
-      `
-    }, queryset_params)
-    const results = await this.typeOrmRepo.query(query, literals)
+      `;
+    }, queryset_params);
+    const results = await this.typeOrmRepo.query(query, literals);
     const counts: {[key: string]: {[value: string]: number}} = {};
     for (const {key, value, count} of results) {
       if (counts[key] === undefined) counts[key] = {};
@@ -266,7 +270,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       .where(this._typeormWhere(filter.where))
       .orderBy(this._typeormOrder(filter.order) as any);
     const [queryset_query, queryset_params] = queryset.getQueryAndParameters();
-    const { query, literals } = safe_query_helper((safe) => {
+    const {query, literals} = safe_query_helper(safe => {
       return `
         select distinct
           key,
@@ -280,9 +284,9 @@ export class TypeORMRepository<T extends Entity, ID extends string>
         order by count desc
         ${safe_filter_limit(safe, filter)}
         ${safe_filter_offset(safe, filter)}
-      `
-    }, queryset_params)
-    const results = await this.typeOrmRepo.query(query, literals)
+      `;
+    }, queryset_params);
+    const results = await this.typeOrmRepo.query(query, literals);
     const counts: {[key: string]: number} = {};
     for (const {key, count} of results) {
       counts[key] = Number(count);
