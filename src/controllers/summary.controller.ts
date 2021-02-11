@@ -174,26 +174,25 @@ class SummaryController {
       if (ui_values.preferred_name === undefined) {
         ui_values.preferred_name = {};
       }
-      const count_promise = counting_fields
-        .map(async item => {
-          const count_stats = await this.fetch_count(item.meta.model);
-          // modify ui values preferred name id it does not exist
-          if (ui_values.preferred_name[item.meta.model] === undefined){
-            ui_values.preferred_name[item.meta.model] = item.meta.text;
-          } 
-          return {
-            model: item.meta.model,
-            name: item.meta.text,
-            icon: item.meta.icon,
-            group: item.meta.group,
-            count: count_stats,
-          };
-        });
+      const count_promise = counting_fields.map(async item => {
+        const count_stats = await this.fetch_count(item.meta.model);
+        // modify ui values preferred name id it does not exist
+        if (ui_values.preferred_name[item.meta.model] === undefined) {
+          ui_values.preferred_name[item.meta.model] = item.meta.text;
+        }
+        return {
+          model: item.meta.model,
+          name: item.meta.text,
+          icon: item.meta.icon,
+          group: item.meta.group,
+          count: count_stats,
+        };
+      });
 
       const counts = await Promise.all(count_promise);
       return {counts, ui_values};
-    } 
-    return { counts: {}, ui_values };
+    }
+    return {counts: {}, ui_values};
   }
 
   async get_metacounts() {
@@ -225,7 +224,7 @@ class SummaryController {
     counts.sort((a, b) => b.count - a.count);
     return {counts};
   }
-  
+
   async get_visualization_count(type: string) {
     const fields = await this.get_counting_fields({
       'meta.type': type,
@@ -247,7 +246,7 @@ class SummaryController {
 
     for (const entry of fields) {
       const model = this.tbl_to_repo(entry.meta.model).entityClass;
-      if (entry.meta.field !== "resource"){
+      if (entry.meta.field !== 'resource') {
         const meta_stats = await this.tbl_to_repo(
           entry.meta.model,
         ).dataSource.value_counts(model, {
@@ -266,7 +265,9 @@ class SummaryController {
           type: entry.meta.type,
         };
       } else {
-        const stats = await this.get_resource_signatures_count(entry.meta.search_field)
+        const stats = await this.get_resource_signatures_count(
+          entry.meta.search_field,
+        );
         counts[entry.meta.text ?? entry.meta.field] = {
           name: entry.meta.text || entry.meta.field,
           field: entry.meta.field,
@@ -275,14 +276,14 @@ class SummaryController {
           group: entry.meta.group,
           type: entry.meta.type,
         };
-      }     
+      }
     }
     return {counts};
   }
-  
+
   async get_visualization_scores() {
     const fields = await this.get_counting_fields({
-      'meta.type': "score",
+      'meta.type': 'score',
     });
 
     const scores: {
@@ -311,7 +312,10 @@ class SummaryController {
       });
       const stats: Array<any> = [];
       for (const value of meta_scores) {
-        const name = makeTemplate('${' + entry.meta.search_field || entry.meta.field + '}', value);
+        const name = makeTemplate(
+          '${' + entry.meta.search_field || entry.meta.field + '}',
+          value,
+        );
         const count = makeTemplate('${' + entry.meta.order_by + '}', value);
         stats.push({name, count: Number(count)});
       }
@@ -356,9 +360,9 @@ class SummaryController {
 
   async get_resource_signatures_count(search_field: string) {
     const resource_signature_count: Array<{
-      count: number,
-      name: string,
-      id: string,
+      count: number;
+      name: string;
+      id: string;
     }> = [];
     for (const resource of await this.resourceRepo.find()) {
       const {count} = await this.resourceController.signatures_count(
@@ -389,16 +393,14 @@ class SummaryController {
       await this.bg.setStatus('get_schemas');
       const schemas = await this.get_schemas();
       await this.bg.setStatus('get_counts');
-      const {counts: models, ui_values: ui_val} = await this.get_counts(
-        ui_values,
-      );
+      const {counts: models} = await this.get_counts(ui_values);
       await this.bg.setStatus('get_metacounts');
       const {counts: meta} = await this.get_metacounts();
-      const count_charts: {[key: string]: {}} = {}
-      for (const type of ["bar", "pie", "word"]){
+      const count_charts: {[key: string]: {}} = {};
+      for (const type of ['bar', 'pie', 'word']) {
         await this.bg.setStatus(`get_${type}_stats`);
         const {counts} = await this.get_visualization_count(type);
-        count_charts[type] = counts
+        count_charts[type] = counts;
       }
       await this.bg.setStatus(`get_scores`);
       const {scores} = await this.get_visualization_scores();
@@ -424,7 +426,7 @@ class SummaryController {
         {
           id: 'scores',
           value: scores,
-        }
+        },
       ]);
     });
   }
