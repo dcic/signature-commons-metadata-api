@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "/query_result/index.json",
+  "title": "QueryResultMeta",
+  "allOf": [
+    { "$ref": "/meta.json" },
+    {
+      "oneOf": [
+        { "$ref": "/query_result/geneset.json" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "/query_result/geneset.json",
+  "title": "GenesetQueryResultMeta",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "n_results": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": true,
+      "required": ["n_results"]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "required": ["error"]
+    }
+  ]
+}
