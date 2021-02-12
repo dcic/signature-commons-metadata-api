@@ -11,11 +11,12 @@
     "node": ">=8.9"
   },
   "scripts": {
+    "build:apis": "dotenv-load node bin/compile_apis.js -i 'src/apis/**/*.yaml' -o src/types/apis.ts",
     "build:docker": "dotenv-load node ./bin/docker-build.js",
     "build:schemas": "dotenv-load node bin/compile_schemas.js -i 'src/schemas/**/*.json' -o src/types/schemas.ts",
     "build:watch": "dotenv-load lb-tsc --watch",
     "build:app": "dotenv-load lb-tsc --outDir dist",
-    "build": "npm run build:schemas && npm run build:app",
+    "build": "npm run build:schemas && npm run build:apis && npm run build:app",
     "clean": "lb-clean dist",
     "coverage:ci": "lb-nyc report --reporter=text-lcov | coveralls",
     "coverage": "http-server coverage",
@@ -69,7 +70,7 @@
     "debug": "^4.3.1",
     "deepmerge": "^3.3.0",
     "dotenv": "^8.2.0",
-    "loopback-connector-postgresql": "github:u8sand/loopback-connector-postgresql#fullTextSearch",
+    "isomorphic-unfetch": "^3.1.0",
     "memory": "0.0.3",
     "passport": "^0.4.1",
     "passport-http": "^0.3.0",
