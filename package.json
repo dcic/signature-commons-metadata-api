@@ -11,9 +11,9 @@
     "node": ">=8.9"
   },
   "scripts": {
-    "build:apis": "dotenv-load node bin/compile_apis.js -i 'src/apis/**/*.yaml' -o src/types/apis.ts",
+    "build:apis": "node bin/compile_apis.js -i \"src/apis/**/*.yaml\" -o src/types/apis.ts",
     "build:docker": "dotenv-load node ./bin/docker-build.js",
-    "build:schemas": "dotenv-load node bin/compile_schemas.js -i 'src/schemas/**/*.json' -o src/types/schemas.ts",
+    "build:schemas": "node bin/compile_schemas.js -i \"src/schemas/**/*.json\" -o src/types/schemas.ts",
     "build:watch": "dotenv-load lb-tsc --watch",
     "build:app": "dotenv-load lb-tsc --outDir dist",
     "build": "npm run build:schemas && npm run build:apis && npm run build:app",
