@@ -1,0 +1,9 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "/ops/fields.json",
+  "title": "OpFields",
+  "type": "array",
+  "items": {
+    "type": "string"
+  }
+}

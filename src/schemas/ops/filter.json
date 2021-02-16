@@ -5,23 +5,13 @@
   "type": "object",
   "properties": {
     "fields": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+      "$ref": "/ops/fields.json"
     },
     "where": {
       "$ref": "/ops/where.json"
     },
     "order": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "string",
-        "enum": [
-          "ASC",
-          "DESC"
-        ]
-      }
+      "$ref": "/ops/order.json"
     },
     "skip": {
       "type": "number"
