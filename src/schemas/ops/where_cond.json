@@ -1,0 +1,164 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "/ops/where_cond.json",
+  "title": "OpWhereCond",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "between": {
+          "type": "array",
+          "items": {
+            "$ref": "/literal.json"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "required": ["between"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "fullTextSearch": {
+          "$ref": "/ops/where_cond_fts.json"
+        }
+      },
+      "required": ["fullTextSearch"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "lt": {
+          "$ref": "/literal.json"
+        }
+      },
+      "required": ["lt"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "lte": {
+          "$ref": "/literal.json"
+        }
+      },
+      "required": ["lte"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "gt": {
+          "$ref": "/literal.json"
+        }
+      },
+      "required": ["gt"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "gte": {
+          "$ref": "/literal.json"
+        }
+      },
+      "required": ["gte"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "like": {
+          "$ref": "/literal.json"
+        }
+      },
+      "required": ["like"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "ilike": {
+          "$ref": "/literal.json"
+        }
+      },
+      "required": ["ilike"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "nlike": {
+          "$ref": "/literal.json"
+        }
+      },
+      "required": ["nlike"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "nilike": {
+          "$ref": "/literal.json"
+        }
+      },
+      "required": ["nilike"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "inq": {
+          "type": "array",
+          "items": {
+            "$ref": "/literal.json"
+          }
+        }
+      },
+      "required": ["inq"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "nin": {
+          "type": "array",
+          "items": {
+            "$ref": "/literal.json"
+          }
+        }
+      },
+      "required": ["nin"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "neq": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": ["neq"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eq": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": ["eq"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "additionalProperties": true
+    }
+  ]
+}

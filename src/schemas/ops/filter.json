@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "/ops/filter.json",
+  "title": "OpFilter",
+  "type": "object",
+  "properties": {
+    "fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "where": {
+      "$ref": "/ops/where.json"
+    },
+    "order": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "enum": [
+          "ASC",
+          "DESC"
+        ]
+      }
+    },
+    "skip": {
+      "type": "number"
+    },
+    "limit": {
+      "type": "number"
+    }
+  },
+  "additionalProperties": false
+}

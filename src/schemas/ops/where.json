@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "/ops/where.json",
+  "title": "OpWhere",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "and": {
+          "$ref": "/ops/where.json"
+        }
+      },
+      "required": ["and"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "or": {
+          "$ref": "/ops/where.json"
+        }
+      },
+      "required": ["or"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "/ops/where_cond.json"
+      }
+    }
+  ]
+}

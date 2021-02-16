@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "/literal.json",
+  "title": "Literal",
+  "oneOf": [
+    {"type": "boolean"},
+    {"type": "integer"},
+    {"type": "number"},
+    {"type": "string"},
+    {"type": "null"}
+  ]
+}
