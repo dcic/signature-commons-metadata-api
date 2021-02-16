@@ -6,7 +6,8 @@
     { "$ref": "/meta.json" },
     {
       "oneOf": [
-        { "$ref": "/query/geneset.json" }
+        { "$ref": "/query/geneset.json" },
+        { "$ref": "/query/up_down_geneset.json" }
       ]
     }
   ]
