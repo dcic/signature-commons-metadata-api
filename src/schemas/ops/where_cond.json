@@ -9,7 +9,7 @@
         "between": {
           "type": "array",
           "items": {
-            "$ref": "/literal.json"
+            "$ref": "/json/literal.json"
           },
           "minItems": 2,
           "maxItems": 2
@@ -32,7 +32,7 @@
       "type": "object",
       "properties": {
         "lt": {
-          "$ref": "/literal.json"
+          "$ref": "/json/literal.json"
         }
       },
       "required": ["lt"],
@@ -42,7 +42,7 @@
       "type": "object",
       "properties": {
         "lte": {
-          "$ref": "/literal.json"
+          "$ref": "/json/literal.json"
         }
       },
       "required": ["lte"],
@@ -52,7 +52,7 @@
       "type": "object",
       "properties": {
         "gt": {
-          "$ref": "/literal.json"
+          "$ref": "/json/literal.json"
         }
       },
       "required": ["gt"],
@@ -62,7 +62,7 @@
       "type": "object",
       "properties": {
         "gte": {
-          "$ref": "/literal.json"
+          "$ref": "/json/literal.json"
         }
       },
       "required": ["gte"],
@@ -72,7 +72,7 @@
       "type": "object",
       "properties": {
         "like": {
-          "$ref": "/literal.json"
+          "$ref": "/json/literal.json"
         }
       },
       "required": ["like"],
@@ -82,7 +82,7 @@
       "type": "object",
       "properties": {
         "ilike": {
-          "$ref": "/literal.json"
+          "$ref": "/json/literal.json"
         }
       },
       "required": ["ilike"],
@@ -92,7 +92,7 @@
       "type": "object",
       "properties": {
         "nlike": {
-          "$ref": "/literal.json"
+          "$ref": "/json/literal.json"
         }
       },
       "required": ["nlike"],
@@ -102,7 +102,7 @@
       "type": "object",
       "properties": {
         "nilike": {
-          "$ref": "/literal.json"
+          "$ref": "/json/literal.json"
         }
       },
       "required": ["nilike"],
@@ -114,7 +114,7 @@
         "inq": {
           "type": "array",
           "items": {
-            "$ref": "/literal.json"
+            "$ref": "/json/literal.json"
           }
         }
       },
@@ -127,7 +127,7 @@
         "nin": {
           "type": "array",
           "items": {
-            "$ref": "/literal.json"
+            "$ref": "/json/literal.json"
           }
         }
       },

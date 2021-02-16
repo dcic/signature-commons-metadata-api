@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "/literal.json",
-  "title": "Literal",
+  "$id": "/json/literal.json",
+  "title": "JsonLiteral",
   "oneOf": [
     {"type": "boolean"},
     {"type": "integer"},

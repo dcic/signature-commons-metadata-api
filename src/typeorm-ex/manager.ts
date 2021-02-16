@@ -6,7 +6,18 @@ import {
   ObjectType,
   SelectQueryBuilder,
 } from 'typeorm';
-import {JSON, JSONLiteral} from '../types/JSON';
+import {
+  OpFilter,
+  OpFields,
+  OpWhere,
+  OpWhereCond,
+  OpWhereCondFTS,
+  OpWhereCondFTSC,
+  JsonLiteralC,
+  Json,
+  JsonC,
+  JsonArrayC,
+} from '../types/schemas';
 import {
   ExColumnMetadata,
   ExColumnMetadataDeep,
@@ -17,14 +28,6 @@ import {
   withSafe,
 } from './helpers';
 
-export type ExFilter = {
-  fields?: ExFields;
-  where?: ExWhere;
-  order?: ExOrder;
-  skip?: number;
-  limit?: number;
-};
-
 export type ExContext = {
   id?: number;
   alias: string;
@@ -34,11 +37,11 @@ export type ExContext = {
 export async function find<T>(
   connection: Connection,
   entity: ObjectType<T>,
-  filter?: ExFilter,
+  filter?: OpFilter,
   join?: ExJoin,
 ): Promise<T[]> {
   const {fields, where, order, skip, limit} =
-    filter === undefined ? ({} as ExFilter) : filter;
+    filter === undefined ? ({} as OpFilter) : filter;
 
   const context: ExContext = {
     alias: 'table',
@@ -77,15 +80,13 @@ export async function find<T>(
   }
 }
 
-export type ExFields = string[];
-
 export function buildSelect(
   context: ExContext,
-  fields: ExFields,
+  fields: OpFields,
 ): ExQueryParams {
   const select = [];
   const deepQueries: {
-    [key: string]: ExColumnMetadataDeep[]
+    [key: string]: ExColumnMetadataDeep[];
   } = {};
   const all_params = {};
   for (const pk of context.metadata.primaryColumns) {
@@ -129,7 +130,7 @@ export function buildSelect(
 
 export type ExJoin = {
   relation: string; // the relationship on the entity that is being queried
-  where: ExWhere; // the where clause on the other side of the relationship (e.g. pk=something)
+  where: OpWhere; // the where clause on the other side of the relationship (e.g. pk=something)
 };
 
 export function buildJoin<T>(context: ExContext, join: ExJoin) {
@@ -138,15 +139,19 @@ export function buildJoin<T>(context: ExContext, join: ExJoin) {
     const joinPropertyMetadata = context.metadata.findRelationWithPropertyPath(
       join.relation,
     );
-    if (joinPropertyMetadata === undefined || joinPropertyMetadata.inverseRelation === undefined)
+    if (
+      joinPropertyMetadata === undefined ||
+      joinPropertyMetadata.inverseRelation === undefined
+    )
       throw new Error(
         `Cannot find relation ${join.relation} in ${context.metadata.name}`,
       );
     const joinEntityMetadata = joinPropertyMetadata.inverseEntityMetadata;
     const conditionClauses = [];
     for (let i = 0; i < joinPropertyMetadata.joinColumns.length; i++) {
-      const joinColumn = joinPropertyMetadata.joinColumns[i]
-      if (joinColumn.referencedColumn === undefined) throw new Error('Unhandled')
+      const joinColumn = joinPropertyMetadata.joinColumns[i];
+      if (joinColumn.referencedColumn === undefined)
+        throw new Error('Unhandled');
       conditionClauses.push(
         `"${context.alias}"."${joinColumn.databaseName}" = "${joinAlias}"."${joinColumn.referencedColumn.databaseName}"`,
       );
@@ -156,8 +161,9 @@ export function buildJoin<T>(context: ExContext, join: ExJoin) {
       i < joinPropertyMetadata.inverseRelation.joinColumns.length;
       i++
     ) {
-      const joinColumn = joinPropertyMetadata.inverseRelation.joinColumns[i]
-      if (joinColumn.referencedColumn === undefined) throw new Error('Unhandled')
+      const joinColumn = joinPropertyMetadata.inverseRelation.joinColumns[i];
+      if (joinColumn.referencedColumn === undefined)
+        throw new Error('Unhandled');
       conditionClauses.push(
         `"${joinAlias}"."${joinColumn.databaseName}" = "${context.alias}"."${joinColumn.referencedColumn.databaseName}"`,
       );
@@ -178,26 +184,23 @@ export function buildJoin<T>(context: ExContext, join: ExJoin) {
   };
 }
 
-export type ExWhere =
-  {[key: string]: ExWhereCond}
-  | {and: ExWhere[]}
-  | {or: ExWhere[]};
-
-export function buildWhere(context: ExContext, where: ExWhere) {
+export function buildWhere(context: ExContext, where: OpWhere) {
   return new Brackets(qs => {
     if ('and' in where) {
+      if (!Array.isArray(where.and)) throw new Error('Syntax error');
       qs = qs.andWhere(
         new Brackets(qb => {
-          for (const w of where.and as ExWhere[]) {
+          for (const w of where.and as OpWhere[]) {
             qb.andWhere(buildWhere(context, w));
           }
           return qb;
         }),
       );
     } else if ('or' in where) {
+      if (!Array.isArray(where.or)) throw new Error('Syntax error');
       qs = qs.andWhere(
         new Brackets(qb => {
-          for (const w of where.or as ExWhere[]) {
+          for (const w of where.or as OpWhere[]) {
             qb = qb.orWhere(buildWhere(context, w));
           }
           return qb;
@@ -205,7 +208,11 @@ export function buildWhere(context: ExContext, where: ExWhere) {
       );
     } else {
       for (const key in where) {
-        const {query, params} = buildCond(context, key, where[key]);
+        const {query, params} = buildCond(
+          context,
+          key,
+          where[key] as OpWhereCond,
+        );
         qs = qs.andWhere(query, params);
       }
     }
@@ -213,34 +220,18 @@ export function buildWhere(context: ExContext, where: ExWhere) {
   });
 }
 
-export type ExWhereCond =
-  JSON
-  | {between: [JSONLiteral, JSONLiteral]}
-  | {fullTextSearch: ExWhereCondFTS}
-  | {lt: JSONLiteral}
-  | {lte: JSONLiteral}
-  | {gt: JSONLiteral}
-  | {gte: JSONLiteral}
-  | {like: JSONLiteral}
-  | {ilike: JSONLiteral}
-  | {nlike: JSONLiteral}
-  | {nilike: JSONLiteral}
-  | {inq: JSONLiteral[]}
-  | {nin: JSONLiteral[]}
-  | {neq: JSON}
-  | {eq: JSON};
-
 function buildCond(
   context: ExContext,
   prop: string,
-  cond: ExWhereCond,
+  cond: OpWhereCond,
 ): ExQueryParams {
   const propMetadata = findDeepCol(context.metadata, prop);
-  let value: JSON;
+  let value: Json;
   if (typeof cond === 'object' && cond !== null) {
     if (Object.keys(cond).length === 1) {
       if ('between' in cond) {
-        if (!Array.isArray(cond.between) || cond.between.length !== 2) throw new Error('Syntax error')
+        if (!Array.isArray(cond.between) || cond.between.length !== 2)
+          throw new Error('Syntax error');
         const [start, end] = cond.between;
         return withSafe(
           context,
@@ -256,14 +247,18 @@ function buildCond(
             `to_tsvector('english', ${propMetadata.asExpression(
               safe,
               context.alias,
-            )}) @@ ${buildFTS(safe, propMetadata, cond.fullTextSearch)}`,
+            )}) @@ ${buildFTS(
+              safe,
+              propMetadata,
+              OpWhereCondFTSC.from(cond.fullTextSearch),
+            )}`,
         );
       } else if ('lt' in cond) {
         return withSafe(
           context,
           safe =>
             `${propMetadata.asExpression(safe, context.alias)} < ${safe(
-              cond.lt,
+              JsonLiteralC.from(cond.lt),
             )}`,
         );
       } else if ('lte' in cond) {
@@ -271,7 +266,7 @@ function buildCond(
           context,
           safe =>
             `${propMetadata.asExpression(safe, context.alias)} <= ${safe(
-              cond.lte,
+              JsonLiteralC.from(cond.lte),
             )}`,
         );
       } else if ('gt' in cond) {
@@ -279,7 +274,7 @@ function buildCond(
           context,
           safe =>
             `${propMetadata.asExpression(safe, context.alias)} > ${safe(
-              cond.gt,
+              JsonLiteralC.from(cond.gt),
             )}`,
         );
       } else if ('gte' in cond) {
@@ -287,7 +282,7 @@ function buildCond(
           context,
           safe =>
             `${propMetadata.asExpression(safe, context.alias)} >= ${safe(
-              cond.gte,
+              JsonLiteralC.from(cond.gte),
             )}`,
         );
       } else if ('like' in cond) {
@@ -295,7 +290,7 @@ function buildCond(
           context,
           safe =>
             `${propMetadata.asExpression(safe, context.alias)} like ${safe(
-              cond.like,
+              JsonLiteralC.from(cond.like),
             )}`,
         );
       } else if ('ilike' in cond) {
@@ -303,7 +298,7 @@ function buildCond(
           context,
           safe =>
             `${propMetadata.asExpression(safe, context.alias)} ilike ${safe(
-              cond.ilike,
+              JsonLiteralC.from(cond.ilike),
             )}`,
         );
       } else if ('nlike' in cond) {
@@ -311,7 +306,7 @@ function buildCond(
           context,
           safe =>
             `${propMetadata.asExpression(safe, context.alias)} not like ${safe(
-              cond.nlike,
+              JsonLiteralC.from(cond.nlike),
             )}`,
         );
       } else if ('nilike' in cond) {
@@ -319,7 +314,7 @@ function buildCond(
           context,
           safe =>
             `${propMetadata.asExpression(safe, context.alias)} not ilike ${safe(
-              cond.nilike,
+              JsonLiteralC.from(cond.nilike),
             )}`,
         );
       } else if ('inq' in cond) {
@@ -327,7 +322,7 @@ function buildCond(
           context,
           safe =>
             `${propMetadata.asExpression(safe, context.alias)} in ${safe(
-              cond.inq,
+              JsonArrayC.from(cond.inq),
               true,
             )}`,
         );
@@ -336,7 +331,7 @@ function buildCond(
           context,
           safe =>
             `${propMetadata.asExpression(safe, context.alias)} not in ${safe(
-              cond.nin,
+              JsonArrayC.from(cond.nin),
               true,
             )}`,
         );
@@ -345,19 +340,19 @@ function buildCond(
           context,
           safe =>
             `${propMetadata.asExpression(safe, context.alias)} != ${safe(
-              cond.neq as JSON,
+              JsonC.from(cond.neq),
             )}`,
         );
       } else if ('eq' in cond) {
-        value = cond.eq;
+        value = JsonC.from(cond.eq);
       } else {
-        value = cond;
+        value = JsonC.from(cond);
       }
     } else {
-      value = cond;
+      value = JsonC.from(cond);
     }
   } else {
-    value = cond;
+    value = JsonC.from(cond);
   }
   if (
     (propMetadata.metadata.type === 'json' ||
@@ -375,35 +370,40 @@ function buildCond(
   );
 }
 
-export type ExWhereCondFTS =
-  JSON
-  | {eq: string}
-  | {neq: string}
-  | {not: ExWhereCondFTS}
-  | {and: ExWhereCondFTS[]}
-  | {or: ExWhereCondFTS[]};
-
 function buildFTS(
   safe: ExSafe,
   propMetadata: ExColumnMetadata,
-  fullTextSearch: ExWhereCondFTS,
+  fullTextSearch: OpWhereCondFTS,
 ): string {
   let query = '';
-  if (typeof fullTextSearch === 'object' && !Array.isArray(fullTextSearch) && fullTextSearch !== null) {
-    if (Object.keys(fullTextSearch).length !== 1) throw new Error('Invalid syntax');
+  if (
+    typeof fullTextSearch === 'object' &&
+    !Array.isArray(fullTextSearch) &&
+    fullTextSearch !== null
+  ) {
+    if (Object.keys(fullTextSearch).length !== 1)
+      throw new Error('Invalid syntax');
     if ('and' in fullTextSearch && Array.isArray(fullTextSearch.and)) {
-      query = `(${(fullTextSearch.and as ExWhereCondFTS[])
+      query = `(${(fullTextSearch.and as OpWhereCondFTS[])
         .map(fts => buildFTS(safe, propMetadata, fts))
         .join('&&')})`;
     } else if ('or' in fullTextSearch && Array.isArray(fullTextSearch.or)) {
-      query = `(${(fullTextSearch.or as ExWhereCondFTS[])
+      query = `(${(fullTextSearch.or as OpWhereCondFTS[])
         .map(fts => buildFTS(safe, propMetadata, fts))
         .join('||')})`;
     } else if ('not' in fullTextSearch) {
-      query = `(!! ${buildFTS(safe, propMetadata, fullTextSearch.not)})`;
+      query = `(!! ${buildFTS(
+        safe,
+        propMetadata,
+        OpWhereCondFTSC.from(fullTextSearch.not),
+      )})`;
     } else if ('eq' in fullTextSearch) {
+      if (typeof fullTextSearch.eq !== 'string')
+        throw new Error('Syntax error');
       query = `plainto_tsquery('english', ${safe(fullTextSearch.eq)}::text)`;
     } else if ('neq' in fullTextSearch) {
+      if (typeof fullTextSearch.neq !== 'string')
+        throw new Error('Syntax error');
       query = `(!! plainto_tsquery('english', ${safe(
         fullTextSearch.neq,
       )}::text)`;
