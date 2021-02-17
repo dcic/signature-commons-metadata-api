@@ -18,7 +18,7 @@ const schemaJsonTemplate = ({schemas}) => ({
   title: '_',
   oneOf: schemas.map(schema => {
     if (schema.inputFile !== undefined) {
-      return {$ref: schema.inputFile};
+      return {$ref: `/${schema.inputFile}`};
     } else {
       console.log(schema);
       return schema.schema;
