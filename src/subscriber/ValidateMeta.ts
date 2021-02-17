@@ -7,7 +7,7 @@ import {
 import {MetaC} from '../types/schemas';
 
 type WithMeta = {
-  meta?: { [key: string]: unknown };
+  meta?: {[key: string]: unknown};
 };
 
 @EventSubscriber()

@@ -76,9 +76,7 @@ export class EnsureResults implements EntitySubscriberInterface<Query> {
   }
 
   async afterLoad(entity: Query, event: LoadEvent<Query>) {
-    if (
-      event?.entity?.meta !== undefined
-    ) {
+    if (event?.entity?.meta !== undefined) {
       await ensure_query_result(event);
     }
   }
