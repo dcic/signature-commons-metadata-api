@@ -184,7 +184,7 @@ class SummaryController {
           model: item.meta.model,
           name: item.meta.text,
           icon: item.meta.icon,
-          group: item.meta.group,
+          priority: item.meta.priority,
           count: count_stats,
         };
       });
@@ -218,7 +218,7 @@ class SummaryController {
         name: entry.meta.text ?? k,
         count: count[k],
         icon: entry.meta.icon,
-        group: entry.meta.group,
+        priority: entry.meta.priority,
       });
     }
     counts.sort((a, b) => b.count - a.count);
@@ -239,7 +239,7 @@ class SummaryController {
           count: number;
           name: string;
         }>;
-        group: any;
+        priority: number;
         type: string;
       };
     } = {};
@@ -261,7 +261,7 @@ class SummaryController {
           stats: Object.entries(
             meta_stats[entry.meta.field] || {},
           ).map(([key, val]) => ({count: val, name: key})),
-          group: entry.meta.group,
+          priority: entry.meta.priority,
           type: entry.meta.type,
         };
       } else {
@@ -273,7 +273,7 @@ class SummaryController {
           field: entry.meta.field,
           model: entry.meta.model,
           stats,
-          group: entry.meta.group,
+          priority: entry.meta.priority,
           type: entry.meta.type,
         };
       }
@@ -295,7 +295,7 @@ class SummaryController {
           count: number;
           name: string;
         }>;
-        group: any;
+        priority: number;
       };
     } = {};
 
@@ -325,7 +325,7 @@ class SummaryController {
         field: entry.meta.search_field || entry.meta.field,
         model: entry.meta.model,
         stats: stats,
-        group: entry.meta.group,
+        priority: entry.meta.priority,
       };
     }
     return {scores};
