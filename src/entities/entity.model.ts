@@ -3,11 +3,11 @@ import {
   Column,
   Generated,
   Index,
-  ManyToMany,
+  OneToMany,
 } from 'typeorm';
 import {Entity as LBEntity, model, property} from '@loopback/repository';
 import {getJsonSchema} from '@loopback/rest';
-import {Signature} from './signature.model';
+import {SignatureEntity} from './signature_entitites.model';
 
 @model({
   name: 'Entity',
@@ -55,11 +55,11 @@ export class Entity extends LBEntity {
     [key: string]: any;
   };
 
-  @ManyToMany(
-    () => Signature,
-    signature => signature._entityset,
+  @OneToMany(
+    () => SignatureEntity,
+    signatureEntity => signatureEntity.entity,
   )
-  _signatureset: Promise<Signature[]>;
+  signatures: Promise<SignatureEntity>[];
 
   constructor(data?: Partial<Entity>) {
     super(data);

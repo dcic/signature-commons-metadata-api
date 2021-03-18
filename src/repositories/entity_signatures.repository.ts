@@ -1,18 +1,15 @@
-import {Entity} from '../entities';
+import {EntitySignatures} from '../entities';
 import {TypeORMDataSource} from '../datasources';
 import {inject} from '@loopback/core';
 import {TypeORMRepository} from './typeorm-repository';
 
-export class EntityRepository extends TypeORMRepository<
-  Entity,
-  typeof Entity.prototype.id
+export class EntitySignaturesRepository extends TypeORMRepository<
+  EntitySignatures,
+  typeof EntitySignatures.prototype.id
 > {
   dataSource: TypeORMDataSource;
-  _select: string;
-  relation: string;
-  inverseTable: string;
 
   constructor(@inject('datasources.typeorm') dataSource: TypeORMDataSource) {
-    super(Entity, dataSource);
+    super(EntitySignatures, dataSource);
   }
 }

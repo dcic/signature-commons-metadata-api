@@ -19,11 +19,19 @@ import {
 
 import {prune} from '../generic-controllers/generic.controller';
 
-import {EntityRepository, SignatureRepository} from '../repositories';
+import {
+  EntitySignaturesRepository,
+  SignatureEntitiesRepository,
+} from '../repositories';
 
 import {applyFieldsFilter} from '../util/applyFieldsFilter';
 
-import {Entity, Signature} from '../entities';
+import {
+  Entity,
+  Signature,
+  EntitySignatures,
+  SignatureEntities,
+} from '../entities';
 import {UserProfile} from '../models';
 
 @api({
@@ -57,19 +65,20 @@ export class ManyToMany {
     },
   })
   async getEntitySignatures(
-    @repository(SignatureRepository)
-    signatureRepository: SignatureRepository,
+    @repository(EntitySignaturesRepository)
+    entitySignaturesRepository: EntitySignaturesRepository,
     @param.path.string('id') id: string,
-    @param.query.object('filter', getFilterSchemaFor(Signature))
+    @param.query.object('filter', getFilterSchemaFor(EntitySignatures))
     filter?: Filter<Signature>,
     @param.query.string('filter_str') filter_str = '',
     @param.query.boolean('contentRange') contentRange = true,
-  ): Promise<Signature[]> {
+  ): Promise<EntitySignatures[]> {
     if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
-    const results = await signatureRepository.find_through(id, {
+    const results = await entitySignaturesRepository.find({
       ...(filter ?? {}),
       where: {
         ...((filter ?? {}).where ?? {}),
+        entity: id,
       },
     });
     if (contentRange !== false && this.response !== undefined) {
@@ -78,8 +87,9 @@ export class ManyToMany {
       if (filter.limit === undefined)
         count = results.length + (filter.skip ?? filter.offset ?? 0);
       else
-        count = (await signatureRepository.count_through(id, filter.where))
-          .count;
+        count = (
+          await entitySignaturesRepository.count({...filter.where, entity: id})
+        ).count;
 
       const start: number = filter.skip ?? filter.offset ?? 0;
       const end = Math.min(start + (filter.limit ?? Infinity), count);
@@ -90,7 +100,7 @@ export class ManyToMany {
       );
       this.response.setHeader('Content-Range', `${start}-${end}/${count}`);
     }
-    return results.map(obj =>
+    return results.map(({entity, ...obj}) =>
       applyFieldsFilter(
         {
           $validator: '/dcic/signature-commons-schema/v5/core/signature.json',
@@ -119,19 +129,20 @@ export class ManyToMany {
     },
   })
   async getSignatureEntities(
-    @repository(EntityRepository)
-    entityRepository: EntityRepository,
+    @repository(SignatureEntitiesRepository)
+    signatureEntitiesRepository: SignatureEntitiesRepository,
     @param.path.string('id') id: string,
     @param.query.object('filter', getFilterSchemaFor(Entity))
     filter?: Filter<Entity>,
     @param.query.string('filter_str') filter_str = '',
     @param.query.boolean('contentRange') contentRange = true,
-  ): Promise<Entity[]> {
+  ): Promise<SignatureEntities[]> {
     if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
-    const results = await entityRepository.find_through(id, {
+    const results = await signatureEntitiesRepository.find({
       ...(filter ?? {}),
       where: {
         ...((filter ?? {}).where ?? {}),
+        signature: id,
       },
     });
     if (contentRange !== false && this.response !== undefined) {
@@ -140,7 +151,12 @@ export class ManyToMany {
       if (filter.limit === undefined)
         count = results.length + (filter.skip ?? filter.offset ?? 0);
       else
-        count = (await entityRepository.count_through(id, filter.where)).count;
+        count = (
+          await signatureEntitiesRepository.count({
+            ...filter.where,
+            signature: id,
+          })
+        ).count;
 
       const start: number = filter.skip ?? filter.offset ?? 0;
       const end = Math.min(start + (filter.limit ?? Infinity), count);
@@ -151,7 +167,7 @@ export class ManyToMany {
       );
       this.response.setHeader('Content-Range', `${start}-${end}/${count}`);
     }
-    return results.map(obj =>
+    return results.map(({signature, ...obj}) =>
       applyFieldsFilter(
         {
           $validator: '/dcic/signature-commons-schema/v5/core/entity.json',
@@ -179,17 +195,15 @@ export class ManyToMany {
     },
   })
   async getEntitySignaturesCount(
-    @repository(SignatureRepository)
-    signatureRepository: SignatureRepository,
+    @repository(EntitySignaturesRepository)
+    entitySignaturesRepository: EntitySignaturesRepository,
     @param.path.string('id') id: string,
     @param.query.object('where', getWhereSchemaFor(Signature))
     where?: Where<Signature>,
     @param.query.string('where_str') where_str = '',
   ): Promise<Count> {
     if (where_str !== '' && where === {}) where = JSON.parse(where_str);
-    const count = await signatureRepository.count_through(id, where);
-
-    return count;
+    return entitySignaturesRepository.count({...where, entity: id});
   }
 
   @authenticate('GET.signatures.entities.count')
@@ -208,17 +222,16 @@ export class ManyToMany {
     },
   })
   async getSignatureEntitiesCount(
-    @repository(EntityRepository)
-    entityRepository: EntityRepository,
+    @repository(SignatureEntitiesRepository)
+    signatureEntitiesRepository: SignatureEntitiesRepository,
     @param.path.string('id') id: string,
     @param.query.object('where', getWhereSchemaFor(Entity))
     where?: Where<Entity>,
     @param.query.string('where_str') where_str = '',
   ): Promise<Count> {
     if (where_str !== '' && where === {}) where = JSON.parse(where_str);
-    const count = await entityRepository.count_through(id, where);
 
-    return count;
+    return signatureEntitiesRepository.count({...where, signature: id});
   }
 
   // Value Count
@@ -245,18 +258,19 @@ export class ManyToMany {
     },
   })
   async getEntitySignaturesValueCount(
-    @repository(SignatureRepository)
-    signatureRepository: SignatureRepository,
+    @repository(EntitySignaturesRepository)
+    entitySignaturesRepository: EntitySignaturesRepository,
     @param.path.string('id') id: string,
     @param.query.object('filter', getFilterSchemaFor(Signature))
     filter?: Filter<Signature>,
     @param.query.string('filter_str') filter_str = '',
   ): Promise<{[key: string]: {[key: string]: number}}> {
     if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
-    const value_count = await signatureRepository.value_counts_through(id, {
+    const value_count = await entitySignaturesRepository.value_counts({
       ...(filter ?? {}),
       where: {
         ...((filter ?? {}).where ?? {}),
+        entity: id,
       },
     });
 
@@ -286,18 +300,19 @@ export class ManyToMany {
     },
   })
   async getSignatureEntitiesValueCount(
-    @repository(EntityRepository)
-    entityRepository: EntityRepository,
+    @repository(SignatureEntitiesRepository)
+    signatureEntitiesRepository: SignatureEntitiesRepository,
     @param.path.string('id') id: string,
     @param.query.object('filter', getFilterSchemaFor(Entity))
     filter?: Filter<Entity>,
     @param.query.string('filter_str') filter_str = '',
   ): Promise<{[key: string]: {[key: string]: number}}> {
     if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
-    const value_count = await entityRepository.value_counts_through(id, {
+    const value_count = await signatureEntitiesRepository.value_counts({
       ...(filter ?? {}),
       where: {
         ...((filter ?? {}).where ?? {}),
+        signature: id,
       },
     });
 
@@ -328,8 +343,8 @@ export class ManyToMany {
     },
   })
   async getEntitySignaturesDistinctValueCount(
-    @repository(SignatureRepository)
-    signatureRepository: SignatureRepository,
+    @repository(EntitySignaturesRepository)
+    entitySignaturesRepository: EntitySignaturesRepository,
     @param.path.string('id') id: string,
     @param.query.object('filter', getFilterSchemaFor(Signature))
     filter?: Filter<Signature>,
@@ -337,12 +352,12 @@ export class ManyToMany {
   ): Promise<{[key: string]: number}> {
     if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
 
-    const distinct_value_count = await signatureRepository.distinct_value_counts_through(
-      id,
+    const distinct_value_count = await entitySignaturesRepository.distinct_value_counts(
       {
         ...(filter ?? {}),
         where: {
           ...((filter ?? {}).where ?? {}),
+          entity: id,
         },
       },
     );
@@ -373,20 +388,20 @@ export class ManyToMany {
     },
   })
   async getSignatureEntitiesDistinctValueCount(
-    @repository(EntityRepository)
-    entityRepository: EntityRepository,
+    @repository(SignatureEntitiesRepository)
+    signatureEntitiesRepository: SignatureEntitiesRepository,
     @param.path.string('id') id: string,
     @param.query.object('filter', getFilterSchemaFor(Entity))
     filter?: Filter<Entity>,
     @param.query.string('filter_str') filter_str = '',
   ): Promise<{[key: string]: number}> {
     if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
-    const distinct_value_count = await entityRepository.distinct_value_counts_through(
-      id,
+    const distinct_value_count = await signatureEntitiesRepository.distinct_value_counts(
       {
         ...(filter ?? {}),
         where: {
           ...((filter ?? {}).where ?? {}),
+          signature: id,
         },
       },
     );
@@ -418,8 +433,8 @@ export class ManyToMany {
     },
   })
   async getEntitySignaturesKeyCount(
-    @repository(SignatureRepository)
-    signatureRepository: SignatureRepository,
+    @repository(EntitySignaturesRepository)
+    entitySignaturesRepository: EntitySignaturesRepository,
     @param.path.string('id') id: string,
     @param.query.object('filter', getFilterSchemaFor(Signature))
     filter?: Filter<Signature>,
@@ -427,10 +442,11 @@ export class ManyToMany {
   ): Promise<{[key: string]: number}> {
     if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
 
-    const key_count = await signatureRepository.key_counts_through(id, {
+    const key_count = await entitySignaturesRepository.key_counts({
       ...(filter ?? {}),
       where: {
         ...((filter ?? {}).where ?? {}),
+        entity: id,
       },
     });
 
@@ -460,18 +476,19 @@ export class ManyToMany {
     },
   })
   async getSignatureEntitiesKeyCount(
-    @repository(EntityRepository)
-    entityRepository: EntityRepository,
+    @repository(SignatureEntitiesRepository)
+    signatureEntitiesRepository: SignatureEntitiesRepository,
     @param.path.string('id') id: string,
     @param.query.object('filter', getFilterSchemaFor(Entity))
     filter?: Filter<Entity>,
     @param.query.string('filter_str') filter_str = '',
   ): Promise<{[key: string]: number}> {
     if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
-    const key_count = await entityRepository.key_counts_through(id, {
+    const key_count = await signatureEntitiesRepository.key_counts({
       ...(filter ?? {}),
       where: {
         ...((filter ?? {}).where ?? {}),
+        signature: id,
       },
     });
 

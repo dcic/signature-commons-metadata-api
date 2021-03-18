@@ -6,3 +6,5 @@ export * from './schema.repository';
 export * from './user-profile.repository';
 export * from './summary.repository';
 export * from './typeorm-repository';
+export * from './signature_entities.repository';
+export * from './entity_signatures.repository';
