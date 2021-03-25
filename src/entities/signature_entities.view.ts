@@ -1,4 +1,9 @@
-import {ViewEntity, ViewColumn, Connection, PrimaryColumn} from 'typeorm';
+import {
+  ViewEntity,
+  Column,
+  Connection,
+  PrimaryColumn,
+} from 'typeorm';
 import {SignatureEntity} from './signature_entitites.model';
 import {Entity} from './entity.model';
 import {Entity as LBEntity, model} from '@loopback/repository';
@@ -26,18 +31,28 @@ import {Entity as LBEntity, model} from '@loopback/repository';
   },
 })
 export class SignatureEntities extends LBEntity {
-  @ViewColumn()
-  @PrimaryColumn()
+  @PrimaryColumn({
+    name: 'id',
+    type: 'uuid',
+  })
   id: string;
 
-  @ViewColumn()
+  @Column({
+    type: 'jsonb',
+  })
   meta: {
     [key: string]: any;
   };
 
-  @ViewColumn()
+  @PrimaryColumn({
+    name: 'signature',
+    type: 'uuid',
+  })
   signature: string;
 
-  @ViewColumn()
+  @Column({
+    name: 'direction',
+    type: 'varchar'
+  })
   direction: string;
 }

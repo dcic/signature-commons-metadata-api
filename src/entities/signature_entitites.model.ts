@@ -34,6 +34,7 @@ export class SignatureEntity extends LBEntity {
     name: 'signature',
     type: 'uuid',
   })
+  @Index()
   signature: Signature;
 
   @ManyToOne(
@@ -48,13 +49,14 @@ export class SignatureEntity extends LBEntity {
     name: 'entity',
     type: 'uuid',
   })
+  @Index()
   entity: Entity;
 
-  @Index()
   @Column({
     name: 'direction',
     type: 'varchar',
     primary: true,
+    default: '-',
   })
   direction: string;
 

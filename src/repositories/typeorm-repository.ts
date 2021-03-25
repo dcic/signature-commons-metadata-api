@@ -37,6 +37,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
   typeOrmRepo: Repository<T>;
   tableName: string;
   columns: {[colName: string]: string};
+  columnTypes: {[colName: string]: string};
   id_generator: UniqueIDGenerator;
 
   constructor(
@@ -59,6 +60,16 @@ export class TypeORMRepository<T extends Entity, ID extends string>
           : {
               ...columns,
               [col.propertyName]: col.databaseName,
+            },
+      {},
+    );
+    this.columnTypes = this.typeOrmRepo.metadata.columns.reduce(
+      (columns, col) =>
+        col.propertyName.startsWith('_')
+          ? columns
+          : {
+              ...columns,
+              [col.propertyName]: col.type,
             },
       {},
     );
@@ -916,7 +927,9 @@ export class TypeORMRepository<T extends Entity, ID extends string>
             .map(k => `'${this._sanitize(k)}'`)
             .join('->');
       }
-    } else {
+    } else if(this.columnTypes[ks[0]]==="uuid"){
+      col_id += '::uuid';
+    }else {
       col_id += '::text';
     }
     return col_id;
