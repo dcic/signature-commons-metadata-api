@@ -1,9 +1,4 @@
-import {
-  ViewEntity,
-  Column,
-  Connection,
-  PrimaryColumn,
-} from 'typeorm';
+import {ViewEntity, Column, Connection, PrimaryColumn} from 'typeorm';
 import {SignatureEntity} from './signature_entitites.model';
 import {Entity} from './entity.model';
 import {Entity as LBEntity, model} from '@loopback/repository';
@@ -52,7 +47,7 @@ export class SignatureEntities extends LBEntity {
 
   @Column({
     name: 'direction',
-    type: 'varchar'
+    type: 'varchar',
   })
   direction: string;
 }

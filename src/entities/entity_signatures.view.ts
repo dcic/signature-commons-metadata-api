@@ -1,10 +1,4 @@
-import {
-  ViewEntity,
-  ViewColumn,
-  Column,
-  Connection,
-  PrimaryColumn,
-} from 'typeorm';
+import {ViewEntity, Column, Connection, PrimaryColumn} from 'typeorm';
 import {SignatureEntity} from './signature_entitites.model';
 import {Signature} from './signature.model';
 import {Entity as LBEntity, model} from '@loopback/repository';
