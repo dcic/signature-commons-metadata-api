@@ -58,7 +58,10 @@ class OptimizationController {
       },
     },
   })
-  async index(@param.query.string('field') field: string, @param.query.string('method') method: string): Promise<void> {
+  async index(
+    @param.query.string('field') field: string,
+    @param.query.string('method') method: string,
+  ): Promise<void> {
     await this.bg.spawn(async () => {
       await this.bg.setStatus('get repo');
       const field_split = field.split('.');
