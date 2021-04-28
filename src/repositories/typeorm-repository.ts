@@ -797,13 +797,13 @@ export class TypeORMRepository<T extends Entity, ID extends string>
             );
             first = false;
           } else if (condition.any !== undefined) {
-            const col = this._dotToCol(key, true);
+            const col = this._dotToCol(key, false);
             const id = this.id_generator.id();
             this._where(
               qb,
-              `${col} ?| :${slug}_${id}`,
+              `${col} ?| :${slug}_${id}::text[]`,
               {
-                [`${slug}_${id}`]: JSON.stringify(condition),
+                [`${slug}_${id}`]: condition.any,
               },
               parent,
               first,
