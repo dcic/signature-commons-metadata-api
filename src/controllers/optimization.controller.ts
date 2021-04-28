@@ -58,7 +58,10 @@ class OptimizationController {
       },
     },
   })
-  async index(@param.query.string('field') field: string): Promise<void> {
+  async index(
+    @param.query.string('field') field: string,
+    @param.query.string('method') method: string,
+  ): Promise<void> {
     await this.bg.spawn(async () => {
       await this.bg.setStatus('get repo');
       const field_split = field.split('.');
@@ -67,7 +70,7 @@ class OptimizationController {
         `repositories.${table}`,
       );
       await this.bg.setStatus('ensureIndex');
-      await repo.ensureIndex(field_split.slice(1).join('.'));
+      await repo.ensureIndex(field_split.slice(1).join('.'), method);
     });
   }
 

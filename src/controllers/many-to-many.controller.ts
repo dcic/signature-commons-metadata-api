@@ -132,7 +132,7 @@ export class ManyToMany {
     @repository(SignatureEntitiesRepository)
     signatureEntitiesRepository: SignatureEntitiesRepository,
     @param.path.string('id') id: string,
-    @param.query.object('filter', getFilterSchemaFor(Entity))
+    @param.query.object('filter', getFilterSchemaFor(SignatureEntities))
     filter?: Filter<Entity>,
     @param.query.string('filter_str') filter_str = '',
     @param.query.boolean('contentRange') contentRange = true,
