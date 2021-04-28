@@ -785,6 +785,19 @@ export class TypeORMRepository<T extends Entity, ID extends string>
               first,
             );
             first = false;
+          } else if (condition.any !== undefined) {
+            const col = this._dotToCol(key, true);
+            const id = this.id_generator.id();
+            this._where(
+              qb,
+              `${col} ?| :${slug}_${id}`,
+              {
+                [`${slug}_${id}`]: JSON.stringify(condition),
+              },
+              parent,
+              first,
+            );
+            first = false;
           } else if (typeof condition === 'object') {
             const col = this._dotToCol(key);
             const id = this.id_generator.id();
