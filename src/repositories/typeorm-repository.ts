@@ -940,7 +940,9 @@ export class TypeORMRepository<T extends Entity, ID extends string>
             .map(k => `'${this._sanitize(k)}'`)
             .join('->');
       }
-    } else if (this.columnTypes[ks[0]] === 'uuid') {
+    } else if (ks[0] === "meta"){
+      col_id = ks[0]
+    }else if (this.columnTypes[ks[0]] === 'uuid') {
       col_id += '::uuid';
     } else {
       col_id += '::text';
