@@ -313,12 +313,15 @@ class SummaryController {
       const stats: Array<any> = [];
       for (const value of meta_scores) {
         const field = entry.meta.search_field || entry.meta.field;
+        const order_by = entry.meta.order_by;
         const order_by_name = entry.meta.order_by_name || entry.meta.order_by;
         console.log('${' + field + '}');
+        console.log('${' + order_by + '}');
         console.log('${' + order_by_name + '}');
         const name = makeTemplate('${' + field + '}', value);
-        const count = makeTemplate('${' + order_by_name + '}', value);
-        stats.push({name, count: Number(count)});
+        const count = makeTemplate('${' + order_by + '}', value);
+        const count_name = makeTemplate('${' + order_by_name + '}', value);
+        stats.push({name, count: Number(count), count_name});
       }
       // await this.entityRepo.dataSource.connection.query('select blah from signatures where blah = :param', {param: ''})
       scores[entry.meta.text ?? entry.meta.field] = {
