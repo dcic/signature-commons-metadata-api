@@ -294,6 +294,7 @@ class SummaryController {
         stats: Array<{
           count: number;
           name: string;
+          count_name: string;
         }>;
         priority: number;
       };
