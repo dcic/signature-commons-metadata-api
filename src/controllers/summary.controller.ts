@@ -301,7 +301,7 @@ class SummaryController {
 
     for (const entry of fields) {
       const order = [`${entry.meta.order_by} ${entry.meta.order}`];
-      const meta_scores = await this.tbl_to_repo(entry.meta.Table).find({
+      const meta_scores = await this.tbl_to_repo(entry.meta.model).find({
         where: {
           [entry.meta.order_by]: {
             neq: null,
