@@ -11,18 +11,24 @@ import {authenticate} from '@loopback/authentication';
   paths: {},
 })
 export class HomePageController {
-  private html: string;
+  private index_html: string;
+  private swagger_html: string;
+
   constructor(
     @inject(RestBindings.Http.RESPONSE) private response: Response,
     @inject(RestBindings.Http.REQUEST) private request: Request,
   ) {
-    this.html = new Function(
+    this.index_html = new Function(
       'PREFIX',
       `return \`${fs.readFileSync(
         path.join(__dirname, '../../../public/index.html'),
         'utf-8',
       )}\`;`,
     )(process.env.PREFIX);
+    this.swagger_html = fs.readFileSync(
+      path.join(__dirname, '../../../public/swagger.html'),
+      'utf-8',
+    );
   }
 
   @authenticate('GET.explorer')
@@ -35,22 +41,11 @@ export class HomePageController {
     },
   })
   explorer() {
-    const protocol = this.request.protocol;
-    let hostname, pathname;
-    if (process.env.SERVERNAME !== undefined) {
-      hostname = process.env.SERVERNAME;
-      if (process.env.PREFIX !== undefined) {
-        pathname = process.env.PREFIX;
-      } else {
-        pathname = this.request.path.replace(/\/explorer$/, '');
-      }
-    } else {
-      hostname = this.request.headers.host;
-      pathname = this.request.path.replace(/\/explorer$/, '');
-    }
-    this.response.redirect(
-      `http://explorer.loopback.io/?url=${protocol}://${hostname}${pathname}/openapi.json`,
-    );
+    this.response
+      .status(200)
+      .contentType('html')
+      .send(this.swagger_html);
+    return this.response;
   }
 
   @authenticate('GET.index')
@@ -67,7 +62,7 @@ export class HomePageController {
     this.response
       .status(200)
       .contentType('html')
-      .send(this.html);
+      .send(this.index_html);
     return this.response;
   }
 }
