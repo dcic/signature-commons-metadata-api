@@ -361,12 +361,28 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
   async count(where?: Where, options?: Options): Promise<Count> {
     await this.init();
-    const result = await this.typeOrmRepo
-      .createQueryBuilder(this.tableName)
-      .where(this._typeormWhere(where as any))
-      .getCount();
-
-    return {count: result.valueOf()};
+    const estimate = false; //(options || {}).estimate;
+    if (estimate) {
+      const query = this.typeOrmRepo
+        .createQueryBuilder(this.tableName)
+        .where(this._typeormWhere(where as any));
+      const [q_query, q_params] = query.getQueryAndParameters();
+      const count_query = `explain ${q_query};`;
+      const result = await this.typeOrmRepo.query(count_query, q_params);
+      const r = JSON.stringify(result).match(/rows=\d*/g) ?? [];
+      const count = r.reduce((acc, t) => {
+        const a = parseInt(t.replace('rows=', ''));
+        if (a > acc) acc = a;
+        return acc;
+      }, 0);
+      return {count};
+    } else {
+      const result = await this.typeOrmRepo
+        .createQueryBuilder(this.tableName)
+        .where(this._typeormWhere(where as any))
+        .getCount();
+      return {count: result.valueOf()};
+    }
   }
 
   async execute(

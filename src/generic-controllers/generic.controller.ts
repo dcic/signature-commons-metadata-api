@@ -168,7 +168,12 @@ export function GenericControllerFactory<
         let count: number;
         if (filter.limit === undefined)
           count = results.length + (filter.skip ?? filter.offset ?? 0);
-        else count = (await this.genericRepository.count(filter.where)).count;
+        else
+          count = (
+            await this.genericRepository.count(filter.where, {
+              estimate: Object.keys(filter.where ?? {}).length > 0,
+            })
+          ).count;
 
         const start: number = filter.skip ?? filter.offset ?? 0;
         const end = Math.min(start + (filter.limit ?? Infinity), count);

@@ -88,7 +88,10 @@ export class ManyToMany {
         count = results.length + (filter.skip ?? filter.offset ?? 0);
       else
         count = (
-          await entitySignaturesRepository.count({...filter.where, entity: id})
+          await entitySignaturesRepository.count(
+            {...filter.where, entity: id},
+            {estimate: Object.keys(filter.where ?? {}).length > 0},
+          )
         ).count;
 
       const start: number = filter.skip ?? filter.offset ?? 0;
@@ -152,10 +155,13 @@ export class ManyToMany {
         count = results.length + (filter.skip ?? filter.offset ?? 0);
       else
         count = (
-          await signatureEntitiesRepository.count({
-            ...filter.where,
-            signature: id,
-          })
+          await signatureEntitiesRepository.count(
+            {
+              ...filter.where,
+              signature: id,
+            },
+            {estimate: Object.keys(filter.where ?? {}).length === 0},
+          )
         ).count;
 
       const start: number = filter.skip ?? filter.offset ?? 0;
