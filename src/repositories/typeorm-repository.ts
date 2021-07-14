@@ -361,7 +361,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
   async count(where?: Where, options?: Options): Promise<Count> {
     await this.init();
-    const estimate = false; //(options || {}).estimate;
+    const estimate = (options || {}).estimate;
     if (estimate) {
       const query = this.typeOrmRepo
         .createQueryBuilder(this.tableName)
@@ -375,15 +375,14 @@ export class TypeORMRepository<T extends Entity, ID extends string>
         if (a > acc) acc = a;
         return acc;
       }, 0);
-      return {count};
-    } else {
-      const query = await this.typeOrmRepo
-        .createQueryBuilder(this.tableName)
-        .select("COUNT(*)", "count")
-        .where(this._typeormWhere(where as any))
-      const {count} = await query.getRawOne();
-      return {count};
+      if (count > 5000) return {count};
     }
+    const query = await this.typeOrmRepo
+      .createQueryBuilder(this.tableName)
+      .select("COUNT(*)", "count")
+      .where(this._typeormWhere(where as any))
+    const {count} = await query.getRawOne();
+    return {count};
   }
 
   async execute(
