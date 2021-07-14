@@ -102,6 +102,7 @@ export class Resource extends GenericResourceController {
           library: {inq: libraries.map(({id: _id}) => _id)},
         },
       },
+      contentRange,
     });
   }
 
