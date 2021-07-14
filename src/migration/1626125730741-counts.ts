@@ -8,6 +8,9 @@ export class counts1626125730741 implements MigrationInterface {
     await queryRunner.query(`
             create index if not exists entity_to_signature on signatures_entities (entity, direction)
         `);
+    await queryRunner.query(`
+        VACUUM ANALYZE
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<any> {
