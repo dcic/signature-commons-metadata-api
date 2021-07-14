@@ -377,11 +377,12 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       }, 0);
       return {count};
     } else {
-      const result = await this.typeOrmRepo
+      const query = await this.typeOrmRepo
         .createQueryBuilder(this.tableName)
+        .select("COUNT(*)", "count")
         .where(this._typeormWhere(where as any))
-        .getCount();
-      return {count: result.valueOf()};
+      const {count} = await query.getRawOne();
+      return {count};
     }
   }
 
