@@ -109,7 +109,9 @@ export interface GenericController<
   deleteById(id: string): Promise<void>;
 }
 
-function prune(obj: {[key: string]: any | undefined}): {[key: string]: any} {
+export function prune(obj: {
+  [key: string]: any | undefined;
+}): {[key: string]: any} {
   for (const key in obj) {
     if (obj[key] === null || obj[key] === undefined) {
       delete obj[key];
@@ -166,7 +168,12 @@ export function GenericControllerFactory<
         let count: number;
         if (filter.limit === undefined)
           count = results.length + (filter.skip ?? filter.offset ?? 0);
-        else count = (await this.genericRepository.count(filter.where)).count;
+        else
+          count = (
+            await this.genericRepository.count(filter.where, {
+              estimate: Object.keys(filter.where ?? {}).length > 0,
+            })
+          ).count;
 
         const start: number = filter.skip ?? filter.offset ?? 0;
         const end = Math.min(start + (filter.limit ?? Infinity), count);
@@ -306,7 +313,6 @@ export function GenericControllerFactory<
     ): Promise<{[key: string]: number}> {
       if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
       if (filter === undefined) filter = {};
-
       if (!filter.where) {
         return this.genericRepository.dataSource.key_counts(
           props.GenericEntity,
@@ -354,7 +360,6 @@ export function GenericControllerFactory<
       if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
 
       if (filter === undefined) filter = {};
-
       if (!filter.where) {
         return this.genericRepository.dataSource.value_counts(
           props.GenericEntity,
@@ -402,7 +407,6 @@ export function GenericControllerFactory<
       if (filter_str !== '' && filter == null) filter = JSON.parse(filter_str);
 
       if (filter === undefined) filter = {};
-
       if (!filter.where) {
         return this.genericRepository.dataSource.distinct_value_counts(
           props.GenericEntity,
@@ -648,7 +652,6 @@ export function GenericControllerFactory<
       },
     ): Promise<GenericEntity[]> {
       if (filter === undefined) filter = {};
-
       const results = await this.genericRepository.find({
         ...filter,
       });

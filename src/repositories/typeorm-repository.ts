@@ -37,6 +37,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
   typeOrmRepo: Repository<T>;
   tableName: string;
   columns: {[colName: string]: string};
+  columnTypes: {[colName: string]: string};
   id_generator: UniqueIDGenerator;
 
   constructor(
@@ -59,6 +60,16 @@ export class TypeORMRepository<T extends Entity, ID extends string>
           : {
               ...columns,
               [col.propertyName]: col.databaseName,
+            },
+      {},
+    );
+    this.columnTypes = this.typeOrmRepo.metadata.columns.reduce(
+      (columns, col) =>
+        col.propertyName.startsWith('_')
+          ? columns
+          : {
+              ...columns,
+              [col.propertyName]: col.type,
             },
       {},
     );
@@ -165,7 +176,6 @@ export class TypeORMRepository<T extends Entity, ID extends string>
     await this.init();
 
     if (filter === undefined) filter = {};
-
     const result = await this.typeOrmRepo
       .createQueryBuilder(this.tableName)
       .select(this._typeormSelect(filter.fields) as any)
@@ -188,6 +198,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       .select(this._typeormSelect(filter.fields) as any)
       .where(this._typeormWhere(filter.where))
       .orderBy(this._typeormOrder(filter.order) as any);
+
     const [queryset_query, queryset_params] = queryset.getQueryAndParameters();
     const params = [
       ...queryset_params,
@@ -234,6 +245,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       .select(this._typeormSelect(filter.fields) as any)
       .where(this._typeormWhere(filter.where))
       .orderBy(this._typeormOrder(filter.order) as any);
+
     const [queryset_query, queryset_params] = queryset.getQueryAndParameters();
     const params = [
       ...queryset_params,
@@ -349,13 +361,28 @@ export class TypeORMRepository<T extends Entity, ID extends string>
 
   async count(where?: Where, options?: Options): Promise<Count> {
     await this.init();
-
-    const result = await this.typeOrmRepo
+    const estimate = (options ?? {}).estimate;
+    if (estimate) {
+      const query = this.typeOrmRepo
+        .createQueryBuilder(this.tableName)
+        .where(this._typeormWhere(where as any));
+      const [q_query, q_params] = query.getQueryAndParameters();
+      const count_query = `explain ${q_query};`;
+      const result = await this.typeOrmRepo.query(count_query, q_params);
+      const r = JSON.stringify(result).match(/rows=\d*/g) ?? [];
+      const count = r.reduce((acc, t) => {
+        const a = parseInt(t.replace('rows=', ''));
+        if (a > acc) acc = a;
+        return acc;
+      }, 0);
+      if (count > 5000) return {count};
+    }
+    const query = this.typeOrmRepo
       .createQueryBuilder(this.tableName)
-      .where(this._typeormWhere(where as any))
-      .getCount();
-
-    return {count: result.valueOf()};
+      .select('COUNT(*)', 'count')
+      .where(this._typeormWhere(where as any));
+    const {count} = await query.getRawOne();
+    return {count: parseInt(count || 0)};
   }
 
   async execute(
@@ -785,6 +812,19 @@ export class TypeORMRepository<T extends Entity, ID extends string>
               first,
             );
             first = false;
+          } else if (condition.any !== undefined) {
+            const col = this._dotToCol(key, false);
+            const id = this.id_generator.id();
+            this._where(
+              qb,
+              `${col} ?| :${slug}_${id}::text[]`,
+              {
+                [`${slug}_${id}`]: condition.any,
+              },
+              parent,
+              first,
+            );
+            first = false;
           } else if (typeof condition === 'object') {
             const col = this._dotToCol(key);
             const id = this.id_generator.id();
@@ -916,6 +956,10 @@ export class TypeORMRepository<T extends Entity, ID extends string>
             .map(k => `'${this._sanitize(k)}'`)
             .join('->');
       }
+    } else if (ks[0] === 'meta') {
+      col_id = ks[0];
+    } else if (this.columnTypes[ks[0]] === 'uuid') {
+      col_id += '::uuid';
     } else {
       col_id += '::text';
     }
