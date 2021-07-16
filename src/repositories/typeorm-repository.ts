@@ -382,7 +382,7 @@ export class TypeORMRepository<T extends Entity, ID extends string>
       .select('COUNT(*)', 'count')
       .where(this._typeormWhere(where as any));
     const {count} = await query.getRawOne();
-    return {count};
+    return {count: parseInt(count || 0)};
   }
 
   async execute(
